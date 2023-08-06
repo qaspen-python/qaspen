@@ -7,10 +7,11 @@ from qaspen.table.meta_table import MetaTable
 
 
 class BaseTable(MetaTable):
+
     @classmethod
     def select(cls: type["BaseTable"]) -> Statement:
         new_statement: Statement = Statement._select(
-            select_fields=list(cls.table_fields),
+            select_fields=list(cls.table_fields),  # type: ignore[attr-defined]
             from_table=cls,
         )
         return new_statement
@@ -28,8 +29,8 @@ class BaseTable(MetaTable):
 
 
 class Test2(BaseTable):
-    aba: typing.Final[VarCharField] = VarCharField()
-    not_aba: typing.Final[VarCharField] = VarCharField()
+    aba: VarCharField = VarCharField()
+    not_aba: VarCharField = VarCharField()
 
 
 print(Test2.select().build_query())

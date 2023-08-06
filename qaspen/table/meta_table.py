@@ -1,15 +1,12 @@
+import dataclasses
 import typing
 
 from qaspen.field.base_field import BaseField
 
 
+@dataclasses.dataclass
 class MetaTable:
     """"""
-
-    table_name: str
-    abstract: bool
-    table_fields: list[BaseField]
-
     def __init_subclass__(
         cls: type["MetaTable"],
         table_name: str | None = None,
@@ -21,11 +18,11 @@ class MetaTable:
             return
 
         if not table_name:
-            cls.table_name = cls.__name__.lower()
+            cls.table_name = cls.__name__.lower()  # type: ignore[attr-defined]
         else:
-            cls.table_name = table_name
+            cls.table_name = table_name  # type: ignore[attr-defined]
 
-        cls.abstract = abstract
+        cls.abstract = abstract  # type: ignore[attr-defined]
         cls._parse_table_fields()
 
         super().__init_subclass__(**kwargs)
@@ -39,7 +36,7 @@ class MetaTable:
             if isinstance(field_class, BaseField)
         ]
 
-        cls.table_fields = table_fields
+        for table_field in table_fields:
+            setattr(cls, table_field.field_name, table_field)
 
-    class Config:
-        extra = "allow"
+        cls.table_fields = table_fields  # type: ignore[attr-defined]

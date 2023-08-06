@@ -22,23 +22,23 @@ class Statement:
         build_query_operation_map: typing.Final[
             dict[OperationType, typing.Callable[[], str]]
         ] = {
-            OperationType.SELECT: self.build_select_query,
-            OperationType.UPDATE: self.build_update_query,
+            OperationType.SELECT: self._build_select_query,
+            OperationType.UPDATE: self._build_update_query,
         }
         build_query_method: typing.Final[
             typing.Callable[[], str],
         ] = build_query_operation_map[self.operation]
         return build_query_method()
 
-    def build_select_query(self: typing.Self) -> str:
+    def _build_select_query(self: typing.Self) -> str:
         to_select_fields: str = ", ".join(self.select_fields)
         string_statement: str = (
             f"SELECT {to_select_fields} "
-            f"FROM {self.from_table.table_name}"
+            f"FROM {self.from_table.table_name}"  # type: ignore[attr-defined]
         )
         return string_statement
 
-    def build_update_query(self: typing.Self) -> str:
+    def _build_update_query(self: typing.Self) -> str:
         to_update_fields: typing.Final[str] = ", ".join(
             [
                 f"{field.field_name} = {new_value}"
@@ -47,7 +47,8 @@ class Statement:
             ]
         )
         return (
-            f"UPDATE {self.from_table.table_name} "
+            f"UPDATE "
+            f"{self.from_table.table_name} "  # type: ignore[attr-defined]
             f"SET {to_update_fields}"
         )
 
@@ -58,7 +59,8 @@ class Statement:
         from_table: type[MetaTable],
     ) -> "Statement":
         select_fields_with_prefix: typing.Final[list[str]] = [
-            f"{from_table.table_name}.{field.field_name}"
+            f"{from_table.table_name}."  # type: ignore[attr-defined]
+            f"{field.field_name}"
             for field in select_fields
         ]
         return Statement(

@@ -3,7 +3,13 @@ import typing
 
 
 class MetaClassField(abc.ABC):
-    value: typing.Any = None
+
+    def __set_name__(
+        self: typing.Self,
+        owner: typing.Any,
+        variable_name: str,
+    ) -> None:
+        self.field_name: str = variable_name
 
     @abc.abstractmethod
     def make_field_create_statement(
@@ -13,10 +19,16 @@ class MetaClassField(abc.ABC):
 
 
 class BaseField(MetaClassField):
-
-    def __set_name__(
+    def __init__(
         self: typing.Self,
-        owner: typing.Any,
-        variable_name: str,
+        field_value: typing.Any = None,
+        is_null: bool = False,
+        default: typing.Any = None,
+        db_field_name: str | None = None,
     ) -> None:
-        self.field_name: str = variable_name
+        self.field_value: typing.Any = field_value
+        self.is_null: bool = is_null
+        self.default: typing.Any = default
+
+        if db_field_name:
+            self.field_name = db_field_name
