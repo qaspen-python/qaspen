@@ -1,11 +1,29 @@
-class Test:
-    def __set_name__(self, owner, name: str):
-        print(owner)
-        self.name = name
+from qaspen.fields.string_fields.fields import TextField, VarCharField
+from qaspen.table.base_table import BaseTable
 
 
-class Sasa:
-    wow = Test()
+class User(BaseTable, table_name="users"):
+    name: VarCharField = VarCharField(default="Sasha")
+    surname: VarCharField = VarCharField(default="Kiselev")
+    description: TextField = TextField(default="Zopa")
 
 
-print(Sasa().wow.name)
+# print(User.select(User.all_fields()).build_query())
+print(User.select(select_fields=[User.name, User.surname]).build_query())
+print(User.update(
+    to_update_fields={
+        User.name: "Sasha",
+        User.surname: "Kiselev",
+        User.description: "Loshara",
+    },
+).build_query())
+
+
+# @dataclasses.dataclass
+# class Test:
+#     a: int = 1
+
+
+# u = User()
+# print(u.name)
+# # print(u)

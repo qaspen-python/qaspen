@@ -1,37 +1,47 @@
 import typing
 
-from qaspen.field.base_field import BaseField
-from qaspen.field.string_fields.varchar import VarCharField
+from qaspen.fields.base_field import Field
 from qaspen.statement.statement import Statement
 from qaspen.table.meta_table import MetaTable
 
 
 class BaseTable(MetaTable):
-
     @classmethod
-    def select(cls: type["BaseTable"]) -> Statement:
-        new_statement: Statement = Statement._select(
-            select_fields=list(cls.table_fields),  # type: ignore[attr-defined]
+    def select(
+        cls: type["BaseTable"],
+        select_fields: list[Field[typing.Any]],
+    ) -> Statement:
+        return Statement._select(
+            select_fields=select_fields,
             from_table=cls,
         )
-        return new_statement
 
     @classmethod
     def update(
         cls: type["BaseTable"],
-        to_update_fields: dict[BaseField, typing.Any],
+        to_update_fields: dict[Field[typing.Any], typing.Any],
     ) -> Statement:
-        new_statement: Statement = Statement._update(
+        return Statement._update(
             to_update_fields=to_update_fields,
             from_table=cls,
         )
-        return new_statement
 
+    @classmethod
+    def delete(cls: type["BaseTable"]) -> Statement:
+        return Statement._delete(
+            from_table=cls,
+        )
 
-class Test2(BaseTable):
-    aba: VarCharField = VarCharField()
-    not_aba: VarCharField = VarCharField()
+    @classmethod
+    def insert(
+        cls: type["BaseTable"],
+        *insert_records: "BaseTable",
+    ) -> Statement:
+        return Statement._insert(
+            from_table=cls,
+            insert_records=insert_records,
+        )
 
-
-print(Test2.select().build_query())
-print(Test2.update({Test2.aba: "123", Test2.not_aba: "555"}).build_query())
+    @classmethod
+    def all_fields(cls: type["BaseTable"]) -> list[Field[typing.Any]]:
+        return cls._table_meta.table_fields
