@@ -8,17 +8,24 @@ class User(BaseTable, table_name="users"):
     description: TextField = TextField(default="Zopa")
 
 
-print(VarCharField(default="Sasha") > "123")
 
-print(User.name > "123")
+meme = (
+    (User.name > "Sasha") & (User.surname > "Kis") | (User.surname > "Aba")
+)
+
+# print(VarCharField(default="Sasha") > "123")
+
+# print(User.name > "123")
 
 
 print(
     User.select(
         User.all_fields(),
     ).where(
-        User.name > "Sasha",
-    )
+        (User.name > "Sasha") & (User.surname > "Kis"),
+    ).where(
+        User.surname > "AB",
+    ).build_query()
 )
 # print(User.select(select_fields=[User.name, User.surname]).build_query())
 # print(User.update(

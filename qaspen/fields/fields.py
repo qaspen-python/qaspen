@@ -2,7 +2,7 @@ import typing
 from qaspen.exceptions import StringFieldComparisonError
 
 from qaspen.fields.base_field import Field
-from qaspen.fields.comparisons import WhereComparison
+from qaspen.fields.comparisons import Where
 from qaspen.fields.operators import GreaterOperator
 from qaspen.fields.utils import validate_max_length
 
@@ -55,9 +55,9 @@ class BaseStringField(Field[str]):
     def __gt__(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> WhereComparison:
+    ) -> Where:
         if isinstance(comparison_value, str):
-            return WhereComparison(
+            return Where(
                 field=self,
                 compare_with_value=comparison_value,
                 operator=GreaterOperator,

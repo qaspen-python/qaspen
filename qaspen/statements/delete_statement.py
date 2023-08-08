@@ -1,5 +1,2 @@
-from qaspen.statements.statement import Statement
-
-
-class DeleteStatement(Statement):
+class DeleteStatement:
     pass

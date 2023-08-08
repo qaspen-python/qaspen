@@ -1,12 +1,13 @@
 import dataclasses
 import typing
 from qaspen.fields.base_field import Field
-from qaspen.statements.common.where_statement import WhereStatementMixin
+from qaspen.fields.comparisons import Where
+from qaspen.statements.common.where_statement import WhereStatement
 from qaspen.table.meta_table import MetaTable
 
 
-# @dataclasses.dataclass
-class SelectStatement(WhereStatementMixin):
+@dataclasses.dataclass
+class SelectStatement:
     def __init__(
         self: typing.Self,
         from_table: type[MetaTable],
@@ -18,6 +19,8 @@ class SelectStatement(WhereStatementMixin):
         ] = select_fields
         self.exist_prefixs: typing.Final[list[str]] = []
 
+        self.where_statement: WhereStatement = WhereStatement()
+
     def build_query(self) -> str:
         to_select_fields: str = ", ".join(
             [field.field_name for field in self.select_fields],
@@ -26,5 +29,12 @@ class SelectStatement(WhereStatementMixin):
             f"SELECT {to_select_fields} "
             f"FROM {self.from_table._table_meta.table_name} "
         )
-        sql_statement += self._build_where_query()
+        sql_statement += self.where_statement._build_where_query()
         return sql_statement
+
+    def where(
+        self: typing.Self,
+        *where_arguments: Where,
+    ) -> typing.Self:
+        self.where_statement.where(*where_arguments)
+        return self

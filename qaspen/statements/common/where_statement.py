@@ -1,18 +1,17 @@
 import typing
 
-from qaspen.fields.comparisons import WhereComparison
+from qaspen.fields.comparisons import Where
 
 
-class WhereStatementMixin:
-    where_statements: list[WhereComparison]
+class WhereStatement:
+    where_expressions: list[Where] = []
 
     def where(
         self: typing.Self,
-        *where_arguments: WhereComparison,
+        *where_arguments: Where,
     ) -> typing.Self:
-        print(self.__class__.__dict__)
-        self.where_statements.append(
-            *where_arguments,
+        self.where_expressions.extend(
+            where_arguments,
         )
         return self
 
@@ -22,7 +21,7 @@ class WhereStatementMixin:
             [
                 where_statement.to_sql_statement()
                 for where_statement
-                in self.where_statements
+                in self.where_expressions
             ]
         )
 

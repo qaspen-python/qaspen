@@ -1,9 +1,9 @@
+import abc
 import dataclasses
-
-from qaspen.table.meta_table import MetaTable
+from qaspen.fields.comparisons import Where
 
 
 @dataclasses.dataclass
-class Statement:
+class Statement(abc.ABC):
     """Dataclass for all SQL queries."""
-    from_table: type[MetaTable]
+    where_statements: list[Where]
