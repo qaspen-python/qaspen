@@ -1,3 +1,4 @@
+import abc
 import dataclasses
 import typing
 
@@ -5,7 +6,11 @@ from qaspen.fields.base_field import Field
 from qaspen.fields.operators import ANDOperator, BaseOperator, OROperator
 
 
-class CombinableExpression:
+class CombinableExpression(abc.ABC):
+    @abc.abstractmethod
+    def to_sql_statement(self: typing.Self) -> str:
+        ...
+
     def __and__(
         self: typing.Self,
         expression: "Where | ANDExpression | ORExpression",
@@ -32,7 +37,11 @@ class ExpressionsCombination(CombinableExpression):
     operator: type[BaseOperator] = BaseOperator
 
     def to_sql_statement(self: typing.Self) -> str:
-        return f"{self.left_expression.to_sql_statement()} {self.operator.operation_template} {self.right_expression.to_sql_statement()}"
+        return (
+            f"{self.left_expression.to_sql_statement()} "
+            f"{self.operator.operation_template} "
+            f"{self.right_expression.to_sql_statement()}"
+        )
 
 
 @dataclasses.dataclass
@@ -50,16 +59,6 @@ class Where(CombinableExpression):
     field: Field[typing.Any]
     compare_with_value: typing.Any
     operator: type[BaseOperator]
-
-    # def __init__(
-    #     self: typing.Self,
-    #     field: Field[typing.Any],
-    #     compare_with_value: typing.Any,
-    #     operator: type[BaseOperator],
-    # ) -> None:
-    #     self.field: Field[typing.Any] = field
-    #     self.compare_with_value: typing.Any = compare_with_value
-    #     self.operator: type[BaseOperator] = operator
 
     def to_sql_statement(self: typing.Self) -> str:
         where_clause: str = ""

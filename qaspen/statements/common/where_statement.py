@@ -1,21 +1,21 @@
 import typing
 
-from qaspen.fields.comparisons import Where
+from qaspen.fields.comparisons import CombinableExpression
 
 
 class WhereStatement:
-    where_expressions: list[Where] = []
+    where_expressions: list[CombinableExpression] = []
 
     def where(
         self: typing.Self,
-        *where_arguments: Where,
+        *where_arguments: CombinableExpression,
     ) -> typing.Self:
         self.where_expressions.extend(
             where_arguments,
         )
         return self
 
-    def _build_where_query(self: typing.Self) -> str:
+    def _build_query(self: typing.Self) -> str:
         where_clause: str = "WHERE "
         filter_params: str = " AND ".join(
             [
