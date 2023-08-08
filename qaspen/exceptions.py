@@ -12,3 +12,7 @@ class FieldDeclarationError(FieldBaseError):
 
 class StringFieldDeclarationError(FieldDeclarationError):
     pass
+
+
+class StringFieldComparisonError(FieldBaseError):
+    pass

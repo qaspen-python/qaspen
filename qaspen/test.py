@@ -1,4 +1,4 @@
-from qaspen.fields.string_fields.fields import TextField, VarCharField
+from qaspen.fields.fields import TextField, VarCharField
 from qaspen.table.base_table import BaseTable
 
 
@@ -8,15 +8,28 @@ class User(BaseTable, table_name="users"):
     description: TextField = TextField(default="Zopa")
 
 
-# print(User.select(User.all_fields()).build_query())
-print(User.select(select_fields=[User.name, User.surname]).build_query())
-print(User.update(
-    to_update_fields={
-        User.name: "Sasha",
-        User.surname: "Kiselev",
-        User.description: "Loshara",
-    },
-).build_query())
+print(VarCharField(default="Sasha") > "123")
+
+print(User.name > "123")
+
+
+print(
+    User.select(
+        User.all_fields(),
+    ).where(
+        User.name > "Sasha",
+    )
+)
+# print(User.select(select_fields=[User.name, User.surname]).build_query())
+# print(User.update(
+#     update_fields={
+#         User.name: "Sasha",
+#         User.surname: "Kiselev",
+#         User.description: "Loshara",
+#     },
+# ).build_query())
+
+
 
 
 # @dataclasses.dataclass

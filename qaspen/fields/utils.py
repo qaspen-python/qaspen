@@ -1,5 +1,5 @@
 from qaspen.exceptions import StringFieldDeclarationError
-from qaspen.fields.string_fields.consts import MAX_STRING_FIELD_LENGTH
+from qaspen.fields.consts import MAX_STRING_FIELD_LENGTH
 
 
 def validate_max_length(max_length: int) -> None:

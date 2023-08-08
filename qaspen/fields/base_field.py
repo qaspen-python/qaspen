@@ -13,10 +13,10 @@ class BaseField(abc.ABC):
     def __set_name__(
         self: typing.Self,
         owner: typing.Any,
-        variable_name: str,
+        field_name: str,
     ) -> None:
         if not self._field_name:
-            self._field_name: str = variable_name
+            self._field_name: str = field_name
 
     @abc.abstractmethod
     def _make_field_create_statement(
@@ -26,9 +26,6 @@ class BaseField(abc.ABC):
 
 
 class Field(BaseField, typing.Generic[FieldType]):
-
-    _field_sql_type: str
-
     def __init__(
         self: typing.Self,
         *pos_arguments: typing.Any,
@@ -55,6 +52,10 @@ class Field(BaseField, typing.Generic[FieldType]):
         else:
             self._field_name = ""
 
+    @property
+    def field_name(self: typing.Self) -> str:
+        return self._field_name
+
     def __str__(self: typing.Self) -> str:
         return str(self._field_value)
 
@@ -66,8 +67,12 @@ class Field(BaseField, typing.Generic[FieldType]):
     def _field_default(self: typing.Self) -> str:
         return f"DEFAULT {self._default}" if self._default else ""
 
+    @property
+    def _default_field_type(self: typing.Self) -> str:
+        return self.__class__.__name__.upper()
+
     def _build_fields_sql_type(self: typing.Self) -> str:
-        return self._field_sql_type
+        return self._default_field_type
 
     def _make_field_create_statement(
         self: typing.Self,

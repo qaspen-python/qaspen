@@ -1,7 +1,10 @@
 import typing
+from qaspen.exceptions import StringFieldComparisonError
 
 from qaspen.fields.base_field import Field
-from qaspen.fields.string_fields.utils import validate_max_length
+from qaspen.fields.comparisons import WhereComparison
+from qaspen.fields.operators import GreaterOperator
+from qaspen.fields.utils import validate_max_length
 
 
 class BaseStringField(Field[str]):
@@ -47,9 +50,24 @@ class BaseStringField(Field[str]):
         )
 
     def _build_fields_sql_type(self: typing.Self) -> str:
-        return f"{self._field_sql_type}({self.max_length})"
+        return f"{self._default_field_type}({self.max_length})"
 
-    def __set__(self: typing.Self, instance: object, value: str) -> None:
+    def __gt__(
+        self: typing.Self,
+        comparison_value: typing.Any,
+    ) -> WhereComparison:
+        if isinstance(comparison_value, str):
+            return WhereComparison(
+                field=self,
+                compare_with_value=comparison_value,
+                operator=GreaterOperator,
+            )
+        raise StringFieldComparisonError(
+            f"It's impossible to compare {self.__class__.__name__} "
+            f"and {type(comparison_value)}"
+        )
+
+    def __set__(self: typing.Self, _instance: object, value: str) -> None:
         if not isinstance(value, str):
             raise TypeError(
                 f"Can't assign not string type to {self.__class__.__name__}"
@@ -58,11 +76,11 @@ class BaseStringField(Field[str]):
 
 
 class VarCharField(BaseStringField):
-    _field_sql_type: typing.Literal["VARCHAR"] = "VARCHAR"
+    pass
 
 
 class CharField(BaseStringField):
-    _field_sql_type: typing.Literal["CHAR"] = "CHAR"
+    pass
 
 
 class TextField(BaseStringField):
