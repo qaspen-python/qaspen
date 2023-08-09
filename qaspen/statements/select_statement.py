@@ -1,6 +1,6 @@
 import dataclasses
 import typing
-from qaspen.fields.base_field import Field
+from qaspen.fields.fields import Field
 from qaspen.fields.comparisons import CombinableExpression
 from qaspen.statements.common.where_statement import WhereStatement
 from qaspen.table.meta_table import MetaTable

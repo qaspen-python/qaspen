@@ -1,6 +1,5 @@
-import dataclasses
 import typing
-from qaspen.fields.base_field import Field
+from qaspen.fields.fields import Field
 from qaspen.table.meta_table import MetaTable
 
 

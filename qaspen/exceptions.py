@@ -14,5 +14,5 @@ class StringFieldDeclarationError(FieldDeclarationError):
     pass
 
 
-class StringFieldComparisonError(FieldBaseError):
+class FieldComparisonError(FieldBaseError):
     pass

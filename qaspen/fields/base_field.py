@@ -1,7 +1,6 @@
 import abc
+import dataclasses
 import typing
-
-from qaspen.exceptions import FieldDeclarationError
 
 
 FieldType = typing.TypeVar(
@@ -9,7 +8,18 @@ FieldType = typing.TypeVar(
 )
 
 
-class BaseField(abc.ABC):
+@dataclasses.dataclass
+class FieldData(typing.Generic[FieldType]):
+    field_name: str
+    is_null: bool = False
+    field_value: FieldType | None = None
+    default: FieldType | None = None
+
+
+class BaseField(abc.ABC, typing.Generic[FieldType]):
+
+    _field_data: FieldData[FieldType]
+
     def __set_name__(
         self: typing.Self,
         owner: typing.Any,
@@ -23,61 +33,3 @@ class BaseField(abc.ABC):
         self: typing.Self,
     ) -> str:
         ...
-
-
-class Field(BaseField, typing.Generic[FieldType]):
-    def __init__(
-        self: typing.Self,
-        *pos_arguments: typing.Any,
-        field_value: FieldType | None = None,
-        is_null: bool = False,
-        default: FieldType | None = None,
-        db_field_name: str | None = None,
-    ) -> None:
-        if pos_arguments:
-            raise FieldDeclarationError("Use only keyword arguments.")
-
-        if is_null and default:
-            raise FieldDeclarationError(
-                "It's not possible to specify is_null and default. "
-                "Specify either is_null or default"
-            )
-
-        self._is_null: bool = is_null
-        self._default: FieldType | None = default
-        self._field_value: FieldType | None = field_value or default
-
-        if db_field_name:
-            self._field_name: str = db_field_name
-        else:
-            self._field_name = ""
-
-    @property
-    def field_name(self: typing.Self) -> str:
-        return self._field_name
-
-    def __str__(self: typing.Self) -> str:
-        return str(self._field_value)
-
-    @property
-    def _field_null(self: typing.Self) -> str:
-        return "NOT NULL" if not self._is_null else ""
-
-    @property
-    def _field_default(self: typing.Self) -> str:
-        return f"DEFAULT {self._default}" if self._default else ""
-
-    @property
-    def _default_field_type(self: typing.Self) -> str:
-        return self.__class__.__name__.upper()
-
-    def _build_fields_sql_type(self: typing.Self) -> str:
-        return self._default_field_type
-
-    def _make_field_create_statement(
-        self: typing.Self,
-    ) -> str:
-        return (
-            f"{self._field_name} {self._build_fields_sql_type()} "
-            f"{self._field_null} {self._field_default}"
-        )

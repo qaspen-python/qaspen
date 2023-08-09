@@ -2,8 +2,8 @@ import abc
 import dataclasses
 import typing
 
-from qaspen.fields.base_field import Field
 from qaspen.fields.operators import ANDOperator, BaseOperator, OROperator
+from qaspen.fields.base_field import BaseField
 
 
 class CombinableExpression(abc.ABC):
@@ -54,11 +54,16 @@ class ORExpression(ExpressionsCombination):
     operator: type[OROperator] = OROperator
 
 
-@dataclasses.dataclass(slots=True)
 class Where(CombinableExpression):
-    field: Field[typing.Any]
-    compare_with_value: typing.Any
-    operator: type[BaseOperator]
+    def __init__(
+        self: typing.Self,
+        field: BaseField[typing.Any],
+        compare_with_value: typing.Any,
+        operator: type[BaseOperator],
+    ) -> None:
+        self.field = field
+        self.compare_with_value: typing.Any = compare_with_value
+        self.operator: type[BaseOperator] = operator
 
     def to_sql_statement(self: typing.Self) -> str:
         where_clause: str = ""
@@ -67,7 +72,7 @@ class Where(CombinableExpression):
             .operator
             .operation_template
             .format(
-                field_name=self.field.field_name,
+                field_name=self.field._field_data.field_name,
                 compare_value=f"'{self.compare_with_value}'",
             )
         )
