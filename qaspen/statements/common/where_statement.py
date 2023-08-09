@@ -16,8 +16,7 @@ class WhereStatement:
         return self
 
     def _build_query(self: typing.Self) -> str:
-        where_clause: str = "WHERE "
-        filter_params: str = " AND ".join(
+        filter_params: str = " AND".join(
             [
                 where_statement.to_sql_statement()
                 for where_statement
@@ -25,4 +24,4 @@ class WhereStatement:
             ]
         )
 
-        return where_clause + filter_params
+        return "WHERE" + filter_params

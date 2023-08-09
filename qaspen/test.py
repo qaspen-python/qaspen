@@ -13,8 +13,9 @@ print(
         User.all_fields(),
     ).where(
         (User.name == "Sasha") | (User.surname > "Kis"),
+        # (User.name == "Sasha"),
     ).where(
-        User.surname > "AB",
+        User.surname != "AB",
     ).build_query()
 )
 # print(User.select(select_fields=[User.name, User.surname]).build_query())

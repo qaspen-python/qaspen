@@ -85,7 +85,7 @@ class Field(BaseField[FieldType]):
                 operator=operators.EqualOperator,
             )
         raise FieldComparisonError(
-            f"It's impossible to use `=` operator "
+            f"It's impossible to use `!=` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}"
         )
