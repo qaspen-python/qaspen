@@ -3,7 +3,7 @@ from qaspen.exceptions import FieldComparisonError, FieldDeclarationError
 from qaspen.fields import operators
 
 from qaspen.fields.base_field import BaseField, FieldData, FieldType
-from qaspen.fields.comparisons import Where
+from qaspen.fields.comparisons import Where, WhereBetween
 from qaspen.fields.utils import validate_max_length
 
 
@@ -44,25 +44,6 @@ class Field(BaseField[FieldType]):
             default=default,
         )
 
-    @property
-    def field_name(self: typing.Self) -> str:
-        return self._field_name
-
-    @property
-    def _field_null(self: typing.Self) -> str:
-        return "NOT NULL" if not self._is_null else ""
-
-    @property
-    def _field_default(self: typing.Self) -> str:
-        return f"DEFAULT {self._default}" if self._default else ""
-
-    @property
-    def _default_field_type(self: typing.Self) -> str:
-        return self.__class__.__name__.upper()
-
-    def _build_fields_sql_type(self: typing.Self) -> str:
-        return self._default_field_type
-
     def _make_field_create_statement(
         self: typing.Self,
     ) -> str:
@@ -74,14 +55,94 @@ class Field(BaseField[FieldType]):
     def __str__(self: typing.Self) -> str:
         return str(self._field_value)
 
+    def contains(
+        self: typing.Self,
+        comparison_values: typing.Iterable[typing.Any],
+    ) -> Where:
+        for comparison_value in comparison_values:
+            is_valid_type: bool = isinstance(
+                comparison_value,
+                self._available_comparison_types,
+            )
+            if not is_valid_type:
+                raise FieldComparisonError(
+                    f"It's impossible to use `IN` operator "
+                    f"to compare {self.__class__.__name__} "
+                    f"and {type(comparison_value)}"
+                )
+
+        return Where(
+            field=self,
+            comparison_values=comparison_values,
+            operator=operators.InOperator,
+        )
+
+    def not_contains(
+        self: typing.Self,
+        comparison_values: typing.Iterable[typing.Any],
+    ) -> Where:
+        for comparison_value in comparison_values:
+            is_valid_type: bool = isinstance(
+                comparison_value,
+                self._available_comparison_types,
+            )
+            if not is_valid_type:
+                raise FieldComparisonError(
+                    f"It's impossible to use `NOT IN` operator "
+                    f"to compare {self.__class__.__name__} "
+                    f"and {type(comparison_value)}"
+                )
+
+        return Where(
+            field=self,
+            comparison_values=comparison_values,
+            operator=operators.NotInOperator,
+        )
+
+    def between(
+        self: typing.Self,
+        left_value: typing.Any,
+        right_value: typing.Any,
+    ) -> WhereBetween:
+        is_valid_type: typing.Final[bool] = all(
+            (
+                isinstance(
+                    left_value,
+                    self._available_comparison_types,
+                ),
+                isinstance(
+                    right_value,
+                    self._available_comparison_types,
+                ),
+            )
+        )
+        if is_valid_type:
+            return WhereBetween(
+                field=self,
+                operator=operators.BetweenOperator,
+                left_comparison_value=left_value,
+                right_comparison_value=right_value,
+            )
+
+        raise FieldComparisonError(
+            f"Incorrect type of one of the values "
+            f"in `BETWEEN operator`. "
+            f"You can use one of these - {self._available_comparison_types}"
+        )
+
     def __eq__(  # type: ignore[override]
         self: typing.Self,
         comparison_value: typing.Any
     ) -> Where:
+        if comparison_value is None:
+            return Where(
+                field=self,
+                operator=operators.IsNullOperator,
+            )
         if isinstance(comparison_value, self._available_comparison_types):
             return Where(
                 field=self,
-                compare_with_value=comparison_value,
+                comparison_value=comparison_value,
                 operator=operators.EqualOperator,
             )
         raise FieldComparisonError(
@@ -94,14 +155,19 @@ class Field(BaseField[FieldType]):
         self: typing.Self,
         comparison_value: typing.Any,
     ) -> Where:
+        if comparison_value is None:
+            return Where(
+                field=self,
+                operator=operators.IsNotNullOperator,
+            )
         if isinstance(comparison_value, self._available_comparison_types):
             return Where(
                 field=self,
-                compare_with_value=comparison_value,
+                comparison_value=comparison_value,
                 operator=operators.NotEqualOperator,
             )
         raise FieldComparisonError(
-            f"It's impossible to use `=` operator "
+            f"It's impossible to use `!=` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}"
         )
@@ -113,7 +179,7 @@ class Field(BaseField[FieldType]):
         if isinstance(comparison_value, self._available_comparison_types):
             return Where(
                 field=self,
-                compare_with_value=comparison_value,
+                comparison_value=comparison_value,
                 operator=operators.GreaterOperator,
             )
         raise FieldComparisonError(
@@ -129,7 +195,7 @@ class Field(BaseField[FieldType]):
         if isinstance(comparison_value, self._available_comparison_types):
             return Where(
                 field=self,
-                compare_with_value=comparison_value,
+                comparison_value=comparison_value,
                 operator=operators.GreaterEqualOperator,
             )
         raise FieldComparisonError(
@@ -145,7 +211,7 @@ class Field(BaseField[FieldType]):
         if isinstance(comparison_value, self._available_comparison_types):
             return Where(
                 field=self,
-                compare_with_value=comparison_value,
+                comparison_value=comparison_value,
                 operator=operators.LessOperator,
             )
         raise FieldComparisonError(
@@ -161,7 +227,7 @@ class Field(BaseField[FieldType]):
         if isinstance(comparison_value, self._available_comparison_types):
             return Where(
                 field=self,
-                compare_with_value=comparison_value,
+                comparison_value=comparison_value,
                 operator=operators.LessEqualOperator,
             )
         raise FieldComparisonError(
