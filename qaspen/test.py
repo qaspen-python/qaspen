@@ -1,4 +1,5 @@
 from qaspen.fields.fields import TextField, VarCharField
+from qaspen.statements.sub_statements.order_by_statement import OrderBy
 from qaspen.table.base_table import BaseTable
 
 
@@ -18,8 +19,25 @@ print(
             left_value="123",
             right_value="55",
         )
-        # | (User.description > "Shit"),
+        & User.name.not_ilike("123")
+        & User.name.ilike("123")
     )
+    .order_by(
+        User.name,
+        ascending=False,
+        nulls_first=False,
+        order_by_statements=(
+            OrderBy(
+                field=User.surname,
+            ),
+            OrderBy(
+                field=User.description,
+                ascending=False,
+                nulls_first=False,
+            ),
+        )
+    )
+    .limit(123)
     .build_query()
 )
 

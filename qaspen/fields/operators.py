@@ -42,6 +42,22 @@ class NotInOperator(BaseOperator):
     operation_template: str = "{field_name} NOT IN ({compare_value})"
 
 
+class LikeOperator(BaseOperator):
+    operation_template: str = "{field_name} LIKE {compare_value}"
+
+
+class NotLikeOperator(BaseOperator):
+    operation_template: str = "{field_name} NOT LIKE {compare_value}"
+
+
+class ILikeOperator(BaseOperator):
+    operation_template: str = "{field_name} NOT ILIKE {compare_value}"
+
+
+class NotILikeOperator(BaseOperator):
+    operation_template: str = "{field_name} NOT ILIKE {compare_value}"
+
+
 class BetweenOperator(BaseOperator):
     operation_template: str = (
         "{field_name} BETWEEN {left_comparison_value} "

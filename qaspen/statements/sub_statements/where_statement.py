@@ -24,4 +24,4 @@ class WhereStatement:
             ]
         )
 
-        return "WHERE" + filter_params
+        return "WHERE" + filter_params + " "

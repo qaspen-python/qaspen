@@ -282,6 +282,70 @@ class BaseStringField(Field[str]):
             max_length if max_length else 100
         )
 
+    def like(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        if isinstance(comparison_value, self._available_comparison_types):
+            return Where(
+                field=self,
+                comparison_value=comparison_value,
+                operator=operators.LikeOperator,
+            )
+        raise FieldComparisonError(
+            f"It's impossible to use `LIKE` operator "
+            f"to compare {self.__class__.__name__} "
+            f"and {type(comparison_value)}"
+        )
+
+    def not_like(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        if isinstance(comparison_value, self._available_comparison_types):
+            return Where(
+                field=self,
+                comparison_value=comparison_value,
+                operator=operators.NotLikeOperator,
+            )
+        raise FieldComparisonError(
+            f"It's impossible to use `NOT LIKE` operator "
+            f"to compare {self.__class__.__name__} "
+            f"and {type(comparison_value)}"
+        )
+
+    def ilike(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        if isinstance(comparison_value, self._available_comparison_types):
+            return Where(
+                field=self,
+                comparison_value=comparison_value,
+                operator=operators.ILikeOperator,
+            )
+        raise FieldComparisonError(
+            f"It's impossible to use `ILIKE` operator "
+            f"to compare {self.__class__.__name__} "
+            f"and {type(comparison_value)}"
+        )
+
+    def not_ilike(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        if isinstance(comparison_value, self._available_comparison_types):
+            return Where(
+                field=self,
+                comparison_value=comparison_value,
+                operator=operators.NotILikeOperator,
+            )
+        raise FieldComparisonError(
+            f"It's impossible to use `NOT ILIKE` operator "
+            f"to compare {self.__class__.__name__} "
+            f"and {type(comparison_value)}"
+        )
+
     def _build_fields_sql_type(self: typing.Self) -> str:
         return f"{self._default_field_type}({self.max_length})"
 
