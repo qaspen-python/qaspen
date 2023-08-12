@@ -124,6 +124,6 @@ class WhereStatement:
         )
 
         if filter_params:
-            return "WHERE" + filter_params + " "
+            return "WHERE" + filter_params
         else:
             return ""

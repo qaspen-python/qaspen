@@ -64,5 +64,5 @@ class OrderByStatement:
             in self.order_by_expressions
         )
         if order_by_params:
-            return "ORDER BY " + order_by_params + " "
+            return "ORDER BY " + order_by_params
         return ""

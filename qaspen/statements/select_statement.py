@@ -15,7 +15,7 @@ from qaspen.statements.combinable_statements.where_statement import (
 from qaspen.table.meta_table import MetaTable
 
 if typing.TYPE_CHECKING:
-    from qaspen.statements.combinable_statements.union_statement import (
+    from qaspen.statements.union_statement import (
         UnionStatement,
     )
 
@@ -43,11 +43,11 @@ class SelectStatement:
         )
         sql_statement: str = (
             f"SELECT {to_select_fields} "
-            f"FROM {self._from_table._table_meta.table_name} "
+            f"FROM {self._from_table._table_meta.table_name}"
         )
-        sql_statement += self._where_statement._build_query()
-        sql_statement += self._order_by_statement._build_query()
-        sql_statement += self._limit_statement._build_query()
+        sql_statement += f" {self._where_statement._build_query()}"
+        sql_statement += f" {self._order_by_statement._build_query()}"
+        sql_statement += f" {self._limit_statement._build_query()}"
         return sql_statement
 
     def where(
@@ -85,17 +85,16 @@ class SelectStatement:
 
     def union(
         self,
-        select_statement: "SelectStatement",
+        union_with: "SelectStatement",
         union_all: bool = False,
     ) -> "UnionStatement":
-        from qaspen.statements.combinable_statements.union_statement import (
+        from qaspen.statements.union_statement import (
             UnionStatement,
         )
         return UnionStatement(
             left_expression=self,
-            right_expression=select_statement,
+            right_expression=union_with,
             union_all=union_all,
-
         )
 
     def _to_sql_statement(self: typing.Self) -> str:
