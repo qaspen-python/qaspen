@@ -10,7 +10,7 @@ class BaseTable(MetaTable):
     @classmethod
     def select(
         cls: type["BaseTable"],
-        select_fields: list[Field[typing.Any]],
+        select_fields: typing.Iterable[Field[typing.Any]],
     ) -> SelectStatement:
         return SelectStatement(
             select_fields=select_fields,

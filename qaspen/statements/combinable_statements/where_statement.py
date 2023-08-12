@@ -1,57 +1,11 @@
-import abc
-import dataclasses
 import typing
-
-from qaspen.fields.operators import ANDOperator, BaseOperator, OROperator
 from qaspen.fields.base_field import BaseField
 
 
-class CombinableExpression(abc.ABC):
-    @abc.abstractmethod
-    def to_sql_statement(self: typing.Self) -> str:
-        ...
-
-    def __and__(
-        self: typing.Self,
-        expression: "CombinableExpression",
-    ) -> "ANDExpression":
-        return ANDExpression(
-            left_expression=self,
-            right_expression=expression,
-        )
-
-    def __or__(
-        self: typing.Self,
-        expression: "CombinableExpression",
-    ) -> "ORExpression":
-        return ORExpression(
-            left_expression=self,
-            right_expression=expression,
-        )
-
-
-@dataclasses.dataclass
-class ExpressionsCombination(CombinableExpression):
-    left_expression: "CombinableExpression"
-    right_expression: "CombinableExpression"
-    operator: type[BaseOperator] = BaseOperator
-
-    def to_sql_statement(self: typing.Self) -> str:
-        return (
-            f"{self.left_expression.to_sql_statement()}"
-            f" {self.operator.operation_template} "
-            f"{self.right_expression.to_sql_statement()}"
-        )
-
-
-@dataclasses.dataclass
-class ANDExpression(ExpressionsCombination):
-    operator: type[ANDOperator] = ANDOperator
-
-
-@dataclasses.dataclass
-class ORExpression(ExpressionsCombination):
-    operator: type[OROperator] = OROperator
+from qaspen.fields.operators import BaseOperator
+from qaspen.statements.combinable_statements.combinations import (
+    CombinableExpression
+)
 
 
 class EmptyValue:
@@ -130,3 +84,39 @@ class WhereBetween(CombinableExpression):
             )
         )
         return where_clause
+
+
+class WhereExclusive(CombinableExpression):
+
+    def __init__(
+        self: typing.Self,
+        comparison: CombinableExpression,
+    ) -> None:
+        self.comparisons: CombinableExpression = comparison
+
+    def to_sql_statement(self: typing.Self) -> str:
+        return f"({self.comparisons.to_sql_statement()})"
+
+
+class WhereStatement:
+    where_expressions: list[CombinableExpression] = []
+
+    def where(
+        self: typing.Self,
+        *where_arguments: CombinableExpression,
+    ) -> typing.Self:
+        self.where_expressions.extend(
+            where_arguments,
+        )
+        return self
+
+    def _build_query(self: typing.Self) -> str:
+        filter_params: str = "AND".join(
+            [
+                f" {where_statement.to_sql_statement()} "
+                for where_statement
+                in self.where_expressions
+            ]
+        )
+
+        return "WHERE" + filter_params + " "

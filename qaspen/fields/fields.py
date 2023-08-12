@@ -3,8 +3,12 @@ from qaspen.exceptions import FieldComparisonError, FieldDeclarationError
 from qaspen.fields import operators
 
 from qaspen.fields.base_field import BaseField, FieldData, FieldType
-from qaspen.fields.comparisons import Where, WhereBetween
+
 from qaspen.fields.utils import validate_max_length
+from qaspen.statements.combinable_statements.where_statement import (
+    Where,
+    WhereBetween,
+)
 
 
 class Field(BaseField[FieldType]):
@@ -151,6 +155,12 @@ class Field(BaseField[FieldType]):
             f"and {type(comparison_value)}"
         )
 
+    def eq(
+        self: typing.Self,
+        comparison_value: typing.Any
+    ) -> Where:
+        return self.__eq__(comparison_value)
+
     def __ne__(  # type: ignore[override]
         self: typing.Self,
         comparison_value: typing.Any,
@@ -172,6 +182,12 @@ class Field(BaseField[FieldType]):
             f"and {type(comparison_value)}"
         )
 
+    def neq(
+        self: typing.Self,
+        comparison_value: typing.Any
+    ) -> Where:
+        return self.__ne__(comparison_value)
+
     def __gt__(
         self: typing.Self,
         comparison_value: typing.Any,
@@ -187,6 +203,12 @@ class Field(BaseField[FieldType]):
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}"
         )
+
+    def gt(
+        self: typing.Self,
+        comparison_value: typing.Any,
+    ) -> Where:
+        return self.__gt__(comparison_value)
 
     def __ge__(
         self: typing.Self,
@@ -204,6 +226,12 @@ class Field(BaseField[FieldType]):
             f"and {type(comparison_value)}"
         )
 
+    def gte(
+        self: typing.Self,
+        comparison_value: typing.Any,
+    ) -> Where:
+        return self.__ge__(comparison_value)
+
     def __lt__(
         self: typing.Self,
         comparison_value: typing.Any,
@@ -220,6 +248,12 @@ class Field(BaseField[FieldType]):
             f"and {type(comparison_value)}"
         )
 
+    def lt(
+        self: typing.Self,
+        comparison_value: typing.Any,
+    ) -> Where:
+        return self.__lt__(comparison_value)
+
     def __le__(
         self: typing.Self,
         comparison_value: typing.Any,
@@ -235,6 +269,12 @@ class Field(BaseField[FieldType]):
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}"
         )
+
+    def lte(
+        self: typing.Self,
+        comparison_value: typing.Any,
+    ) -> Where:
+        return self.__le__(comparison_value)
 
 
 class BaseStringField(Field[str]):

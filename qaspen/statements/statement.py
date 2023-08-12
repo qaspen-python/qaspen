@@ -1,6 +1,7 @@
 import abc
 import dataclasses
-from qaspen.fields.comparisons import Where
+
+from qaspen.statements.combinable_statements.where_statement import Where
 
 
 @dataclasses.dataclass

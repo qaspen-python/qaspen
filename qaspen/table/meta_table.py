@@ -43,9 +43,9 @@ class MetaTable:
 
         super().__init_subclass__(**kwargs)
 
-    def __init__(self: typing.Self, **new_fields_values: typing.Any) -> None:
+    def __init__(self: typing.Self, **fields_values: typing.Any) -> None:
         for table_field in self._table_meta.table_fields:
-            new_field_value: typing.Any | None = new_fields_values.get(
+            new_field_value: typing.Any | None = fields_values.get(
                 table_field._field_name,
             )
             if new_field_value:
