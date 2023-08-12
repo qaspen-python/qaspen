@@ -15,11 +15,12 @@ statement = (
     .select(User.all_fields())
     .where(
         WhereExclusive(
-            User.name.equals("Sasha")
-            & (User.name == "Kiselev")
-            | (User.surname == "Not Kiselev")
-        )
-        | WhereExclusive(
+            WhereExclusive(
+                User.name.eq("Sasha") | User.name.like("123")
+            ) & WhereExclusive(
+                User.name.neq("123") & User.name.contains("123", "234")
+            )
+        ) | WhereExclusive(
             (User.description == "Shit")
         )
     )
@@ -27,8 +28,6 @@ statement = (
 )
 
 print(statement)
-
-User.name.eq("Sasha")
 
 
 # print(

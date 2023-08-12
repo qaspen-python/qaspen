@@ -157,7 +157,7 @@ class Field(BaseField[FieldType]):
 
     def eq(
         self: typing.Self,
-        comparison_value: typing.Any
+        comparison_value: typing.Any,
     ) -> Where:
         return self.__eq__(comparison_value)
 
@@ -184,7 +184,7 @@ class Field(BaseField[FieldType]):
 
     def neq(
         self: typing.Self,
-        comparison_value: typing.Any
+        comparison_value: typing.Any,
     ) -> Where:
         return self.__ne__(comparison_value)
 
@@ -322,6 +322,97 @@ class BaseStringField(Field[str]):
             max_length if max_length else 100
         )
 
+    def contains(
+        self: typing.Self,
+        *comparison_values: typing.Iterable[str],
+    ) -> Where:
+        return super().contains(comparison_values)
+
+    def not_contains(
+        self: typing.Self,
+        comparison_values: typing.Iterable[str],
+    ) -> Where:
+        return super().not_contains(comparison_values)
+
+    def between(
+        self: typing.Self,
+        left_value: str,
+        right_value: str,
+    ) -> WhereBetween:
+        return super().between(left_value, right_value)
+
+    def __eq__(  # type: ignore[override]
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().__eq__(comparison_value)
+
+    def eq(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().eq(comparison_value)
+
+    def __ne__(  # type: ignore[override]
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().__ne__(comparison_value)
+
+    def neq(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().neq(comparison_value)
+
+    def __gt__(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().__gt__(comparison_value)
+
+    def gt(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().gt(comparison_value)
+
+    def __ge__(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().__ge__(comparison_value)
+
+    def gte(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().gte(comparison_value)
+
+    def __lt__(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().__lt__(comparison_value)
+
+    def lt(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().lt(comparison_value)
+
+    def __le__(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().__le__(comparison_value)
+
+    def lte(
+        self: typing.Self,
+        comparison_value: str,
+    ) -> Where:
+        return super().lte(comparison_value)
+
     def like(
         self: typing.Self,
         comparison_value: str,
@@ -388,9 +479,6 @@ class BaseStringField(Field[str]):
 
     def _build_fields_sql_type(self: typing.Self) -> str:
         return f"{self._default_field_type}({self.max_length})"
-
-    def __gt__(self: typing.Self, comparison_value: str) -> Where:
-        return super().__gt__(comparison_value)
 
     def __set__(self: typing.Self, _instance: object, value: str) -> None:
         if not isinstance(value, str):
