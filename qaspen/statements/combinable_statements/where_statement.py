@@ -1,3 +1,4 @@
+import dataclasses
 import typing
 from qaspen.fields.base_field import BaseField
 
@@ -33,7 +34,7 @@ class Where(CombinableExpression):
             typing.Any,
         ] = comparison_values
 
-    def to_sql_statement(self: typing.Self) -> str:
+    def _to_sql_statement(self: typing.Self) -> str:
         if self.comparison_value is not EMPTY_VALUE:
             compare_value: str = f"'{self.comparison_value}'"
         elif self.comparison_values is not EMPTY_VALUE:
@@ -72,7 +73,7 @@ class WhereBetween(CombinableExpression):
         self.left_comparison_value: typing.Any = left_comparison_value
         self.right_comparison_value: typing.Any = right_comparison_value
 
-    def to_sql_statement(self: typing.Self) -> str:
+    def _to_sql_statement(self: typing.Self) -> str:
         where_clause: str = (
             self
             .operator
@@ -94,12 +95,15 @@ class WhereExclusive(CombinableExpression):
     ) -> None:
         self.comparisons: CombinableExpression = comparison
 
-    def to_sql_statement(self: typing.Self) -> str:
-        return f"({self.comparisons.to_sql_statement()})"
+    def _to_sql_statement(self: typing.Self) -> str:
+        return f"({self.comparisons._to_sql_statement()})"
 
 
+@dataclasses.dataclass
 class WhereStatement:
-    where_expressions: list[CombinableExpression] = []
+    where_expressions: list[CombinableExpression] = dataclasses.field(
+        default_factory=list,
+    )
 
     def where(
         self: typing.Self,
@@ -113,10 +117,13 @@ class WhereStatement:
     def _build_query(self: typing.Self) -> str:
         filter_params: str = "AND".join(
             [
-                f" {where_statement.to_sql_statement()} "
+                f" {where_statement._to_sql_statement()} "
                 for where_statement
                 in self.where_expressions
             ]
         )
 
-        return "WHERE" + filter_params + " "
+        if filter_params:
+            return "WHERE" + filter_params + " "
+        else:
+            return ""

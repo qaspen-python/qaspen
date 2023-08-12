@@ -12,10 +12,12 @@ class BaseTable(MetaTable):
         cls: type["BaseTable"],
         select_fields: typing.Iterable[Field[typing.Any]],
     ) -> SelectStatement:
-        return SelectStatement(
+        select_statement: typing.Final[SelectStatement] = SelectStatement(
             select_fields=select_fields,
             from_table=cls,
         )
+        print(id(select_statement))
+        return select_statement
 
     @classmethod
     def update(

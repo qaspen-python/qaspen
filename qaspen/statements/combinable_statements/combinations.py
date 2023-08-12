@@ -7,7 +7,7 @@ from qaspen.fields.operators import ANDOperator, BaseOperator, OROperator
 
 class CombinableExpression(abc.ABC):
     @abc.abstractmethod
-    def to_sql_statement(self: typing.Self) -> str:
+    def _to_sql_statement(self: typing.Self) -> str:
         ...
 
     def __and__(
@@ -35,11 +35,11 @@ class ExpressionsCombination(CombinableExpression):
     right_expression: "CombinableExpression"
     operator: type[BaseOperator] = BaseOperator
 
-    def to_sql_statement(self: typing.Self) -> str:
+    def _to_sql_statement(self: typing.Self) -> str:
         return (
-            f"{self.left_expression.to_sql_statement()}"
+            f"{self.left_expression._to_sql_statement()}"
             f" {self.operator.operation_template} "
-            f"{self.right_expression.to_sql_statement()}"
+            f"{self.right_expression._to_sql_statement()}"
         )
 
 

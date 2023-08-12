@@ -1,6 +1,8 @@
+import dataclasses
 import typing
 
 
+@dataclasses.dataclass
 class LimitStatement:
     limit_number: int | None = None
 

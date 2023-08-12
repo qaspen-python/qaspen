@@ -1,3 +1,4 @@
+import dataclasses
 import typing
 
 from qaspen.fields.fields import Field
@@ -29,8 +30,11 @@ class OrderBy:
         return order_by_statement
 
 
+@dataclasses.dataclass
 class OrderByStatement:
-    order_by_expressions: list[OrderBy] = []
+    order_by_expressions: list[OrderBy] = dataclasses.field(
+        default_factory=list,
+    )
 
     def order_by(
         self: typing.Self,

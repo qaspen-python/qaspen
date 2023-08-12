@@ -3,15 +3,21 @@ from qaspen.fields.fields import Field
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
+
 from qaspen.statements.sub_statements.limit_statement import LimitStatement
 from qaspen.statements.combinable_statements.order_by_statement import (
     OrderBy,
     OrderByStatement,
 )
 from qaspen.statements.combinable_statements.where_statement import (
-    WhereStatement
+    WhereStatement,
 )
 from qaspen.table.meta_table import MetaTable
+
+if typing.TYPE_CHECKING:
+    from qaspen.statements.combinable_statements.union_statement import (
+        UnionStatement,
+    )
 
 
 class SelectStatement:
@@ -76,3 +82,21 @@ class SelectStatement:
                 order_by_statements=order_by_statements
             )
         return self
+
+    def union(
+        self,
+        select_statement: "SelectStatement",
+        union_all: bool = False,
+    ) -> "UnionStatement":
+        from qaspen.statements.combinable_statements.union_statement import (
+            UnionStatement,
+        )
+        return UnionStatement(
+            left_expression=self,
+            right_expression=select_statement,
+            union_all=union_all,
+
+        )
+
+    def _to_sql_statement(self: typing.Self) -> str:
+        return self.build_query()
