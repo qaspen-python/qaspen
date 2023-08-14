@@ -12,3 +12,19 @@ class User(BaseTable, table_name="users"):
     name: VarCharField = VarCharField(default="Sasha")
     surname: VarCharField = VarCharField(default="Kiselev")
     description: TextField = TextField(default="Zopa")
+
+
+print(
+    User.select(
+        User.all_fields(),
+    ).where(
+        User.name > "123",
+    ).
+    order_by(
+        order_by_statements=[
+            OrderBy(User.name),
+            OrderBy(User.surname),
+        ],
+    )
+    .build_query()
+)

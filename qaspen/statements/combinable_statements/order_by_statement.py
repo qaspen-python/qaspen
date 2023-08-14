@@ -1,7 +1,11 @@
 import dataclasses
+import functools
+import operator
 import typing
 
 from qaspen.fields.fields import Field
+from qaspen.querystring.querystring import OrderByQueryString, QueryString
+from qaspen.statements.statement import BaseStatement
 
 
 class OrderBy:
@@ -15,23 +19,28 @@ class OrderBy:
         self.ascending: typing.Final[bool] = ascending
         self.nulls_first: typing.Final[bool] = nulls_first
 
-    def _to_sql_statement(self: typing.Self) -> str:
-        order_by_statement: str = f"{self.field.field_name}"
+    def querystring(self: typing.Self) -> OrderByQueryString:
+        querystring_template: typing.Final[str] = "{} {} {}"
+        querystring_arguments: list[str] = [self.field.field_name]
+
         if self.ascending is True:
-            order_by_statement += " ASC"
+            querystring_arguments.append("ASC")
         elif self.ascending is False:
-            order_by_statement += " DESC"
+            querystring_arguments.append("DESC")
 
         if self.nulls_first is True:
-            order_by_statement += " NULLS FIRST"
+            querystring_arguments.append("NULLS FIRST")
         elif self.nulls_first is False:
-            order_by_statement += " NULLS LAST"
+            querystring_arguments.append("NULLS LAST")
 
-        return order_by_statement
+        return OrderByQueryString(
+            *querystring_arguments,
+            sql_template=querystring_template,
+        )
 
 
 @dataclasses.dataclass
-class OrderByStatement:
+class OrderByStatement(BaseStatement):
     order_by_expressions: list[OrderBy] = dataclasses.field(
         default_factory=list,
     )
@@ -57,12 +66,17 @@ class OrderByStatement:
                 order_by_statements,
             )
 
-    def _build_query(self: typing.Self) -> str:
-        order_by_params: str = ", ".join(
-            order_by_expression._to_sql_statement()
-            for order_by_expression
-            in self.order_by_expressions
+    def querystring(self: typing.Self) -> QueryString:
+        final_order_by: OrderByQueryString = functools.reduce(
+            operator.add,
+            [
+                order_by_expression.querystring()
+                for order_by_expression
+                in self.order_by_expressions
+            ],
         )
-        if order_by_params:
-            return "ORDER BY " + order_by_params
-        return ""
+
+        return QueryString(
+            *final_order_by.template_arguments,
+            sql_template=f"ORDER BY {final_order_by.sql_template}",
+        )

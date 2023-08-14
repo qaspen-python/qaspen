@@ -2,6 +2,9 @@ import typing
 
 
 class QueryString:
+
+    add_delimiter: str = " "
+
     def __init__(
         self: typing.Self,
         *template_arguments: typing.Any,
@@ -20,7 +23,10 @@ class QueryString:
         additional_querystring: "QueryString",
     ) -> typing.Self:
         """"""
-        self.sql_template += f" {additional_querystring.sql_template}"
+        self.sql_template += (
+            f"{self.add_delimiter}"
+            f"{additional_querystring.sql_template}"
+        )
         self.template_arguments.extend(
             additional_querystring.template_arguments,
         )
@@ -30,3 +36,7 @@ class QueryString:
         return self.sql_template.format(
             *self.template_arguments,
         )
+
+
+class OrderByQueryString(QueryString):
+    add_delimiter: str = ", "

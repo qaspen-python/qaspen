@@ -46,7 +46,7 @@ class SelectStatement:
             f"FROM {self._from_table._table_meta.table_name}"
         )
         sql_statement += f" {self._where_statement._build_query()}"
-        sql_statement += f" {self._order_by_statement._build_query()}"
+        sql_statement += f"{self._order_by_statement.querystring()}"
         sql_statement += f" {self._limit_statement._build_query()}"
         return sql_statement
 
