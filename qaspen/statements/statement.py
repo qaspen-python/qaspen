@@ -1,10 +1,10 @@
 import abc
-import dataclasses
-
-from qaspen.statements.combinable_statements.where_statement import Where
+import typing
 
 
-@dataclasses.dataclass
-class Statement(abc.ABC):
-    """Dataclass for all SQL queries."""
-    where_statements: list[Where]
+class BaseStatement(abc.ABC):
+    """Base statement all statements."""
+
+    @abc.abstractmethod
+    def querystring(self: typing.Self) -> str:
+        ...
