@@ -15,16 +15,28 @@ class User(BaseTable, table_name="users"):
 
 
 print(
-    User.select(
-        User.all_fields(),
-    ).where(
-        User.name > "123",
-    ).
-    order_by(
-        order_by_statements=[
-            OrderBy(User.name),
-            OrderBy(User.surname),
-        ],
+    User.select(User.all_fields())
+    .where(
+        WhereExclusive(
+            (User.name == "Sasha")
+            & WhereExclusive(
+                User.surname.eq("123")
+                & User.surname.between("122", "999")
+                & WhereExclusive(
+                    (User.description > "100")
+                    | (User.description < "100")
+                )
+            )
+        ) | WhereExclusive(
+            (User.name == "Sasha")
+            & WhereExclusive(
+                User.surname.eq("123")
+                & User.surname.between("122", "999")
+            )
+        )
     )
-    .build_query()
+    .order_by(User.name)
+    .union(
+        User.select([User.surname])
+    ).querystring()
 )

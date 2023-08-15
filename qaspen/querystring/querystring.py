@@ -13,6 +13,10 @@ class QueryString:
         self.sql_template: str = sql_template
         self.template_arguments: list[typing.Any] = list(template_arguments)
 
+    @classmethod
+    def empty(cls: type["QueryString"]) -> "EmptyQueryString":
+        return EmptyQueryString(sql_template="")
+
     def querystring(self: typing.Self) -> str:
         return self.sql_template.format(
             *self.template_arguments,
@@ -22,7 +26,9 @@ class QueryString:
         self: typing.Self,
         additional_querystring: "QueryString",
     ) -> typing.Self:
-        """"""
+        if isinstance(additional_querystring, EmptyQueryString):
+            return self
+
         self.sql_template += (
             f"{self.add_delimiter}"
             f"{additional_querystring.sql_template}"
@@ -38,5 +44,14 @@ class QueryString:
         )
 
 
+class EmptyQueryString(QueryString):
+    add_delimiter: str = ""
+
+
 class OrderByQueryString(QueryString):
     add_delimiter: str = ", "
+
+
+class WhereQueryString(QueryString):
+
+    add_delimiter: str = " AND "

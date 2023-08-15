@@ -1,12 +1,16 @@
 import dataclasses
+import functools
+import operator
 import typing
 from qaspen.fields.base_field import BaseField
 
 
 from qaspen.fields.operators import BaseOperator
+from qaspen.querystring.querystring import QueryString, WhereQueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression
 )
+from qaspen.statements.statement import BaseStatement
 
 
 class EmptyValue:
@@ -34,7 +38,7 @@ class Where(CombinableExpression):
             typing.Any,
         ] = comparison_values
 
-    def _to_sql_statement(self: typing.Self) -> str:
+    def querystring(self: typing.Self) -> WhereQueryString:
         if self.comparison_value is not EMPTY_VALUE:
             compare_value: str = f"'{self.comparison_value}'"
         elif self.comparison_values is not EMPTY_VALUE:
@@ -46,17 +50,11 @@ class Where(CombinableExpression):
                 ]
             )
 
-        where_clause: str = (
-            self
-            .operator
-            .operation_template
-            .format(
-                field_name=self.field.field_name,
-                compare_value=compare_value,
-            )
+        return WhereQueryString(
+            self.field.field_name,
+            compare_value,
+            sql_template=self.operator.operation_template,
         )
-
-        return where_clause
 
 
 class WhereBetween(CombinableExpression):
@@ -73,18 +71,13 @@ class WhereBetween(CombinableExpression):
         self.left_comparison_value: typing.Any = left_comparison_value
         self.right_comparison_value: typing.Any = right_comparison_value
 
-    def _to_sql_statement(self: typing.Self) -> str:
-        where_clause: str = (
-            self
-            .operator
-            .operation_template
-            .format(
-                field_name=self.field.field_name,
-                left_comparison_value=self.left_comparison_value,
-                right_comparison_value=self.right_comparison_value,
-            )
+    def querystring(self: typing.Self) -> WhereQueryString:
+        return WhereQueryString(
+            self.field.field_name,
+            self.left_comparison_value,
+            self.right_comparison_value,
+            sql_template=self.operator.operation_template,
         )
-        return where_clause
 
 
 class WhereExclusive(CombinableExpression):
@@ -95,12 +88,17 @@ class WhereExclusive(CombinableExpression):
     ) -> None:
         self.comparisons: CombinableExpression = comparison
 
-    def _to_sql_statement(self: typing.Self) -> str:
-        return f"({self.comparisons._to_sql_statement()})"
+    def querystring(self: typing.Self) -> WhereQueryString:
+        return WhereQueryString(
+            *self.comparisons.querystring().template_arguments,
+            sql_template=(
+                "(" + self.comparisons.querystring().sql_template + ")"
+            ),
+        )
 
 
 @dataclasses.dataclass
-class WhereStatement:
+class WhereStatement(BaseStatement):
     where_expressions: list[CombinableExpression] = dataclasses.field(
         default_factory=list,
     )
@@ -114,16 +112,22 @@ class WhereStatement:
         )
         return self
 
-    def _build_query(self: typing.Self) -> str:
-        filter_params: str = "AND".join(
+    def querystring(self: typing.Self) -> QueryString:
+        if not self.where_expressions:
+            return QueryString.empty()
+        final_where: QueryString = functools.reduce(
+            operator.add,
             [
-                f" {where_statement._to_sql_statement()} "
-                for where_statement
+                WhereQueryString(  # TODO: find another way to concatenate.
+                    *where_expression.querystring().template_arguments,
+                    sql_template=where_expression.querystring().sql_template,
+                )
+                for where_expression
                 in self.where_expressions
-            ]
+            ],
         )
 
-        if filter_params:
-            return "WHERE" + filter_params
-        else:
-            return ""
+        return QueryString(
+            *final_where.template_arguments,
+            sql_template=f"WHERE {final_where.sql_template}",
+        )

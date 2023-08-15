@@ -1,9 +1,12 @@
 import dataclasses
 import typing
+from qaspen.querystring.querystring import QueryString
+
+from qaspen.statements.statement import BaseStatement
 
 
 @dataclasses.dataclass
-class LimitStatement:
+class LimitStatement(BaseStatement):
     limit_number: int | None = None
 
     def limit(
@@ -12,5 +15,10 @@ class LimitStatement:
     ) -> None:
         self.limit_number = limit_number
 
-    def _build_query(self: typing.Self) -> str:
-        return f"LIMIT {self.limit_number} " if self.limit_number else ""
+    def querystring(self: typing.Self) -> QueryString:
+        if not self.limit_number:
+            return QueryString.empty()
+        return QueryString(
+            self.limit_number,
+            sql_template="LIMIT {}"
+        )

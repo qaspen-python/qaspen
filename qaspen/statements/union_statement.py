@@ -1,8 +1,10 @@
 import typing
+from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression
 )
 from qaspen.statements.select_statement import SelectStatement
+from qaspen.statements.statement import BaseStatement
 
 
 class Union(CombinableExpression):
@@ -16,16 +18,16 @@ class Union(CombinableExpression):
         self.right_expression: SelectStatement = right_expression
         self.union_all: bool = union_all
 
-    def _to_sql_statement(self: typing.Self) -> str:
+    def querystring(self: typing.Self) -> QueryString:
         union_operator: str = "UNION ALL" if self.union_all else "UNION"
-        return (
-            f"{self.left_expression._to_sql_statement()}"
-            f" {union_operator} "
-            f"{self.right_expression._to_sql_statement()}"
+        return QueryString(
+            self.left_expression.querystring(),
+            self.right_expression.querystring(),
+            sql_template="{} " + union_operator + " {}"
         )
 
 
-class UnionStatement:
+class UnionStatement(BaseStatement):
     union_statement: Union
 
     def __init__(
@@ -53,5 +55,8 @@ class UnionStatement:
         )
         return self
 
+    def querystring(self: typing.Self) -> QueryString:
+        return self.union_statement.querystring()
+
     def build_query(self) -> str:
-        return self.union_statement._to_sql_statement()
+        return str(self.querystring())

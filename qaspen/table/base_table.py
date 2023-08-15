@@ -16,7 +16,6 @@ class BaseTable(MetaTable):
             select_fields=select_fields,
             from_table=cls,
         )
-        print(id(select_statement))
         return select_statement
 
     @classmethod

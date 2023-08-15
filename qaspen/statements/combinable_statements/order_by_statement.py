@@ -67,6 +67,8 @@ class OrderByStatement(BaseStatement):
             )
 
     def querystring(self: typing.Self) -> QueryString:
+        if not self.order_by_expressions:
+            return QueryString.empty()
         final_order_by: OrderByQueryString = functools.reduce(
             operator.add,
             [

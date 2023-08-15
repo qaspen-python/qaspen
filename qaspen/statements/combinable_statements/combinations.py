@@ -3,11 +3,12 @@ import dataclasses
 import typing
 
 from qaspen.fields.operators import ANDOperator, BaseOperator, OROperator
+from qaspen.querystring.querystring import QueryString
 
 
 class CombinableExpression(abc.ABC):
     @abc.abstractmethod
-    def _to_sql_statement(self: typing.Self) -> str:
+    def querystring(self: typing.Self) -> QueryString:
         ...
 
     def __and__(
@@ -35,11 +36,11 @@ class ExpressionsCombination(CombinableExpression):
     right_expression: "CombinableExpression"
     operator: type[BaseOperator] = BaseOperator
 
-    def _to_sql_statement(self: typing.Self) -> str:
-        return (
-            f"{self.left_expression._to_sql_statement()}"
-            f" {self.operator.operation_template} "
-            f"{self.right_expression._to_sql_statement()}"
+    def querystring(self: typing.Self) -> QueryString:
+        return QueryString(
+            self.left_expression.querystring(),
+            self.right_expression.querystring(),
+            sql_template="{} " + self.operator.operation_template + " {}",
         )
 
 
