@@ -20,6 +20,9 @@ if typing.TYPE_CHECKING:
     from qaspen.statements.union_statement import (
         UnionStatement,
     )
+    from qaspen.statements.intersect_statement import (
+        IntersectStatement,
+    )
 
 
 class SelectStatement(BaseStatement):
@@ -75,7 +78,7 @@ class SelectStatement(BaseStatement):
         return self
 
     def union(
-        self,
+        self: typing.Self,
         union_with: "SelectStatement",
         union_all: bool = False,
     ) -> "UnionStatement":
@@ -86,6 +89,18 @@ class SelectStatement(BaseStatement):
             left_expression=self,
             right_expression=union_with,
             union_all=union_all,
+        )
+
+    def intersect(
+        self: typing.Self,
+        intersect_with: "SelectStatement",
+    ) -> "IntersectStatement":
+        from qaspen.statements.intersect_statement import (
+            IntersectStatement,
+        )
+        return IntersectStatement(
+            left_expression=self,
+            right_expression=intersect_with,
         )
 
     def querystring(self: typing.Self) -> QueryString:
