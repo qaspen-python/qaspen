@@ -1,14 +1,14 @@
 import dataclasses
 import typing
 
-from qaspen.fields.fields import Field
+from qaspen.fields.base.base_field import BaseField
 
 
 @dataclasses.dataclass
 class MetaTableData:
     table_name: str = ""
     abstract: bool = False
-    table_fields: list[Field[typing.Any]] = dataclasses.field(
+    table_fields: list[BaseField[typing.Any]] = dataclasses.field(
         default_factory=list,
     )
 
@@ -32,7 +32,7 @@ class MetaTable:
 
         cls.abstract = abstract  # type: ignore[attr-defined]
         table_fields: typing.Final[
-            list[Field[typing.Any]],
+            list[BaseField[typing.Any]],
         ] = cls._parse_table_fields()
 
         cls._table_meta = MetaTableData(
@@ -46,21 +46,23 @@ class MetaTable:
     def __init__(self: typing.Self, **fields_values: typing.Any) -> None:
         for table_field in self._table_meta.table_fields:
             new_field_value: typing.Any | None = fields_values.get(
-                table_field._field_name,
+                table_field.field_name,
             )
             if new_field_value:
-                setattr(self, table_field._field_name, new_field_value)
+                setattr(self, table_field.field_name, new_field_value)
 
     @classmethod
-    def _parse_table_fields(cls: type["MetaTable"]) -> list[Field[typing.Any]]:
-        table_fields: typing.Final[list[Field[typing.Any]]] = [
+    def _parse_table_fields(
+        cls: type["MetaTable"],
+    ) -> list[BaseField[typing.Any]]:
+        table_fields: typing.Final[list[BaseField[typing.Any]]] = [
             field_class
             for field_class
             in cls.__dict__.values()
-            if isinstance(field_class, Field)
+            if isinstance(field_class, BaseField)
         ]
 
         for table_field in table_fields:
-            setattr(cls, table_field._field_name, table_field)
+            setattr(cls, table_field.field_name, table_field)
 
         return table_fields

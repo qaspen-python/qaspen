@@ -3,7 +3,7 @@ import functools
 import operator
 import typing
 
-from qaspen.fields.fields import Field
+from qaspen.fields.base.base_field import BaseField
 from qaspen.querystring.querystring import OrderByQueryString, QueryString
 from qaspen.statements.statement import BaseStatement
 
@@ -11,11 +11,11 @@ from qaspen.statements.statement import BaseStatement
 class OrderBy:
     def __init__(
         self: typing.Self,
-        field: Field[typing.Any],
+        field: BaseField[typing.Any],
         ascending: bool = True,
         nulls_first: bool = True,
     ) -> None:
-        self.field: typing.Final[Field[typing.Any]] = field
+        self.field: typing.Final[BaseField[typing.Any]] = field
         self.ascending: typing.Final[bool] = ascending
         self.nulls_first: typing.Final[bool] = nulls_first
 
@@ -47,7 +47,7 @@ class OrderByStatement(BaseStatement):
 
     def order_by(
         self: typing.Self,
-        field: Field[typing.Any] | None = None,
+        field: BaseField[typing.Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
         order_by_statements: typing.Iterable[OrderBy] | None = None,

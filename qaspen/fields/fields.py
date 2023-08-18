@@ -2,13 +2,14 @@ import typing
 from qaspen.exceptions import FieldComparisonError, FieldDeclarationError
 from qaspen.fields import operators
 
-from qaspen.fields.base_field import BaseField, FieldData, FieldType
+from qaspen.fields.base.base_field import BaseField, FieldData, FieldType
 
 from qaspen.fields.utils import validate_max_length
 from qaspen.statements.combinable_statements.where_statement import (
     Where,
     WhereBetween,
 )
+from qaspen.statements.select_statement import SelectStatement
 
 
 class Field(BaseField[FieldType]):
@@ -61,7 +62,8 @@ class Field(BaseField[FieldType]):
 
     def contains(
         self: typing.Self,
-        comparison_values: typing.Iterable[typing.Any],
+        *comparison_values: typing.Any,
+        select_statement: SelectStatement | None = None,
     ) -> Where:
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
@@ -324,9 +326,13 @@ class BaseStringField(Field[str]):
 
     def contains(
         self: typing.Self,
-        *comparison_values: typing.Iterable[str],
+        *comparison_values: typing.Any,
+        select_statement: SelectStatement | None = None,
     ) -> Where:
-        return super().contains(comparison_values)
+        return super().contains(
+            *comparison_values,
+            select_statement=select_statement,
+        )
 
     def not_contains(
         self: typing.Self,

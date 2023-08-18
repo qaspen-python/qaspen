@@ -2,7 +2,7 @@ import dataclasses
 import functools
 import operator
 import typing
-from qaspen.fields.base_field import BaseField
+from qaspen.fields.base.base_field import BaseField
 
 
 from qaspen.fields.operators import BaseOperator

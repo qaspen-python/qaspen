@@ -13,3 +13,12 @@ class User(BaseTable, table_name="users"):
     surname: VarCharField = VarCharField(default="Kiselev")
     description: TextField = TextField(default="Zopa")
 
+
+print(
+    User
+    .select(User.all_fields())
+    .where(
+        User.name.contains("123", "455")
+    )
+    .querystring()
+)

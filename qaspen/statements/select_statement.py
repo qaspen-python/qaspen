@@ -1,5 +1,5 @@
 import typing
-from qaspen.fields.fields import Field
+from qaspen.fields.base.base_field import BaseField
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
@@ -29,11 +29,11 @@ class SelectStatement(BaseStatement):
     def __init__(
         self: typing.Self,
         from_table: type[MetaTable],
-        select_fields: typing.Iterable[Field[typing.Any]],
+        select_fields: typing.Iterable[BaseField[typing.Any]],
     ) -> None:
         self._from_table: typing.Final[type[MetaTable]] = from_table
         self._select_fields: typing.Final[
-            typing.Iterable[Field[typing.Any]]
+            typing.Iterable[BaseField[typing.Any]]
         ] = select_fields
         self.exist_prefixes: typing.Final[list[str]] = []
 
@@ -60,7 +60,7 @@ class SelectStatement(BaseStatement):
 
     def order_by(
         self: typing.Self,
-        field: Field[typing.Any] | None = None,
+        field: BaseField[typing.Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
         order_by_statements: typing.Iterable[OrderBy] | None = None,
