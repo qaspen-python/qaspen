@@ -18,7 +18,11 @@ print(
     User
     .select(User.all_fields())
     .where(
-        User.name.contains("123", "455")
+        User.name.contains(
+            select_statement=User.select(
+                [User.name],
+            ),
+        )
     )
     .querystring()
 )

@@ -2,8 +2,7 @@ import abc
 import typing
 
 
-class SQLable(abc.ABC):
-    """Unable functionality to turn something into the SQL string."""
+class SQLSelectable(abc.ABC):
     @abc.abstractmethod
     def make_sql_string(self: typing.Self) -> str:
         ...

@@ -1,4 +1,5 @@
 import typing
+from qaspen.base.sql_base import SQLSelectable
 from qaspen.exceptions import FieldComparisonError, FieldDeclarationError
 from qaspen.fields import operators
 
@@ -9,7 +10,6 @@ from qaspen.statements.combinable_statements.where_statement import (
     Where,
     WhereBetween,
 )
-from qaspen.statements.select_statement import SelectStatement
 
 
 class Field(BaseField[FieldType]):
@@ -63,7 +63,7 @@ class Field(BaseField[FieldType]):
     def contains(
         self: typing.Self,
         *comparison_values: typing.Any,
-        select_statement: SelectStatement | None = None,
+        select_statement: SQLSelectable | None = None,
     ) -> Where:
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
@@ -77,11 +77,16 @@ class Field(BaseField[FieldType]):
                     f"and {type(comparison_value)}"
                 )
 
-        return Where(
-            field=self,
-            comparison_values=comparison_values,
-            operator=operators.InOperator,
-        )
+        where_parameters: dict[str, typing.Any] = {
+            "field": self,
+            "operator": operators.InOperator,
+        }
+        if select_statement:
+            where_parameters["comparison_value"] = select_statement
+        elif comparison_values:
+            where_parameters["comparison_values"] = comparison_values
+
+        return Where(**where_parameters)
 
     def not_contains(
         self: typing.Self,
@@ -327,7 +332,7 @@ class BaseStringField(Field[str]):
     def contains(
         self: typing.Self,
         *comparison_values: typing.Any,
-        select_statement: SelectStatement | None = None,
+        select_statement: SQLSelectable | None = None,
     ) -> Where:
         return super().contains(
             *comparison_values,

@@ -1,4 +1,5 @@
 import typing
+from qaspen.base.sql_base import SQLSelectable
 from qaspen.fields.base.base_field import BaseField
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
@@ -25,7 +26,7 @@ if typing.TYPE_CHECKING:
     )
 
 
-class SelectStatement(BaseStatement):
+class SelectStatement(BaseStatement, SQLSelectable):
     def __init__(
         self: typing.Self,
         from_table: type[MetaTable],
@@ -117,3 +118,6 @@ class SelectStatement(BaseStatement):
         sql_statement += self._limit_statement.querystring()
 
         return sql_statement
+
+    def make_sql_string(self: typing.Self) -> str:
+        return str(self.querystring())

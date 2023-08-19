@@ -2,6 +2,7 @@ import dataclasses
 import functools
 import operator
 import typing
+from qaspen.base.sql_base import SQLSelectable
 from qaspen.fields.base.base_field import BaseField
 
 
@@ -40,7 +41,10 @@ class Where(CombinableExpression):
 
     def querystring(self: typing.Self) -> WhereQueryString:
         if self.comparison_value is not EMPTY_VALUE:
-            compare_value: str = f"'{self.comparison_value}'"
+            if isinstance(self.comparison_value, SQLSelectable):
+                compare_value: str = self.comparison_value.make_sql_string()
+            else:
+                compare_value = f"'{self.comparison_value}'"
         elif self.comparison_values is not EMPTY_VALUE:
             compare_value = ", ".join(
                 [
@@ -86,13 +90,13 @@ class WhereExclusive(CombinableExpression):
         self: typing.Self,
         comparison: CombinableExpression,
     ) -> None:
-        self.comparisons: CombinableExpression = comparison
+        self.comparison: CombinableExpression = comparison
 
     def querystring(self: typing.Self) -> WhereQueryString:
         return WhereQueryString(
-            *self.comparisons.querystring().template_arguments,
+            *self.comparison.querystring().template_arguments,
             sql_template=(
-                "(" + self.comparisons.querystring().sql_template + ")"
+                "(" + self.comparison.querystring().sql_template + ")"
             ),
         )
 
