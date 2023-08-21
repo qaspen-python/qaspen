@@ -1,4 +1,5 @@
 import typing
+from qaspen.base.sql_base import SQLSelectable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
@@ -24,7 +25,7 @@ class Intersect(CombinableExpression):
         )
 
 
-class IntersectStatement(BaseStatement):
+class IntersectStatement(BaseStatement, SQLSelectable):
     intersect_statement: Intersect
 
     def __init__(
@@ -51,4 +52,7 @@ class IntersectStatement(BaseStatement):
         return self.intersect_statement.querystring()
 
     def build_query(self: typing.Self) -> str:
+        return str(self.querystring())
+
+    def make_sql_string(self: typing.Self) -> str:
         return str(self.querystring())

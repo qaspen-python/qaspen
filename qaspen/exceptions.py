@@ -16,3 +16,7 @@ class StringFieldDeclarationError(FieldDeclarationError):
 
 class FieldComparisonError(FieldBaseError):
     pass
+
+
+class WhereComparisonError(FieldBaseError):
+    pass

@@ -18,11 +18,19 @@ print(
     User
     .select(User.all_fields())
     .where(
-        User.name.contains(
-            select_statement=User.select(
-                [User.name],
-            ),
+        WhereExclusive(
+            User.name.contains(
+                subquery=User.select(
+                    [User.name],
+                ),
+            )
+            | User.name.not_contains(
+                subquery=User.select(
+                    [User.surname],
+                ),
+            )
         )
+        | User.name.eq("Govno"),
     )
     .querystring()
 )

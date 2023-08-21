@@ -1,4 +1,5 @@
 import typing
+from qaspen.base.sql_base import SQLSelectable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression
@@ -27,7 +28,7 @@ class Union(CombinableExpression):
         )
 
 
-class UnionStatement(BaseStatement):
+class UnionStatement(BaseStatement, SQLSelectable):
     union_statement: Union
 
     def __init__(
@@ -59,4 +60,7 @@ class UnionStatement(BaseStatement):
         return self.union_statement.querystring()
 
     def build_query(self: typing.Self) -> str:
+        return str(self.querystring())
+
+    def make_sql_string(self: typing.Self) -> str:
         return str(self.querystring())

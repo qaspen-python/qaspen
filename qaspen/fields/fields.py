@@ -1,6 +1,10 @@
 import typing
 from qaspen.base.sql_base import SQLSelectable
-from qaspen.exceptions import FieldComparisonError, FieldDeclarationError
+from qaspen.exceptions import (
+    FieldComparisonError,
+    FieldDeclarationError,
+    WhereComparisonError,
+)
 from qaspen.fields import operators
 
 from qaspen.fields.base.base_field import BaseField, FieldData, FieldType
@@ -63,7 +67,7 @@ class Field(BaseField[FieldType]):
     def contains(
         self: typing.Self,
         *comparison_values: typing.Any,
-        select_statement: SQLSelectable | None = None,
+        subquery: SQLSelectable | None = None,
     ) -> Where:
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
@@ -77,12 +81,20 @@ class Field(BaseField[FieldType]):
                     f"and {type(comparison_value)}"
                 )
 
+        if subquery and comparison_values:
+            raise WhereComparisonError(
+                "It's not possible to specify subquery "
+                "with positional arguments in `contains` method. "
+                "Please choose either subquery or positional arguments."
+            )
+
         where_parameters: dict[str, typing.Any] = {
             "field": self,
             "operator": operators.InOperator,
         }
-        if select_statement:
-            where_parameters["comparison_value"] = select_statement
+
+        if subquery:
+            where_parameters["comparison_value"] = subquery
         elif comparison_values:
             where_parameters["comparison_values"] = comparison_values
 
@@ -90,7 +102,8 @@ class Field(BaseField[FieldType]):
 
     def not_contains(
         self: typing.Self,
-        comparison_values: typing.Iterable[typing.Any],
+        *comparison_values: typing.Any,
+        subquery: SQLSelectable | None = None,
     ) -> Where:
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
@@ -104,11 +117,17 @@ class Field(BaseField[FieldType]):
                     f"and {type(comparison_value)}"
                 )
 
-        return Where(
-            field=self,
-            comparison_values=comparison_values,
-            operator=operators.NotInOperator,
-        )
+        where_parameters: dict[str, typing.Any] = {
+            "field": self,
+            "operator": operators.NotInOperator,
+        }
+
+        if subquery:
+            where_parameters["comparison_value"] = subquery
+        elif comparison_values:
+            where_parameters["comparison_values"] = comparison_values
+
+        return Where(**where_parameters)
 
     def between(
         self: typing.Self,
@@ -331,19 +350,23 @@ class BaseStringField(Field[str]):
 
     def contains(
         self: typing.Self,
-        *comparison_values: typing.Any,
-        select_statement: SQLSelectable | None = None,
+        *comparison_values: str,
+        subquery: SQLSelectable | None = None,
     ) -> Where:
         return super().contains(
             *comparison_values,
-            select_statement=select_statement,
+            subquery=subquery,
         )
 
     def not_contains(
         self: typing.Self,
-        comparison_values: typing.Iterable[str],
+        *comparison_values: str,
+        subquery: SQLSelectable | None = None,
     ) -> Where:
-        return super().not_contains(comparison_values)
+        return super().not_contains(
+            *comparison_values,
+            subquery=subquery,
+        )
 
     def between(
         self: typing.Self,
