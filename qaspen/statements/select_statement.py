@@ -24,6 +24,9 @@ if typing.TYPE_CHECKING:
     from qaspen.statements.intersect_statement import (
         IntersectStatement,
     )
+    from qaspen.statements.exists_statement import (
+        ExistsStatement,
+    )
 
 
 class SelectStatement(BaseStatement, SQLSelectable):
@@ -104,20 +107,28 @@ class SelectStatement(BaseStatement, SQLSelectable):
             right_expression=intersect_with,
         )
 
+    def exists(self: typing.Self) -> "ExistsStatement":
+        from qaspen.statements.exists_statement import (
+            ExistsStatement,
+        )
+        return ExistsStatement(
+            select_statement=self,
+        )
+
     def querystring(self: typing.Self) -> QueryString:
         to_select_fields: str = ", ".join(
             [field.field_name for field in self._select_fields],
         )
-        sql_statement = QueryString(
+        sql_querystring = QueryString(
             to_select_fields,
             self._from_table._table_meta.table_name,
             sql_template="SELECT {} FROM {}",
         )
-        sql_statement += self._where_statement.querystring()
-        sql_statement += self._order_by_statement.querystring()
-        sql_statement += self._limit_statement.querystring()
+        sql_querystring += self._where_statement.querystring()
+        sql_querystring += self._order_by_statement.querystring()
+        sql_querystring += self._limit_statement.querystring()
 
-        return sql_statement
+        return sql_querystring
 
     def make_sql_string(self: typing.Self) -> str:
         return str(self.querystring())

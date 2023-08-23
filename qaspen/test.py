@@ -15,22 +15,18 @@ class User(BaseTable, table_name="users"):
 
 
 print(
-    User
-    .select(User.all_fields())
-    .where(
-        WhereExclusive(
-            User.name.contains(
-                subquery=User.select(
-                    [User.name],
-                ),
-            )
-            | User.name.not_contains(
-                subquery=User.select(
-                    [User.surname],
-                ),
-            )
-        )
-        | User.name.eq("Govno"),
-    )
-    .querystring()
+    User.select(
+        User.all_fields(),
+    ).where(
+        User.select([User.name]).where(User.name > "Sasha").exists(),
+    ).build_query()
+)
+
+
+print(
+    User.select(
+        User.all_fields(),
+    ).where(
+        User.name > "123",
+    ).exists().make_sql_string(),
 )
