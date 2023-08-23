@@ -15,6 +15,7 @@ from qaspen.statements.combinable_statements.order_by_statement import (
 from qaspen.statements.combinable_statements.where_statement import (
     WhereStatement,
 )
+from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 from qaspen.table.meta_table import MetaTable
 
 if typing.TYPE_CHECKING:
@@ -43,10 +44,8 @@ class SelectStatement(BaseStatement, SQLSelectable):
 
         self._where_statement: WhereStatement = WhereStatement()
         self._limit_statement: LimitStatement = LimitStatement()
+        self._offset_statement: OffsetStatement = OffsetStatement()
         self._order_by_statement: OrderByStatement = OrderByStatement()
-
-    def build_query(self) -> str:
-        return str(self.querystring())
 
     def where(
         self: typing.Self,
@@ -60,6 +59,22 @@ class SelectStatement(BaseStatement, SQLSelectable):
         limit: int,
     ) -> typing.Self:
         self._limit_statement.limit(limit_number=limit)
+        return self
+
+    def offset(
+        self: typing.Self,
+        offset: int,
+    ) -> typing.Self:
+        self._offset_statement.set_offset(offset_number=offset)
+        return self
+
+    def limit_offset(
+        self: typing.Self,
+        limit: int,
+        offset: int,
+    ) -> typing.Self:
+        self._limit_statement.limit(limit_number=limit)
+        self._offset_statement.set_offset(offset_number=offset)
         return self
 
     def order_by(
@@ -127,6 +142,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
         sql_querystring += self._where_statement.querystring()
         sql_querystring += self._order_by_statement.querystring()
         sql_querystring += self._limit_statement.querystring()
+        sql_querystring += self._offset_statement.querystring()
 
         return sql_querystring
 

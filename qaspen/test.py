@@ -19,7 +19,7 @@ print(
         User.all_fields(),
     ).where(
         User.select([User.name]).where(User.name > "Sasha").exists(),
-    ).build_query()
+    ).make_sql_string()
 )
 
 
