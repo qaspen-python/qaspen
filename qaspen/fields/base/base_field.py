@@ -3,6 +3,10 @@ import dataclasses
 import typing
 
 
+if typing.TYPE_CHECKING:
+    from qaspen.table.base_table import BaseTable
+
+
 FieldType = typing.TypeVar(
     "FieldType",
 )
@@ -11,6 +15,7 @@ FieldType = typing.TypeVar(
 @dataclasses.dataclass
 class FieldData(typing.Generic[FieldType]):
     field_name: str
+    from_table: "BaseTable | None" = None
     is_null: bool = False
     field_value: FieldType | None = None
     default: FieldType | None = None
@@ -25,6 +30,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         owner: typing.Any,
         field_name: str,
     ) -> None:
+        self._field_data.from_table = owner
         self._field_data.field_name = field_name
 
     @abc.abstractmethod
@@ -34,8 +40,11 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         ...
 
     @property
-    def field_name(self: typing.Self) -> str:
-        return self._field_data.field_name
+    def field_name_with_table_name(self: typing.Self) -> str:
+        return (
+            f"{self._field_data.from_table._table_name()}."  # type: ignore
+            f"{self._field_data.field_name}"
+        )
 
     @property
     def default(self: typing.Self) -> FieldType | None:

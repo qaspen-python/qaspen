@@ -55,7 +55,7 @@ class Where(CombinableExpression):
             )
 
         return WhereQueryString(
-            self.field.field_name,
+            self.field.field_name_with_table_name,
             compare_value,
             sql_template=self.operator.operation_template,
         )
@@ -77,7 +77,7 @@ class WhereBetween(CombinableExpression):
 
     def querystring(self: typing.Self) -> WhereQueryString:
         return WhereQueryString(
-            self.field.field_name,
+            self.field.field_name_with_table_name,
             self.left_comparison_value,
             self.right_comparison_value,
             sql_template=self.operator.operation_template,

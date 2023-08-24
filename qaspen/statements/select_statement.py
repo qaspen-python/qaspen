@@ -132,7 +132,10 @@ class SelectStatement(BaseStatement, SQLSelectable):
 
     def querystring(self: typing.Self) -> QueryString:
         to_select_fields: str = ", ".join(
-            [field.field_name for field in self._select_fields],
+            [
+                field.field_name_with_table_name
+                for field in self._select_fields
+            ],
         )
         sql_querystring = QueryString(
             to_select_fields,
