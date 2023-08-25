@@ -20,3 +20,7 @@ class FieldComparisonError(FieldBaseError):
 
 class WhereComparisonError(FieldBaseError):
     pass
+
+
+class OnJoinComparisonError(FieldBaseError):
+    pass

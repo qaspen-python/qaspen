@@ -1,4 +1,5 @@
 import abc
+import copy
 import dataclasses
 import typing
 
@@ -15,10 +16,11 @@ FieldType = typing.TypeVar(
 @dataclasses.dataclass
 class FieldData(typing.Generic[FieldType]):
     field_name: str
-    from_table: "BaseTable | None" = None
+    from_table: type["BaseTable"] = None  # type: ignore
     is_null: bool = False
     field_value: FieldType | None = None
     default: FieldType | None = None
+    prefix: str = ""
 
 
 class BaseField(abc.ABC, typing.Generic[FieldType]):
@@ -39,10 +41,20 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
     ) -> str:
         ...
 
+    def _with_prefix(self: typing.Self, prefix: str) -> "BaseField[FieldType]":
+        field = copy.deepcopy(self)
+        field._field_data.prefix = prefix
+        return field
+
     @property
-    def field_name_with_table_name(self: typing.Self) -> str:
+    def field_name_with_prefix(self: typing.Self) -> str:
+        prefix: str = (
+            self._field_data.prefix
+            or self._field_data.from_table._table_name()
+        )
+        self._field_data.prefix
         return (
-            f"{self._field_data.from_table._table_name()}."  # type: ignore
+            f"{prefix}."
             f"{self._field_data.field_name}"
         )
 

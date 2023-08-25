@@ -21,7 +21,7 @@ class OrderBy:
 
     def querystring(self: typing.Self) -> OrderByQueryString:
         querystring_template: typing.Final[str] = "{} {} {}"
-        querystring_arguments: list[str] = [self.field.field_name_with_table_name]
+        querystring_arguments: list[str] = [self.field.field_name_with_prefix]
 
         if self.ascending is True:
             querystring_arguments.append("ASC")

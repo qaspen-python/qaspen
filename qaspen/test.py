@@ -1,5 +1,6 @@
 from qaspen.fields.fields import TextField, VarCharField
 from qaspen.querystring.querystring import QueryString
+from qaspen.statements.combinable_statements.join_statement import JoinStatement
 from qaspen.statements.combinable_statements.order_by_statement import OrderBy
 from qaspen.statements.combinable_statements.where_statement import (
     WhereExclusive,
@@ -14,19 +15,24 @@ class User(BaseTable, table_name="users"):
     description: TextField = TextField(default="Zopa")
 
 
-print(
-    User.select(
-        User.all_fields(),
-    ).where(
-        User.select([User.name]).where(User.name > "Sasha").exists(),
-    ).make_sql_string()
-)
+class Profile(BaseTable, table_name="profiles"):
+    user: VarCharField = VarCharField(default="nana")
+    nickname: VarCharField = VarCharField(default="memeLord")
+    description: TextField = TextField(default="MemeDesc")
+
+
+class Video(BaseTable, table_name="videos"):
+    profile: VarCharField = VarCharField(default="memeLord")
+    video_id: VarCharField = VarCharField(default="1")
 
 
 print(
-    User.select(
-        User.all_fields(),
-    ).where(
-        User.name > "123",
-    ).exists().make_sql_string(),
+    User.select(User.all_fields())
+    .join(
+        fields_to_join=[Profile.nickname, Profile.description],
+        based_on=(
+            (User.name == Profile.user)
+        )
+    )
+    .make_sql_string()
 )

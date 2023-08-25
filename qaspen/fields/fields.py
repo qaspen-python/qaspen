@@ -16,7 +16,7 @@ from qaspen.statements.combinable_statements.where_statement import (
 )
 
 
-class Field(BaseField[FieldType]):
+class Field(BaseField[FieldType], SQLSelectable):
 
     _available_comparison_types: tuple[type, ...]
 
@@ -60,6 +60,9 @@ class Field(BaseField[FieldType]):
             f"{self._field_name} {self._build_fields_sql_type()} "
             f"{self._field_null} {self._field_default}"
         )
+
+    def make_sql_string(self: typing.Self) -> str:
+        return self.field_name_with_prefix
 
     def __str__(self: typing.Self) -> str:
         return str(self._field_value)
@@ -305,7 +308,10 @@ class Field(BaseField[FieldType]):
 
 class BaseStringField(Field[str]):
 
-    _available_comparison_types: tuple[type, ...] = (str, )
+    _available_comparison_types: tuple[type, ...] = (
+        str,
+        Field,
+    )
 
     @typing.overload
     def __init__(
@@ -377,13 +383,13 @@ class BaseStringField(Field[str]):
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | Field[FieldType],
     ) -> Where:
         return super().__eq__(comparison_value)
 
     def eq(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | Field[FieldType],
     ) -> Where:
         return super().eq(comparison_value)
 

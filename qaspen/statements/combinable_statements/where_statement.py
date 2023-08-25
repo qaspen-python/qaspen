@@ -26,7 +26,9 @@ class Where(CombinableExpression):
         self: typing.Self,
         field: BaseField[typing.Any],
         operator: type[BaseOperator],
-        comparison_value: EmptyValue | typing.Any = EMPTY_VALUE,
+        comparison_value: (
+            EmptyValue | BaseField[typing.Any] | typing.Any
+        ) = EMPTY_VALUE,
         comparison_values: EmptyValue | typing.Iterable[
             typing.Any,
         ] = EMPTY_VALUE,
@@ -55,7 +57,7 @@ class Where(CombinableExpression):
             )
 
         return WhereQueryString(
-            self.field.field_name_with_table_name,
+            self.field.field_name_with_prefix,
             compare_value,
             sql_template=self.operator.operation_template,
         )
@@ -77,7 +79,7 @@ class WhereBetween(CombinableExpression):
 
     def querystring(self: typing.Self) -> WhereQueryString:
         return WhereQueryString(
-            self.field.field_name_with_table_name,
+            self.field.field_name_with_prefix,
             self.left_comparison_value,
             self.right_comparison_value,
             sql_template=self.operator.operation_template,
