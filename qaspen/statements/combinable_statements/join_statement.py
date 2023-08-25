@@ -100,8 +100,7 @@ class JoinStatement(BaseStatement):
                     _field_data.
                     from_table.
                     _table_name()
-                )
-                == self._join_table._table_name()
+                ) == self._join_table._table_name()
             ),
         )
 
