@@ -32,9 +32,9 @@ print(
         fields_to_join=[
             Profile.nickname,
         ],
-        based_on=User.name.between(
-            left_value=User.name,
-            right_value=Profile.user,
+        based_on=(
+            (User.name == Profile.user)
+            & (User.surname == Profile.nickname)
         )
     )
     .where(

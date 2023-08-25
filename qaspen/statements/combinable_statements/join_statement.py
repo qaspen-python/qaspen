@@ -82,31 +82,39 @@ class JoinStatement(BaseStatement):
                 expression.comparison_value,
             )
         )
-        
-        if_left_to_change: bool = all(
+
+        if_left_to_change: typing.Final[bool] = all(
             (
                 isinstance(expression.field, BaseField),
                 expression.field._field_data.from_table._table_name()
                 == self._join_table._table_name()
-            )
+            ),
         )
 
-        is_left_to_change: bool = (
-            expression.field._field_data.from_table._table_name()
-            == self._join_table._table_name()
+        is_right_to_change: typing.Final[bool] = all(
+            (
+                isinstance(expression.field, BaseField),
+                expression.comparison_value._field_data.from_table._table_name()
+                == self._join_table._table_name()
+            ),
         )
 
-        if is_left_to_change:
+        print("-"*50)
+        print(self._join_table)
+        print(expression.comparison_value._field_data.from_table._table_name())
+        print(self._join_table._table_name())
+        print("-"*50)
+
+        if if_left_to_change:
             expression.field = (
                 expression.field._with_prefix(self._alias)
             )
-        else:
-            if isinstance(expression.comparison_value, BaseField):
-                expression.comparison_value = (
-                    expression.comparison_value._with_prefix(
-                        self._alias,
-                    )
+        if is_right_to_change:
+            expression.comparison_value = (
+                expression.comparison_value._with_prefix(  # type: ignore
+                    self._alias,
                 )
+            )
 
         return expression
 
