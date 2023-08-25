@@ -8,6 +8,7 @@ from qaspen.statements.combinable_statements.combinations import (
 )
 from qaspen.statements.combinable_statements.where_statement import (
     Where,
+    WhereBetween,
 )
 
 from qaspen.statements.statement import BaseStatement
@@ -22,13 +23,17 @@ class JoinStatement(BaseStatement):
         self: typing.Self,
         fields: typing.Iterable[BaseField[typing.Any]],
         join_table: type[MetaTable],
+        from_table: type[MetaTable],
         on: CombinableExpression,
         alias: str,
     ) -> None:
-        self._fields = fields
-        self._join_table = join_table
+        self._fields: typing.Final[
+            typing.Iterable[BaseField[typing.Any]]
+        ] = fields
+        self._join_table: typing.Final[type[MetaTable]] = join_table
+        self._from_table: typing.Final[type[MetaTable]] = from_table
         self._on: CombinableExpression = on
-        self._alias = alias
+        self._alias: typing.Final[str] = alias
 
     def querystring(self: typing.Self) -> QueryString:
         sql_template: typing.Final[str] = (
@@ -52,6 +57,10 @@ class JoinStatement(BaseStatement):
                 return self._change_where_combination(
                     expression=expression,
                 )
+            if isinstance(expression, WhereBetween):
+                return self._change_where_between_combination(
+                    expression=expression,
+                )
 
         if isinstance(expression, ExpressionsCombination):
             self._change_combinable_expression(
@@ -60,18 +69,58 @@ class JoinStatement(BaseStatement):
             self._change_combinable_expression(
                 expression.right_expression,
             )
+
         return expression
 
     def _change_where_combination(
         self: typing.Self,
         expression: Where,
     ) -> Where:
-        if not isinstance(expression.comparison_value, BaseField):
-            raise OnJoinComparisonError(
-                f"You can't use not `Field` class in ON clause in "
-                f"`.join()` method. "
-                f"You used - {expression.comparison_value}",
+        self._check_fields_in_join(
+            (
+                expression.field,
+                expression.comparison_value,
             )
+        )
+        
+        if_left_to_change: bool = all(
+            (
+                isinstance(expression.field, BaseField),
+                expression.field._field_data.from_table._table_name()
+                == self._join_table._table_name()
+            )
+        )
+
+        is_left_to_change: bool = (
+            expression.field._field_data.from_table._table_name()
+            == self._join_table._table_name()
+        )
+
+        if is_left_to_change:
+            expression.field = (
+                expression.field._with_prefix(self._alias)
+            )
+        else:
+            if isinstance(expression.comparison_value, BaseField):
+                expression.comparison_value = (
+                    expression.comparison_value._with_prefix(
+                        self._alias,
+                    )
+                )
+
+        return expression
+
+    def _change_where_between_combination(
+        self: typing.Self,
+        expression: WhereBetween,
+    ) -> WhereBetween:
+        self._check_fields_in_join(
+            (
+                expression.field,
+                expression.left_comparison_value,
+                expression.right_comparison_value,
+            ),
+        )
 
         is_left_to_change: bool = (
             expression.field._field_data.from_table._table_name()
@@ -83,10 +132,55 @@ class JoinStatement(BaseStatement):
                 expression.field._with_prefix(self._alias)
             )
             return expression
-        else:
-            expression.comparison_value = (
-                expression.comparison_value._with_prefix(  # type: ignore
+
+        if isinstance(expression.left_comparison_value, BaseField):
+            expression.left_comparison_value = (
+                expression.left_comparison_value._with_prefix(
                     self._alias,
                 )
             )
-            return expression
+        if isinstance(expression.right_comparison_value, BaseField):
+            expression.right_comparison_value = (
+                expression.right_comparison_value._with_prefix(
+                    self._alias,
+                )
+            )
+
+        return expression
+
+    def _check_fields_in_join(
+        self: typing.Self,
+        for_checks_join_fields: tuple[typing.Any, ...],
+    ) -> None:
+        for for_checks_join_field in for_checks_join_fields:
+            if isinstance(for_checks_join_field, BaseField):
+                self._is_field_in_join(for_checks_join_field)
+
+    def _is_field_in_join(
+        self: typing.Self,
+        field: BaseField[typing.Any],
+    ) -> None:
+        is_field_from_from_table: bool = (
+           field._field_data.from_table._table_name()
+           == self._from_table._table_name()
+        )
+        if_field_from_join_table: bool = (
+            field._field_data.from_table._table_name()
+            == self._join_table._table_name()
+        )
+
+        available_condition: bool = any(
+            (
+                is_field_from_from_table,
+                if_field_from_join_table,
+            )
+        )
+        if not available_condition:
+            raise OnJoinComparisonError(
+                f"It's impossible to use field from table "
+                f"`{field._field_data.from_table}` "
+                f"in join with FROM table "
+                f"`{self._from_table}` "
+                f"and with field JOIN table `{self._join_table}`"
+            )
+        return None

@@ -376,8 +376,8 @@ class BaseStringField(Field[str]):
 
     def between(
         self: typing.Self,
-        left_value: str,
-        right_value: str,
+        left_value: str | Field[FieldType],
+        right_value: str | Field[FieldType],
     ) -> WhereBetween:
         return super().between(left_value, right_value)
 

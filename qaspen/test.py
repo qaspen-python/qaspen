@@ -22,17 +22,28 @@ class Profile(BaseTable, table_name="profiles"):
 
 
 class Video(BaseTable, table_name="videos"):
-    profile: VarCharField = VarCharField(default="memeLord")
+    user: VarCharField = VarCharField(default="Sasha")
     video_id: VarCharField = VarCharField(default="1")
 
 
 print(
     User.select(User.all_fields())
     .join(
-        fields_to_join=[Profile.nickname, Profile.description],
-        based_on=(
-            (User.name == Profile.user)
+        fields_to_join=[
+            Profile.nickname,
+        ],
+        based_on=User.name.between(
+            left_value=User.name,
+            right_value=Profile.user,
         )
+    )
+    .where(
+        User.description == "Meme"
+    )
+    .order_by(User.name)
+    .limit_offset(
+        limit=10,
+        offset=0,
     )
     .make_sql_string()
 )

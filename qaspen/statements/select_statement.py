@@ -142,7 +142,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
         if not fields_to_join:
             raise ValueError()
 
-        from_table: type[MetaTable] = (
+        join_table: type[MetaTable] = (
             fields_to_join[0]
             ._field_data
             .from_table
@@ -150,7 +150,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
 
         join_alias: str = (
             f"{self._from_table._table_name()}_"
-            f"{from_table._table_name()}_"
+            f"{join_table._table_name()}_"
             f"{len(self._join_statements) + 1}"
         )
 
@@ -162,7 +162,8 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self._join_statements.append(
             JoinStatement(
                 fields=join_fields,
-                join_table=from_table,
+                join_table=join_table,
+                from_table=self._from_table,
                 on=based_on,
                 alias=join_alias,
             )
