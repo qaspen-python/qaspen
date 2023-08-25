@@ -94,16 +94,16 @@ class JoinStatement(BaseStatement):
         is_right_to_change: typing.Final[bool] = all(
             (
                 isinstance(expression.field, BaseField),
-                expression.comparison_value._field_data.from_table._table_name()
+                (
+                    expression.  # type: ignore[union-attr]
+                    comparison_value.
+                    _field_data.
+                    from_table.
+                    _table_name()
+                )
                 == self._join_table._table_name()
             ),
         )
-
-        print("-"*50)
-        print(self._join_table)
-        print(expression.comparison_value._field_data.from_table._table_name())
-        print(self._join_table._table_name())
-        print("-"*50)
 
         if if_left_to_change:
             expression.field = (
