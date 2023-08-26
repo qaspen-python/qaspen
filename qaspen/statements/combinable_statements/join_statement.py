@@ -9,6 +9,7 @@ from qaspen.statements.combinable_statements.combinations import (
 from qaspen.statements.combinable_statements.where_statement import (
     Where,
     WhereBetween,
+    WhereExclusive,
 )
 
 from qaspen.statements.statement import BaseStatement
@@ -70,6 +71,11 @@ class JoinStatement(BaseStatement):
                 expression.right_expression,
             )
 
+        if isinstance(expression, WhereExclusive):
+            self._change_combinable_expression(
+                expression.comparison,
+            )
+
         return expression
 
     def _change_where_combination(
@@ -91,17 +97,11 @@ class JoinStatement(BaseStatement):
             ),
         )
 
-        is_right_to_change: typing.Final[bool] = all(
-            (
-                isinstance(expression.field, BaseField),
-                (
-                    expression.  # type: ignore[union-attr]
-                    comparison_value.
-                    _field_data.
-                    from_table.
-                    _table_name()
-                ) == self._join_table._table_name()
-            ),
+        is_right_to_change: typing.Final[bool] = (
+            isinstance(expression.comparison_value, BaseField)
+            and
+            (expression.comparison_value.table_name)
+            == self._join_table._table_name()
         )
 
         if if_left_to_change:
@@ -129,24 +129,38 @@ class JoinStatement(BaseStatement):
             ),
         )
 
-        is_left_to_change: bool = (
+        is_field_to_change: bool = (
             expression.field._field_data.from_table._table_name()
             == self._join_table._table_name()
         )
 
-        if is_left_to_change:
+        if is_field_to_change:
             expression.field = (
                 expression.field._with_prefix(self._alias)
             )
             return expression
 
-        if isinstance(expression.left_comparison_value, BaseField):
+        is_left_comparison_to_change: typing.Final[bool] = (
+            isinstance(expression.left_comparison_value, BaseField)
+            and
+            expression.left_comparison_value.table_name
+            == self._join_table._table_name()
+        )
+
+        if is_left_comparison_to_change:
             expression.left_comparison_value = (
                 expression.left_comparison_value._with_prefix(
                     self._alias,
                 )
             )
-        if isinstance(expression.right_comparison_value, BaseField):
+
+        is_right_comparison_to_change: typing.Final[bool] = (
+            isinstance(expression.right_comparison_value, BaseField)
+            and
+            expression.right_comparison_value.table_name
+            == self._join_table._table_name()
+        )
+        if is_right_comparison_to_change:
             expression.right_comparison_value = (
                 expression.right_comparison_value._with_prefix(
                     self._alias,
@@ -187,7 +201,6 @@ class JoinStatement(BaseStatement):
                 f"It's impossible to use field from table "
                 f"`{field._field_data.from_table}` "
                 f"in join with FROM table "
-                f"`{self._from_table}` "
-                f"and with field JOIN table `{self._join_table}`"
+                f"`{self._from_table}` and JOIN table `{self._join_table}`"
             )
         return None

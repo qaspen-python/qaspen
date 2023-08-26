@@ -12,6 +12,7 @@ from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression
 )
 from qaspen.statements.statement import BaseStatement
+from qaspen.utils.fields_utils import transform_value_to_sql
 
 
 class EmptyValue:
@@ -46,11 +47,11 @@ class Where(CombinableExpression):
             if isinstance(self.comparison_value, SQLSelectable):
                 compare_value: str = self.comparison_value.make_sql_string()
             else:
-                compare_value = f"'{self.comparison_value}'"
+                compare_value = transform_value_to_sql(self.comparison_value)
         elif self.comparison_values is not EMPTY_VALUE:
             compare_value = ", ".join(
                 [
-                    f"'{comparison_value}'"
+                    transform_value_to_sql(comparison_value)
                     for comparison_value
                     in self.comparison_values  # type: ignore[union-attr]
                 ]
@@ -81,13 +82,13 @@ class WhereBetween(CombinableExpression):
         left_value: str = (
             self.left_comparison_value.field_name_with_prefix
             if isinstance(self.left_comparison_value, BaseField)
-            else self.left_comparison_value
+            else transform_value_to_sql(self.left_comparison_value)
         )
 
         right_value: str = (
             self.right_comparison_value.field_name_with_prefix
             if isinstance(self.right_comparison_value, BaseField)
-            else self.right_comparison_value
+            else transform_value_to_sql(self.right_comparison_value)
         )
 
         return WhereQueryString(

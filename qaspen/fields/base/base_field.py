@@ -47,6 +47,10 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         return field
 
     @property
+    def table_name(self: typing.Self) -> str:
+        return self._field_data.from_table._table_name()
+
+    @property
     def field_name_with_prefix(self: typing.Self) -> str:
         prefix: str = (
             self._field_data.prefix

@@ -33,8 +33,15 @@ print(
             Profile.nickname,
         ],
         based_on=(
-            (User.name == Profile.user)
-            & (User.surname == Profile.nickname)
+            WhereExclusive(
+                (User.name == Profile.user)
+                & (User.surname == Profile.nickname)
+            )
+            |
+            WhereExclusive(
+                (Profile.description == User.description)
+                & (User.surname == Profile.nickname)
+            )
         )
     )
     .where(
@@ -47,3 +54,14 @@ print(
     )
     .make_sql_string()
 )
+
+# print(
+#     User.select(User.all_fields())
+#     .where(
+#         User.name.between(
+#             User.name,
+#             Profile.description,
+#         )
+#     )
+#     .make_sql_string()
+# )
