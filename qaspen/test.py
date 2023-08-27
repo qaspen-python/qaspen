@@ -59,7 +59,13 @@ video_join = Join(
     ],
     from_table=User,
     join_table=Video,
-    on=profile_join.profile_id == Video.profile_id,
+    on=(
+        WhereExclusive(
+            (profile_join.profile_id == Video.profile_id)
+            & (profile_join.profile_id == User.user_id)
+        )
+        | (profile_join.profile_id == Profile.profile_id)
+    ),
     join_alias="video_join",
 )
 

@@ -224,8 +224,11 @@ class Join(CombinableExpression):
         field_from_join: Field[typing.Any] = self._join_table.get_field(
             field_name=field_name,
         )
-        field_from_join._field_data.in_join = True
-        return field_from_join._with_prefix(self._alias)
+        field_from_join_with_alias: Field[
+            typing.Any,
+        ] = field_from_join._with_prefix(self._alias)
+        field_from_join_with_alias._field_data.in_join = True
+        return field_from_join_with_alias
 
     def _process_select_fields(
         self: typing.Self,
