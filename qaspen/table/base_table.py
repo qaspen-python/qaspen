@@ -10,8 +10,10 @@ class BaseTable(MetaTable):
     @classmethod
     def select(
         cls: type["BaseTable"],
-        select_fields: typing.Iterable[BaseField[typing.Any]],
+        select_fields: typing.Iterable[BaseField[typing.Any]] | None = None,
     ) -> SelectStatement:
+        if not select_fields:
+            select_fields = cls.all_fields()
         select_statement: typing.Final[SelectStatement] = SelectStatement(
             select_fields=select_fields,
             from_table=cls,

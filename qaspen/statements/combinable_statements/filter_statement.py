@@ -22,7 +22,7 @@ class EmptyValue:
 EMPTY_VALUE = EmptyValue()
 
 
-class Where(CombinableExpression):
+class Filter(CombinableExpression):
     def __init__(
         self: typing.Self,
         field: BaseField[typing.Any],
@@ -43,9 +43,10 @@ class Where(CombinableExpression):
         ] = comparison_values
 
     def querystring(self: typing.Self) -> WhereQueryString:
+        compare_value: str = ""
         if self.comparison_value is not EMPTY_VALUE:
             if isinstance(self.comparison_value, SQLSelectable):
-                compare_value: str = self.comparison_value.make_sql_string()
+                compare_value = self.comparison_value.make_sql_string()
             else:
                 compare_value = transform_value_to_sql(self.comparison_value)
         elif self.comparison_values is not EMPTY_VALUE:
@@ -64,7 +65,7 @@ class Where(CombinableExpression):
         )
 
 
-class WhereBetween(CombinableExpression):
+class FilterBetween(CombinableExpression):
     def __init__(
         self: typing.Self,
         field: BaseField[typing.Any],
@@ -99,7 +100,7 @@ class WhereBetween(CombinableExpression):
         )
 
 
-class WhereExclusive(CombinableExpression):
+class FilterExclusive(CombinableExpression):
 
     def __init__(
         self: typing.Self,
@@ -117,8 +118,8 @@ class WhereExclusive(CombinableExpression):
 
 
 @dataclasses.dataclass
-class WhereStatement(BaseStatement):
-    where_expressions: list[CombinableExpression] = dataclasses.field(
+class FilterStatement(BaseStatement):
+    filter_expressions: list[CombinableExpression] = dataclasses.field(
         default_factory=list,
     )
 
@@ -126,23 +127,23 @@ class WhereStatement(BaseStatement):
         self: typing.Self,
         *where_arguments: CombinableExpression,
     ) -> typing.Self:
-        self.where_expressions.extend(
+        self.filter_expressions.extend(
             where_arguments,
         )
         return self
 
     def querystring(self: typing.Self) -> QueryString:
-        if not self.where_expressions:
+        if not self.filter_expressions:
             return QueryString.empty()
         final_where: QueryString = functools.reduce(
             operator.add,
             [
                 WhereQueryString(  # TODO: find another way to concatenate.
-                    *where_expression.querystring().template_arguments,
-                    sql_template=where_expression.querystring().sql_template,
+                    *filter_expression.querystring().template_arguments,
+                    sql_template=filter_expression.querystring().sql_template,
                 )
-                for where_expression
-                in self.where_expressions
+                for filter_expression
+                in self.filter_expressions
             ],
         )
 

@@ -1,5 +1,6 @@
 import typing
 from qaspen.base.sql_base import SQLSelectable
+from qaspen.exceptions import OnJoinFieldsError
 from qaspen.fields.base.base_field import BaseField
 from qaspen.fields.fields import Field
 from qaspen.querystring.querystring import QueryString
@@ -17,8 +18,8 @@ from qaspen.statements.combinable_statements.order_by_statement import (
     OrderBy,
     OrderByStatement,
 )
-from qaspen.statements.combinable_statements.where_statement import (
-    WhereStatement,
+from qaspen.statements.combinable_statements.filter_statement import (
+    FilterStatement,
 )
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 from qaspen.table.meta_table import MetaTable
@@ -47,7 +48,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
         ] = select_fields
         self.exist_prefixes: typing.Final[list[str]] = []
 
-        self._where_statement: WhereStatement = WhereStatement()
+        self._filter_statement: FilterStatement = FilterStatement()
         self._limit_statement: LimitStatement = LimitStatement()
         self._offset_statement: OffsetStatement = OffsetStatement()
         self._order_by_statement: OrderByStatement = OrderByStatement()
@@ -57,7 +58,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self: typing.Self,
         *where_arguments: CombinableExpression,
     ) -> typing.Self:
-        self._where_statement.where(*where_arguments)
+        self._filter_statement.where(*where_arguments)
         return self
 
     def limit(
@@ -142,7 +143,9 @@ class SelectStatement(BaseStatement, SQLSelectable):
         based_on: CombinableExpression,
     ) -> typing.Self:
         if not fields:
-            raise ValueError()
+            raise OnJoinFieldsError(
+                "You need to specify at least one field to join.",
+            )
 
         join_table: type[MetaTable] = (
             fields[0]
@@ -185,7 +188,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
             sql_template="SELECT {} FROM {}",
         )
         sql_querystring += self._join_statement.querystring()
-        sql_querystring += self._where_statement.querystring()
+        sql_querystring += self._filter_statement.querystring()
         sql_querystring += self._order_by_statement.querystring()
         sql_querystring += self._limit_statement.querystring()
         sql_querystring += self._offset_statement.querystring()

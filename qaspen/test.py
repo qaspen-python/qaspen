@@ -1,9 +1,9 @@
 from qaspen.fields.fields import TextField, VarCharField
 from qaspen.querystring.querystring import QueryString
-from qaspen.statements.combinable_statements.join_statement import Join, JoinStatement
+from qaspen.statements.combinable_statements.join_statement import InnerJoin, Join, JoinStatement, RightOuterJoin
 from qaspen.statements.combinable_statements.order_by_statement import OrderBy
-from qaspen.statements.combinable_statements.where_statement import (
-    WhereExclusive,
+from qaspen.statements.combinable_statements.filter_statement import (
+    FilterExclusive,
 )
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.base_table import BaseTable
@@ -26,52 +26,38 @@ class Profile(BaseTable, table_name="profiles"):
 class Video(BaseTable, table_name="videos"):
     video_id: VarCharField = VarCharField(default="1")
     profile_id: VarCharField = VarCharField(default="Sasha")
+    views_count: VarCharField = VarCharField(default="20")
 
 
-# statement1 = (
-#     User.select(User.all_fields())
-#     .join_on(
-#         fields=[
-#             Profile.profile_id,
-#             Profile.nickname,
-#         ],
-#         based_on=Profile.user_id == User.user_id,
-#     )
-# )
+print(
+    User.select([User.name]).querystring()
+)
 
-# print(statement1.querystring())
+statement = User.select()
 
-
-statement2 = User.select(User.all_fields())
 profile_join = Join(
-    fields=[
-        Profile.profile_id,
-        Profile.nickname,
-    ],
+    fields=[Profile.nickname, Profile.description],
     from_table=User,
     join_table=Profile,
     on=Profile.user_id == User.user_id,
     join_alias="profile_join",
 )
-video_join = Join(
-    fields=[
-        Video.video_id,
-    ],
+
+video_join = InnerJoin(
+    fields=[Video.views_count],
     from_table=User,
     join_table=Video,
-    on=(
-        WhereExclusive(
-            (profile_join.profile_id == Video.profile_id)
-            & (profile_join.profile_id == User.user_id)
-        )
-        | (profile_join.profile_id == Profile.profile_id)
-    ),
+    on=profile_join.profile_id == Video.profile_id,
     join_alias="video_join",
 )
 
-statement2.add_join(
+statement.add_join(
     profile_join,
     video_join,
 )
 
-print(statement2.querystring())
+statement.where(
+    video_join.views_count > "100",
+)
+
+print(statement.querystring())

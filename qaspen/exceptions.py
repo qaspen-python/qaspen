@@ -22,5 +22,13 @@ class WhereComparisonError(FieldBaseError):
     pass
 
 
-class OnJoinComparisonError(FieldBaseError):
+class OnJoinError(QaspenBaseError):
+    pass
+
+
+class OnJoinComparisonError(OnJoinError):
+    pass
+
+
+class OnJoinFieldsError(OnJoinError):
     pass

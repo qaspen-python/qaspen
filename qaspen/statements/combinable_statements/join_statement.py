@@ -9,10 +9,10 @@ from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
     ExpressionsCombination
 )
-from qaspen.statements.combinable_statements.where_statement import (
-    Where,
-    WhereBetween,
-    WhereExclusive,
+from qaspen.statements.combinable_statements.filter_statement import (
+    Filter,
+    FilterBetween,
+    FilterExclusive,
 )
 
 from qaspen.statements.statement import BaseStatement
@@ -60,11 +60,11 @@ class Join(CombinableExpression):
         expression: CombinableExpression,
     ) -> CombinableExpression:
         if not isinstance(expression, ExpressionsCombination):
-            if isinstance(expression, Where):
+            if isinstance(expression, Filter):
                 return self._change_where_combination(
                     expression=expression,
                 )
-            if isinstance(expression, WhereBetween):
+            if isinstance(expression, FilterBetween):
                 return self._change_where_between_combination(
                     expression=expression,
                 )
@@ -77,7 +77,7 @@ class Join(CombinableExpression):
                 expression.right_expression,
             )
 
-        if isinstance(expression, WhereExclusive):
+        if isinstance(expression, FilterExclusive):
             self._change_combinable_expression(
                 expression.comparison,
             )
@@ -86,8 +86,8 @@ class Join(CombinableExpression):
 
     def _change_where_combination(
         self: typing.Self,
-        expression: Where,
-    ) -> Where:
+        expression: Filter,
+    ) -> Filter:
         self._check_fields_in_join(
             (
                 expression.field,
@@ -127,8 +127,8 @@ class Join(CombinableExpression):
 
     def _change_where_between_combination(
         self: typing.Self,
-        expression: WhereBetween,
-    ) -> WhereBetween:
+        expression: FilterBetween,
+    ) -> FilterBetween:
         self._check_fields_in_join(
             (
                 expression.field,
@@ -243,6 +243,22 @@ class Join(CombinableExpression):
 
     def _join_fields(self: typing.Self) -> list[Field[typing.Any]]:
         return self._fields
+
+
+class InnerJoin(Join):
+    join_type: str = "INNER JOIN"
+
+
+class LeftOuterJoin(Join):
+    join_type: str = "LEFT OUTER JOIN"
+
+
+class RightOuterJoin(Join):
+    join_type: str = "RIGHT OUTER JOIN"
+
+
+class FullOuterJoin(Join):
+    join_type: str = "FULL OUTER JOIN"
 
 
 @dataclasses.dataclass

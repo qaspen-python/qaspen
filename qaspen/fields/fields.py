@@ -11,9 +11,9 @@ from qaspen.fields import operators
 from qaspen.fields.base.base_field import BaseField, FieldData, FieldType
 
 from qaspen.fields.utils import validate_max_length
-from qaspen.statements.combinable_statements.where_statement import (
-    Where,
-    WhereBetween,
+from qaspen.statements.combinable_statements.filter_statement import (
+    Filter,
+    FilterBetween,
 )
 
 
@@ -77,7 +77,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         self: typing.Self,
         *comparison_values: typing.Any,
         subquery: SQLSelectable | None = None,
-    ) -> Where:
+    ) -> Filter:
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
                 comparison_value,
@@ -107,13 +107,13 @@ class Field(BaseField[FieldType], SQLSelectable):
         elif comparison_values:
             where_parameters["comparison_values"] = comparison_values
 
-        return Where(**where_parameters)
+        return Filter(**where_parameters)
 
     def not_contains(
         self: typing.Self,
         *comparison_values: typing.Any,
         subquery: SQLSelectable | None = None,
-    ) -> Where:
+    ) -> Filter:
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
                 comparison_value,
@@ -136,13 +136,13 @@ class Field(BaseField[FieldType], SQLSelectable):
         elif comparison_values:
             where_parameters["comparison_values"] = comparison_values
 
-        return Where(**where_parameters)
+        return Filter(**where_parameters)
 
     def between(
         self: typing.Self,
         left_value: typing.Any,
         right_value: typing.Any,
-    ) -> WhereBetween:
+    ) -> FilterBetween:
         is_valid_type: typing.Final[bool] = all(
             (
                 isinstance(
@@ -156,7 +156,7 @@ class Field(BaseField[FieldType], SQLSelectable):
             )
         )
         if is_valid_type:
-            return WhereBetween(
+            return FilterBetween(
                 field=self,
                 operator=operators.BetweenOperator,
                 left_comparison_value=left_value,
@@ -172,14 +172,14 @@ class Field(BaseField[FieldType], SQLSelectable):
     def __eq__(  # type: ignore[override]
         self: typing.Self,
         comparison_value: typing.Any
-    ) -> Where:
+    ) -> Filter:
         if comparison_value is None:
-            return Where(
+            return Filter(
                 field=self,
                 operator=operators.IsNullOperator,
             )
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.EqualOperator,
@@ -193,20 +193,20 @@ class Field(BaseField[FieldType], SQLSelectable):
     def eq(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         return self.__eq__(comparison_value)
 
     def __ne__(  # type: ignore[override]
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         if comparison_value is None:
-            return Where(
+            return Filter(
                 field=self,
                 operator=operators.IsNotNullOperator,
             )
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.NotEqualOperator,
@@ -220,15 +220,15 @@ class Field(BaseField[FieldType], SQLSelectable):
     def neq(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         return self.__ne__(comparison_value)
 
     def __gt__(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.GreaterOperator,
@@ -242,15 +242,15 @@ class Field(BaseField[FieldType], SQLSelectable):
     def gt(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         return self.__gt__(comparison_value)
 
     def __ge__(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.GreaterEqualOperator,
@@ -264,15 +264,15 @@ class Field(BaseField[FieldType], SQLSelectable):
     def gte(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         return self.__ge__(comparison_value)
 
     def __lt__(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.LessOperator,
@@ -286,15 +286,15 @@ class Field(BaseField[FieldType], SQLSelectable):
     def lt(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         return self.__lt__(comparison_value)
 
     def __le__(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.LessEqualOperator,
@@ -308,7 +308,7 @@ class Field(BaseField[FieldType], SQLSelectable):
     def lte(
         self: typing.Self,
         comparison_value: typing.Any,
-    ) -> Where:
+    ) -> Filter:
         return self.__le__(comparison_value)
 
 
@@ -364,7 +364,7 @@ class BaseStringField(Field[str]):
         self: typing.Self,
         *comparison_values: str,
         subquery: SQLSelectable | None = None,
-    ) -> Where:
+    ) -> Filter:
         return super().contains(
             *comparison_values,
             subquery=subquery,
@@ -374,7 +374,7 @@ class BaseStringField(Field[str]):
         self: typing.Self,
         *comparison_values: str,
         subquery: SQLSelectable | None = None,
-    ) -> Where:
+    ) -> Filter:
         return super().not_contains(
             *comparison_values,
             subquery=subquery,
@@ -384,87 +384,87 @@ class BaseStringField(Field[str]):
         self: typing.Self,
         left_value: str | Field[FieldType],
         right_value: str | Field[FieldType],
-    ) -> WhereBetween:
+    ) -> FilterBetween:
         return super().between(left_value, right_value)
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
         comparison_value: str | Field[FieldType],
-    ) -> Where:
+    ) -> Filter:
         return super().__eq__(comparison_value)
 
     def eq(
         self: typing.Self,
         comparison_value: str | Field[FieldType],
-    ) -> Where:
+    ) -> Filter:
         return super().eq(comparison_value)
 
     def __ne__(  # type: ignore[override]
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().__ne__(comparison_value)
 
     def neq(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().neq(comparison_value)
 
     def __gt__(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().__gt__(comparison_value)
 
     def gt(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().gt(comparison_value)
 
     def __ge__(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().__ge__(comparison_value)
 
     def gte(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().gte(comparison_value)
 
     def __lt__(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().__lt__(comparison_value)
 
     def lt(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().lt(comparison_value)
 
     def __le__(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().__le__(comparison_value)
 
     def lte(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         return super().lte(comparison_value)
 
     def like(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.LikeOperator,
@@ -478,9 +478,9 @@ class BaseStringField(Field[str]):
     def not_like(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.NotLikeOperator,
@@ -494,9 +494,9 @@ class BaseStringField(Field[str]):
     def ilike(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.ILikeOperator,
@@ -510,9 +510,9 @@ class BaseStringField(Field[str]):
     def not_ilike(
         self: typing.Self,
         comparison_value: str,
-    ) -> Where:
+    ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
-            return Where(
+            return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.NotILikeOperator,
