@@ -8,8 +8,13 @@ from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
 from qaspen.statements.combinable_statements.join_statement import (
+    FullOuterJoin,
+    InnerJoin,
     Join,
-    JoinStatement
+    JoinStatement,
+    JoinType,
+    LeftOuterJoin,
+    RightOuterJoin
 )
 from qaspen.statements.statement import BaseStatement
 
@@ -137,14 +142,15 @@ class SelectStatement(BaseStatement, SQLSelectable):
             select_statement=self,
         )
 
-    def join_on(
+    def _join_on(
         self: typing.Self,
-        fields: list[Field[typing.Any]],
         based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+        join_type: JoinType,
     ) -> typing.Self:
         if not fields:
             raise OnJoinFieldsError(
-                "You need to specify at least one field to join.",
+                "You must specify fields to get from JOIN",
             )
 
         join_table: type[MetaTable] = (
@@ -158,8 +164,131 @@ class SelectStatement(BaseStatement, SQLSelectable):
             join_table=join_table,
             from_table=self._from_table,
             on=based_on,
+            join_type=join_type,
         )
         return self
+
+    def join_on(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> typing.Self:
+        return self._join_on(
+            based_on=based_on,
+            fields=fields,
+            join_type=JoinType.JOIN,
+        )
+
+    def inner_join_on(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> typing.Self:
+        return self._join_on(
+            based_on=based_on,
+            fields=fields,
+            join_type=JoinType.INNERJOIN,
+        )
+
+    def left_join_on(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> typing.Self:
+        return self._join_on(
+            based_on=based_on,
+            fields=fields,
+            join_type=JoinType.LEFTJOIN,
+        )
+
+    def right_join_on(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> typing.Self:
+        return self._join_on(
+            based_on=based_on,
+            fields=fields,
+            join_type=JoinType.RIGHTJOIN,
+        )
+
+    def full_outer_join_on(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> typing.Self:
+        return self._join_on(
+            based_on=based_on,
+            fields=fields,
+            join_type=JoinType.FULLOUTERJOIN,
+        )
+
+    def join_on_with_return(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> Join:
+        self.join_on(
+            based_on=based_on,
+            fields=fields,
+        )
+        return self._join_statement.join_expressions[-1]
+
+    def inner_join_on_with_return(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> InnerJoin:
+        self.inner_join_on(
+            based_on=based_on,
+            fields=fields,
+        )
+        return typing.cast(
+            InnerJoin,
+            self._join_statement.join_expressions[-1],
+        )
+
+    def left_join_on_with_return(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> LeftOuterJoin:
+        self.left_join_on(
+            based_on=based_on,
+            fields=fields,
+        )
+        return typing.cast(
+            LeftOuterJoin,
+            self._join_statement.join_expressions[-1],
+        )
+
+    def right_join_on_with_return(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> RightOuterJoin:
+        self.right_join_on(
+            based_on=based_on,
+            fields=fields,
+        )
+        return typing.cast(
+            RightOuterJoin,
+            self._join_statement.join_expressions[-1],
+        )
+
+    def full_outer_join_on_with_return(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+    ) -> FullOuterJoin:
+        self.full_outer_join_on(
+            based_on=based_on,
+            fields=fields,
+        )
+        return typing.cast(
+            FullOuterJoin,
+            self._join_statement.join_expressions[-1],
+        )
 
     def add_join(
         self: typing.Self,

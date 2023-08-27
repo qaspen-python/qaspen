@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 import functools
 import operator
 import typing
@@ -250,15 +251,23 @@ class InnerJoin(Join):
 
 
 class LeftOuterJoin(Join):
-    join_type: str = "LEFT OUTER JOIN"
+    join_type: str = "LEFT JOIN"
 
 
 class RightOuterJoin(Join):
-    join_type: str = "RIGHT OUTER JOIN"
+    join_type: str = "RIGHT JOIN"
 
 
 class FullOuterJoin(Join):
     join_type: str = "FULL OUTER JOIN"
+
+
+class JoinType(enum.Enum):
+    JOIN: type[Join] = Join
+    INNERJOIN: type[InnerJoin] = InnerJoin
+    LEFTJOIN: type[LeftOuterJoin] = LeftOuterJoin
+    RIGHTJOIN: type[RightOuterJoin] = RightOuterJoin
+    FULLOUTERJOIN: type[FullOuterJoin] = FullOuterJoin
 
 
 @dataclasses.dataclass
@@ -277,9 +286,10 @@ class JoinStatement(BaseStatement):
         join_table: type[MetaTable],
         from_table: type[MetaTable],
         on: CombinableExpression,
+        join_type: JoinType,
     ) -> None:
         self.join_expressions.append(
-            Join(
+            join_type.value(
                 join_alias=self.__create_new_alias(),
                 fields=fields,
                 join_table=join_table,
@@ -290,11 +300,12 @@ class JoinStatement(BaseStatement):
 
     def add_join(
         self: typing.Self,
-        *join: Join,
+        *join_expressions: Join,
     ) -> None:
-        self.join_expressions.extend(
-            join,
-        )
+        for join_expression in join_expressions:
+            if not join_expression.join_type:
+                join_expression.join_type = self.__create_new_alias()
+            self.join_expressions.append(join_expression)
         return None
 
     def querystring(self: typing.Self) -> QueryString:
@@ -324,6 +335,6 @@ class JoinStatement(BaseStatement):
     ) -> str:
         if not self.used_aliases:
             self.used_aliases.append(1)
-            return "a1"
+            return "A1"
         alias_number: typing.Final[int] = self.used_aliases[-1] + 1
-        return f"a{alias_number}"
+        return f"A{alias_number}"
