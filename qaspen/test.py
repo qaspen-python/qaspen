@@ -1,6 +1,6 @@
 from qaspen.fields.fields import TextField, VarCharField
 from qaspen.querystring.querystring import QueryString
-from qaspen.statements.combinable_statements.join_statement import JoinStatement
+from qaspen.statements.combinable_statements.join_statement import Join, JoinStatement
 from qaspen.statements.combinable_statements.order_by_statement import OrderBy
 from qaspen.statements.combinable_statements.where_statement import (
     WhereExclusive,
@@ -10,58 +10,62 @@ from qaspen.table.base_table import BaseTable
 
 
 class User(BaseTable, table_name="users"):
+    user_id: VarCharField = VarCharField(default="1")
     name: VarCharField = VarCharField(default="Sasha")
     surname: VarCharField = VarCharField(default="Kiselev")
     description: TextField = TextField(default="Zopa")
 
 
 class Profile(BaseTable, table_name="profiles"):
-    user: VarCharField = VarCharField(default="nana")
+    profile_id: VarCharField = VarCharField(default="1")
+    user_id: VarCharField = VarCharField(default="1")
     nickname: VarCharField = VarCharField(default="memeLord")
     description: TextField = TextField(default="MemeDesc")
 
 
 class Video(BaseTable, table_name="videos"):
-    user: VarCharField = VarCharField(default="Sasha")
     video_id: VarCharField = VarCharField(default="1")
+    profile_id: VarCharField = VarCharField(default="Sasha")
 
 
-print(
-    User.select(User.all_fields())
-    .join(
-        fields_to_join=[
-            Profile.nickname,
-        ],
-        based_on=(
-            WhereExclusive(
-                (User.name == Profile.user)
-                & (User.surname == Profile.nickname)
-            )
-            |
-            WhereExclusive(
-                (Profile.description == User.description)
-                & (User.surname == Profile.nickname)
-            )
-        )
-    )
-    .where(
-        User.description == "Meme"
-    )
-    .order_by(User.name)
-    .limit_offset(
-        limit=10,
-        offset=0,
-    )
-    .make_sql_string()
+# statement1 = (
+#     User.select(User.all_fields())
+#     .join_on(
+#         fields=[
+#             Profile.profile_id,
+#             Profile.nickname,
+#         ],
+#         based_on=Profile.user_id == User.user_id,
+#     )
+# )
+
+# print(statement1.querystring())
+
+
+statement2 = User.select(User.all_fields())
+profile_join = Join(
+    fields=[
+        Profile.profile_id,
+        Profile.nickname,
+    ],
+    from_table=User,
+    join_table=Profile,
+    on=Profile.user_id == User.user_id,
+    join_alias="profile_join",
+)
+video_join = Join(
+    fields=[
+        Video.video_id,
+    ],
+    from_table=User,
+    join_table=Video,
+    on=profile_join.profile_id == Video.profile_id,
+    join_alias="video_join",
 )
 
-# print(
-#     User.select(User.all_fields())
-#     .where(
-#         User.name.between(
-#             User.name,
-#             Profile.description,
-#         )
-#     )
-#     .make_sql_string()
-# )
+statement2.add_join(
+    profile_join,
+    video_join,
+)
+
+print(statement2.querystring())

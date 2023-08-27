@@ -1,3 +1,4 @@
+import copy
 import typing
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.exceptions import (
@@ -60,6 +61,11 @@ class Field(BaseField[FieldType], SQLSelectable):
             f"{self._field_name} {self._build_fields_sql_type()} "
             f"{self._field_null} {self._field_default}"
         )
+
+    def _with_prefix(self: typing.Self, prefix: str) -> "Field[FieldType]":
+        field: Field[FieldType] = copy.deepcopy(self)
+        field._field_data.prefix = prefix
+        return field
 
     def make_sql_string(self: typing.Self) -> str:
         return self.field_name_with_prefix

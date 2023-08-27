@@ -21,6 +21,7 @@ class FieldData(typing.Generic[FieldType]):
     field_value: FieldType | None = None
     default: FieldType | None = None
     prefix: str = ""
+    in_join: bool = False
 
 
 class BaseField(abc.ABC, typing.Generic[FieldType]):
@@ -41,14 +42,18 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
     ) -> str:
         ...
 
+    @property
+    def table_name(self: typing.Self) -> str:
+        return self._field_data.from_table._table_name()
+
     def _with_prefix(self: typing.Self, prefix: str) -> "BaseField[FieldType]":
-        field = copy.deepcopy(self)
+        field: BaseField[FieldType] = copy.deepcopy(self)
         field._field_data.prefix = prefix
         return field
 
     @property
-    def table_name(self: typing.Self) -> str:
-        return self._field_data.from_table._table_name()
+    def field_name(self: typing.Self) -> str:
+        return self._field_data.field_name
 
     @property
     def field_name_with_prefix(self: typing.Self) -> str:

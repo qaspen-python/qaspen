@@ -2,6 +2,7 @@ import dataclasses
 import typing
 
 from qaspen.fields.base.base_field import BaseField
+from qaspen.fields.fields import Field
 
 
 @dataclasses.dataclass
@@ -46,14 +47,33 @@ class MetaTable:
     def __init__(self: typing.Self, **fields_values: typing.Any) -> None:
         for table_field in self._table_meta.table_fields:
             new_field_value: typing.Any | None = fields_values.get(
-                table_field.field_name_with_prefix,
+                table_field.field_name,
             )
             if new_field_value:
                 setattr(
                     self,
-                    table_field.field_name_with_prefix,
+                    table_field.field_name,
                     new_field_value,
                 )
+
+    @classmethod
+    def get_field(
+        cls: type["MetaTable"],
+        field_name: str,
+    ) -> Field[typing.Any]:
+        try:
+            return typing.cast(
+                Field[typing.Any],
+                cls.__dict__[field_name],
+            )
+        except LookupError:
+            raise AttributeError(
+                f"Table `{cls.__name__}` doesn't have `{field_name}` field",
+            )
+    # @classmethod
+    # def __getattr__(cls: type["MetaTable"], name: str) -> None:
+    #     print(type(cls.__dict__[name]))
+    #     print(123, name)
 
     @classmethod
     def _table_name(cls: type["MetaTable"]) -> str:
@@ -71,6 +91,6 @@ class MetaTable:
         ]
 
         for table_field in table_fields:
-            setattr(cls, table_field.field_name_with_prefix, table_field)
+            setattr(cls, table_field.field_name, table_field)
 
         return table_fields
