@@ -4,13 +4,15 @@ from qaspen.base.sql_base import SQLSelectable
 from qaspen.exceptions import (
     FieldComparisonError,
     FieldDeclarationError,
-    WhereComparisonError,
+    FilterComparisonError,
 )
 from qaspen.fields import operators
 
 from qaspen.fields.base.base_field import BaseField, FieldData, FieldType
 
 from qaspen.fields.utils import validate_max_length
+from qaspen.operators import AnyOperator
+from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
     FilterBetween,
@@ -54,30 +56,18 @@ class Field(BaseField[FieldType], SQLSelectable):
             default=default,
         )
 
-    def _make_field_create_statement(
-        self: typing.Self,
-    ) -> str:
-        return (
-            f"{self._field_name} {self._build_fields_sql_type()} "
-            f"{self._field_null} {self._field_default}"
-        )
-
-    def _with_prefix(self: typing.Self, prefix: str) -> "Field[FieldType]":
-        field: Field[FieldType] = copy.deepcopy(self)
-        field._field_data.prefix = prefix
-        return field
-
-    def make_sql_string(self: typing.Self) -> str:
-        return self.field_name_with_prefix
-
-    def __str__(self: typing.Self) -> str:
-        return str(self._field_value)
-
     def contains(
         self: typing.Self,
         *comparison_values: typing.Any,
         subquery: SQLSelectable | None = None,
     ) -> Filter:
+        if subquery and comparison_values:
+            raise FilterComparisonError(
+                "It's not possible to specify subquery "
+                "with positional arguments in `contains` method. "
+                "Please choose either subquery or positional arguments."
+            )
+
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
                 comparison_value,
@@ -89,13 +79,6 @@ class Field(BaseField[FieldType], SQLSelectable):
                     f"to compare {self.__class__.__name__} "
                     f"and {type(comparison_value)}"
                 )
-
-        if subquery and comparison_values:
-            raise WhereComparisonError(
-                "It's not possible to specify subquery "
-                "with positional arguments in `contains` method. "
-                "Please choose either subquery or positional arguments."
-            )
 
         where_parameters: dict[str, typing.Any] = {
             "field": self,
@@ -114,6 +97,13 @@ class Field(BaseField[FieldType], SQLSelectable):
         *comparison_values: typing.Any,
         subquery: SQLSelectable | None = None,
     ) -> Filter:
+        if subquery and comparison_values:
+            raise FilterComparisonError(
+                "It's not possible to specify subquery "
+                "with positional arguments in `not_contains` method. "
+                "Please choose either subquery or positional arguments."
+            )
+
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
                 comparison_value,
@@ -168,6 +158,31 @@ class Field(BaseField[FieldType], SQLSelectable):
             f"in `BETWEEN operator`. "
             f"You can use one of these - {self._available_comparison_types}"
         )
+
+    def _make_field_create_statement(
+        self: typing.Self,
+    ) -> str:
+        return (
+            f"{self._field_name} {self._build_fields_sql_type()} "
+            f"{self._field_null} {self._field_default}"
+        )
+
+    def _with_prefix(self: typing.Self, prefix: str) -> "Field[FieldType]":
+        field: Field[FieldType] = copy.deepcopy(self)
+        field._field_data.prefix = prefix
+        return field
+
+    def querystring(self: typing.Self) -> QueryString:
+        return QueryString(
+            self.field_name_with_prefix,
+            sql_template="{}",
+        )
+
+    def make_sql_string(self: typing.Self) -> str:
+        return self.field_name_with_prefix
+
+    def __str__(self: typing.Self) -> str:
+        return str(self._field_value)
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
@@ -317,6 +332,7 @@ class BaseStringField(Field[str]):
     _available_comparison_types: tuple[type, ...] = (
         str,
         Field,
+        AnyOperator,
     )
 
     @typing.overload
@@ -389,73 +405,73 @@ class BaseStringField(Field[str]):
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: str | Field[FieldType],
+        comparison_value: str | Field[FieldType] | AnyOperator,
     ) -> Filter:
         return super().__eq__(comparison_value)
 
     def eq(
         self: typing.Self,
-        comparison_value: str | Field[FieldType],
+        comparison_value: str | Field[FieldType] | AnyOperator,
     ) -> Filter:
         return super().eq(comparison_value)
 
     def __ne__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().__ne__(comparison_value)
 
     def neq(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().neq(comparison_value)
 
     def __gt__(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().__gt__(comparison_value)
 
     def gt(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().gt(comparison_value)
 
     def __ge__(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().__ge__(comparison_value)
 
     def gte(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().gte(comparison_value)
 
     def __lt__(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().__lt__(comparison_value)
 
     def lt(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().lt(comparison_value)
 
     def __le__(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().__le__(comparison_value)
 
     def lte(
         self: typing.Self,
-        comparison_value: str,
+        comparison_value: str | AnyOperator,
     ) -> Filter:
         return super().lte(comparison_value)
 

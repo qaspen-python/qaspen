@@ -18,7 +18,7 @@ class FieldComparisonError(FieldBaseError):
     pass
 
 
-class WhereComparisonError(FieldBaseError):
+class FilterComparisonError(FieldBaseError):
     pass
 
 

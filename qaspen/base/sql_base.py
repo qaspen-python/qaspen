@@ -1,8 +1,10 @@
 import abc
 import typing
 
+from qaspen.querystring.querystring import QueryString
+
 
 class SQLSelectable(abc.ABC):
     @abc.abstractmethod
-    def make_sql_string(self: typing.Self) -> str:
+    def querystring(self: typing.Self) -> QueryString:
         ...

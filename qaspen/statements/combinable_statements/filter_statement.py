@@ -46,7 +46,7 @@ class Filter(CombinableExpression):
         compare_value: str = ""
         if self.comparison_value is not EMPTY_VALUE:
             if isinstance(self.comparison_value, SQLSelectable):
-                compare_value = self.comparison_value.make_sql_string()
+                compare_value = str(self.comparison_value.querystring())
             else:
                 compare_value = transform_value_to_sql(self.comparison_value)
         elif self.comparison_values is not EMPTY_VALUE:
