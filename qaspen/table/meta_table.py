@@ -47,12 +47,12 @@ class MetaTable:
     def __init__(self: typing.Self, **fields_values: typing.Any) -> None:
         for table_field in self._table_meta.table_fields:
             new_field_value: typing.Any | None = fields_values.get(
-                table_field.field_name,
+                table_field.field_name_clear,
             )
             if new_field_value:
                 setattr(
                     self,
-                    table_field.field_name,
+                    table_field.field_name_clear,
                     new_field_value,
                 )
 
@@ -91,6 +91,6 @@ class MetaTable:
         ]
 
         for table_field in table_fields:
-            setattr(cls, table_field.field_name, table_field)
+            setattr(cls, table_field.field_name_clear, table_field)
 
         return table_fields

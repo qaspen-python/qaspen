@@ -335,6 +335,6 @@ class JoinStatement(BaseStatement):
     ) -> str:
         if not self.used_aliases:
             self.used_aliases.append(1)
-            return "A1"
+            return "J1"
         alias_number: typing.Final[int] = self.used_aliases[-1] + 1
-        return f"A{alias_number}"
+        return f"J{alias_number}"

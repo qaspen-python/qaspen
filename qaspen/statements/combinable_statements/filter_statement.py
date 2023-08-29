@@ -59,7 +59,7 @@ class Filter(CombinableExpression):
             )
 
         return WhereQueryString(
-            self.field.field_name_with_prefix,
+            self.field.field_name,
             compare_value,
             sql_template=self.operator.operation_template,
         )
@@ -81,19 +81,19 @@ class FilterBetween(CombinableExpression):
 
     def querystring(self: typing.Self) -> WhereQueryString:
         left_value: str = (
-            self.left_comparison_value.field_name_with_prefix
+            self.left_comparison_value.field_name
             if isinstance(self.left_comparison_value, BaseField)
             else transform_value_to_sql(self.left_comparison_value)
         )
 
         right_value: str = (
-            self.right_comparison_value.field_name_with_prefix
+            self.right_comparison_value.field_name
             if isinstance(self.right_comparison_value, BaseField)
             else transform_value_to_sql(self.right_comparison_value)
         )
 
         return WhereQueryString(
-            self.field.field_name_with_prefix,
+            self.field.field_name,
             left_value,
             right_value,
             sql_template=self.operator.operation_template,

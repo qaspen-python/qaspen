@@ -21,6 +21,7 @@ class FieldData(typing.Generic[FieldType]):
     field_value: FieldType | None = None
     default: FieldType | None = None
     prefix: str = ""
+    alias: str = ""
     in_join: bool = False
 
 
@@ -51,21 +52,30 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         field._field_data.prefix = prefix
         return field
 
+    def _with_alias(self: typing.Self, alias: str) -> "BaseField[FieldType]":
+        field: BaseField[FieldType] = copy.deepcopy(self)
+        field._field_data.alias = alias
+        return field
+
     @property
-    def field_name(self: typing.Self) -> str:
+    def field_name_clear(self: typing.Self) -> str:
         return self._field_data.field_name
 
     @property
-    def field_name_with_prefix(self: typing.Self) -> str:
+    def field_name(self: typing.Self) -> str:
+        """Return field name with prefix and alias."""
         prefix: str = (
             self._field_data.prefix
             or self._field_data.from_table._table_name()
         )
-        self._field_data.prefix
-        return (
+        field_name: str = (
             f"{prefix}."
             f"{self._field_data.field_name}"
         )
+        if prefix := self._field_data.alias:
+            field_name += f" AS {prefix}"
+
+        return field_name
 
     @property
     def default(self: typing.Self) -> FieldType | None:

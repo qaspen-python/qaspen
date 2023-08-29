@@ -174,12 +174,12 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def querystring(self: typing.Self) -> QueryString:
         return QueryString(
-            self.field_name_with_prefix,
+            self.field_name,
             sql_template="{}",
         )
 
     def make_sql_string(self: typing.Self) -> str:
-        return self.field_name_with_prefix
+        return self.field_name
 
     def __str__(self: typing.Self) -> str:
         return str(self._field_value)

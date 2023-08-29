@@ -28,15 +28,34 @@ class Video(BaseTable, table_name="videos"):
     video_id: VarCharField = VarCharField(default="1")
     profile_id: VarCharField = VarCharField(default="Sasha")
     views_count: VarCharField = VarCharField(default="20")
+    status: VarCharField = VarCharField()
 
+
+statement = User.select()
+profile_join = (
+    statement
+    .join_on_with_return(
+        based_on=User.user_id == Profile.user_id,
+        fields=[
+            Profile.nickname,
+            Profile.description,
+        ],
+    )
+)
+video_join = (
+    statement.join_on_with_return(
+        based_on=profile_join.profile_id == Video.profile_id,
+        fields=[
+            Video.views_count,
+            Video.status,
+        ]
+    )
+)
 
 print(
-    User
-    .select()
+    statement
     .where(
-        User.description > AllOperator(
-            User.select([User.name])
-        )
+        profile_join.nickname == "Chandr",
     )
     .querystring()
 )

@@ -58,6 +58,10 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self._offset_statement: OffsetStatement = OffsetStatement()
         self._order_by_statement: OrderByStatement = OrderByStatement()
         self._join_statement: JoinStatement = JoinStatement()
+        self._annotations: dict[
+            str,
+            BaseField[typing.Any]
+        ] = {}
 
     def where(
         self: typing.Self,
@@ -300,14 +304,12 @@ class SelectStatement(BaseStatement, SQLSelectable):
         return self
 
     def querystring(self: typing.Self) -> QueryString:
-        fields_to_select: list[BaseField[typing.Any]] = []
-        fields_to_select.extend(self._select_fields)
-        fields_to_select.extend(
-            self._join_statement._retrieve_all_join_fields(),
-        )
+        fields_to_select: list[
+            BaseField[typing.Any],
+        ] = self.prepare_select_fields()
         to_select_fields: str = ", ".join(
             [
-                field.field_name_with_prefix
+                field.field_name
                 for field in fields_to_select
             ],
         )
@@ -326,3 +328,26 @@ class SelectStatement(BaseStatement, SQLSelectable):
 
     def make_sql_string(self: typing.Self) -> str:
         return str(self.querystring())
+
+    def prepare_select_fields(
+        self: typing.Self,
+    ) -> list[BaseField[typing.Any]]:
+        final_select_fields: typing.Final[list[BaseField[typing.Any]]] = []
+
+        fields_to_select: list[BaseField[typing.Any]] = []
+        fields_to_select.extend(self._select_fields)
+        fields_to_select.extend(
+            self._join_statement._retrieve_all_join_fields(),
+        )
+
+        for field in fields_to_select:
+            if not self._annotations:
+                alias = "A1"
+            else:
+                alias = f"A{len(self._annotations) + 1}"
+
+            aliased_field = field._with_alias(alias=alias)
+            self._annotations[alias] = aliased_field
+            final_select_fields.append(aliased_field)
+
+        return final_select_fields
