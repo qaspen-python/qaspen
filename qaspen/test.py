@@ -1,5 +1,5 @@
 from qaspen.fields.fields import TextField, VarCharField
-from qaspen.operators.any import Any
+from qaspen.base.operators import AnyOperator, AllOperator
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.join_statement import InnerJoin, Join, JoinStatement, RightOuterJoin
 from qaspen.statements.combinable_statements.order_by_statement import OrderBy
@@ -34,7 +34,7 @@ print(
     User
     .select()
     .where(
-        User.description > Any(
+        User.description > AllOperator(
             User.select([User.name])
         )
     )
