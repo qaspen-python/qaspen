@@ -1,3 +1,4 @@
+from collections import UserDict
 import typing
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.exceptions import OnJoinFieldsError
@@ -41,6 +42,35 @@ if typing.TYPE_CHECKING:
     )
 
 
+class FieldAlias:
+
+    def __init__(
+        self: typing.Self,
+        aliased_field: BaseField[typing.Any],
+    ) -> None:
+        self.aliased_field: typing.Final = aliased_field
+
+
+class FieldAliases(UserDict[str, Field[typing.Any]]):
+    def __init__(self: typing.Self):
+        self.aliases: dict[str, FieldAlias] = {}
+        self.last_alias_number: int = 0
+
+    def add_annotation(
+        self: typing.Self,
+        field: BaseField[typing.Any],
+    ) -> BaseField[typing.Any]:
+        self.last_alias_number += 1
+
+        alias: typing.Final = f"A{self.last_alias_number}"
+        new_aliased_field: typing.Final = field._with_alias(alias=alias)
+
+        self.aliases[f"A{self.last_alias_number}"] = FieldAlias(
+            aliased_field=new_aliased_field,
+        )
+        return new_aliased_field
+
+
 class SelectStatement(BaseStatement, SQLSelectable):
     def __init__(
         self: typing.Self,
@@ -58,10 +88,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self._offset_statement: OffsetStatement = OffsetStatement()
         self._order_by_statement: OrderByStatement = OrderByStatement()
         self._join_statement: JoinStatement = JoinStatement()
-        self._annotations: dict[
-            str,
-            BaseField[typing.Any]
-        ] = {}
+        self._field_aliases: FieldAliases = FieldAliases()
 
     def where(
         self: typing.Self,
@@ -341,13 +368,9 @@ class SelectStatement(BaseStatement, SQLSelectable):
         )
 
         for field in fields_to_select:
-            if not self._annotations:
-                alias = "A1"
-            else:
-                alias = f"A{len(self._annotations) + 1}"
-
-            aliased_field = field._with_alias(alias=alias)
-            self._annotations[alias] = aliased_field
+            aliased_field = self._field_aliases.add_annotation(
+                field=field,
+            )
             final_select_fields.append(aliased_field)
 
         return final_select_fields
