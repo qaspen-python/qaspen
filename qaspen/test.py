@@ -1,3 +1,5 @@
+import asyncio
+import typing
 from qaspen.fields.fields import TextField, VarCharField
 from qaspen.base.operators import AnyOperator, AllOperator
 from qaspen.querystring.querystring import QueryString
@@ -31,34 +33,52 @@ class Video(BaseTable, table_name="videos"):
     status: VarCharField = VarCharField()
 
 
-statement = User.select()
-profile_join = (
-    statement
-    .join_on_with_return(
-        based_on=User.user_id == Profile.user_id,
-        fields=[
-            Profile.nickname,
-            Profile.description,
-        ],
+async def run_query(query: str) -> typing.Any:
+    import psycopg
+    aconn = await psycopg.AsyncConnection.connect(
+        "postgres://postgres:12345@localhost:5432/postgres",
     )
-)
-video_join = (
-    statement.join_on_with_return(
-        based_on=profile_join.profile_id == Video.profile_id,
-        fields=[
-            Video.views_count,
-            Video.status,
-        ]
-    )
-)
+    async with aconn:
+        async with aconn.cursor() as cur:
+            await cur.execute(query)
+            print(await cur.fetchall())
 
-print(
+
+statement = User.select()
+# profile_join = (
+#     statement
+#     .join_on_with_return(
+#         based_on=User.user_id == Profile.user_id,
+#         fields=[
+#             Profile.nickname,
+#             Profile.description,
+#         ],
+#     )
+# )
+# video_join = (
+#     statement.join_on_with_return(
+#         based_on=profile_join.profile_id == Video.profile_id,
+#         fields=[
+#             Video.views_count,
+#             Video.status,
+#         ]
+#     )
+# )
+
+query = (
     statement
-    .where(
-        profile_join.nickname == "Chandr",
-    )
+    # .where(
+    #     profile_join.nickname == "Chandr",
+    # )
     .querystring()
 )
+
+
+async def main() -> None:
+    await run_query(query=str(query))
+
+
+asyncio.run(main())
 
 # a = User(
 #     user_id="123",
