@@ -14,16 +14,18 @@ class BaseEngine(abc.ABC, typing.Generic[ConnectionClass]):
     def __init__(
         self: typing.Self,
         connection_string: str,
+        **connection_parameters: typing.Any,
     ) -> None:
         self.connection_string: str = connection_string
         self.connection: ConnectionClass | None = None
+        self.connection_parameters: typing.Any = connection_parameters
 
     @abc.abstractmethod
-    async def create_connection(self: typing.Self) -> ConnectionClass:
+    async def startup(self: typing.Self) -> None:
         ...
 
     @abc.abstractmethod
-    async def close_connection(self: typing.Self) -> None:
+    async def shutdown(self: typing.Self) -> None:
         ...
 
     @abc.abstractmethod
