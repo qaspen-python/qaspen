@@ -53,6 +53,3 @@ class IntersectStatement(BaseStatement, SQLSelectable):
 
     def build_query(self: typing.Self) -> str:
         return str(self.querystring())
-
-    def make_sql_string(self: typing.Self) -> str:
-        return str(self.querystring())

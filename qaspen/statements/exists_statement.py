@@ -32,6 +32,3 @@ class ExistsStatement(
             self.select_statement.querystring(),
             sql_template="SELECT EXISTS ({})",
         )
-
-    def make_sql_string(self: typing.Self) -> str:
-        return str(self.querystring_for_select())

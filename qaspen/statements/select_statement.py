@@ -51,7 +51,7 @@ class FieldAlias:
         self.aliased_field: typing.Final = aliased_field
 
 
-class FieldAliases(UserDict[str, Field[typing.Any]]):
+class FieldAliases(UserDict[str, BaseField[typing.Any]]):
     def __init__(self: typing.Self):
         self.aliases: dict[str, FieldAlias] = {}
         self.last_alias_number: int = 0
@@ -352,9 +352,6 @@ class SelectStatement(BaseStatement, SQLSelectable):
         sql_querystring += self._offset_statement.querystring()
 
         return sql_querystring
-
-    def make_sql_string(self: typing.Self) -> str:
-        return str(self.querystring())
 
     def prepare_select_fields(
         self: typing.Self,

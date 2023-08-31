@@ -178,9 +178,6 @@ class Field(BaseField[FieldType], SQLSelectable):
             sql_template="{}",
         )
 
-    def make_sql_string(self: typing.Self) -> str:
-        return self.field_name
-
     def __str__(self: typing.Self) -> str:
         return str(self._field_value)
 
