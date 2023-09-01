@@ -36,5 +36,5 @@ class BaseEngine(abc.ABC, typing.Generic[ConnectionClass]):
         self: typing.Self,
         querystring: QueryString,
         in_transaction: bool = True,
-    ) -> typing.Any:
+    ) -> list[tuple[typing.Any, ...]]:
         ...

@@ -83,8 +83,8 @@ class SelectStatement(BaseStatement, SQLSelectable):
         as_object: bool = False,
     ) -> typing.Any:
         from qaspen.query_result import QueryResult
-        raw_query_result: tuple[
-            tuple[typing.Any, ...], ...,
+        raw_query_result: list[
+            tuple[typing.Any, ...],
         ] = await engine.run_query(
             querystring=self.querystring(),
         )

@@ -76,6 +76,9 @@ async def main() -> None:
     print(
         (
             await statement
+            .where(
+               profile_join.nickname == "Chandr",
+            )
             .execute(engine=engine)
         )
     )

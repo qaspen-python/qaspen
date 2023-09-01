@@ -29,7 +29,7 @@ class PsycopgPoolEngine(BaseEngine[AsyncConnectionPool]):
         self: typing.Self,
         querystring: QueryString,
         in_transaction: bool = True,
-    ) -> typing.Any:
+    ) -> list[tuple[typing.Any, ...]]:
         if not self.connection:
             await self.startup()
         if not self.connection:

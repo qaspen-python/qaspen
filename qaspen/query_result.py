@@ -8,7 +8,7 @@ class QueryResult:
     def __init__(
         self: typing.Self,
         from_table: type[BaseTable],
-        query_result: tuple[tuple[typing.Any, ...], ...],
+        query_result: list[tuple[typing.Any, ...]],
         aliases: FieldAliases,
     ) -> None:
         self.from_table = from_table
