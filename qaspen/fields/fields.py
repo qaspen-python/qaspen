@@ -42,7 +42,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         self._is_null: bool = is_null
         self._default: FieldType | None = default
-        self._field_value: FieldType | None = field_value or default
+        self._field_value: FieldType | None = field_value
 
         if db_field_name:
             self._field_name: str = db_field_name

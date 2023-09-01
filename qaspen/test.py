@@ -38,6 +38,12 @@ engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/postgres",
 )
 
+
+u = User(
+    user_id="123",
+)
+print(u.surname)
+
 # async def run_query(query: str) -> typing.Any:
 #     import psycopg
 #     aconn = await psycopg.AsyncConnection.connect(
