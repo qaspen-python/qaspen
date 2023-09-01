@@ -1,7 +1,8 @@
-from collections import UserDict
 import typing
 from qaspen.base.sql_base import SQLSelectable
+from qaspen.engine.base_engine import BaseEngine
 from qaspen.exceptions import OnJoinFieldsError
+from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base.base_field import BaseField
 from qaspen.fields.fields import Field
 from qaspen.querystring.querystring import QueryString
@@ -42,35 +43,6 @@ if typing.TYPE_CHECKING:
     )
 
 
-class FieldAlias:
-
-    def __init__(
-        self: typing.Self,
-        aliased_field: BaseField[typing.Any],
-    ) -> None:
-        self.aliased_field: typing.Final = aliased_field
-
-
-class FieldAliases(UserDict[str, BaseField[typing.Any]]):
-    def __init__(self: typing.Self):
-        self.aliases: dict[str, FieldAlias] = {}
-        self.last_alias_number: int = 0
-
-    def add_annotation(
-        self: typing.Self,
-        field: BaseField[typing.Any],
-    ) -> BaseField[typing.Any]:
-        self.last_alias_number += 1
-
-        alias: typing.Final = f"A{self.last_alias_number}"
-        new_aliased_field: typing.Final = field._with_alias(alias=alias)
-
-        self.aliases[f"A{self.last_alias_number}"] = FieldAlias(
-            aliased_field=new_aliased_field,
-        )
-        return new_aliased_field
-
-
 class SelectStatement(BaseStatement, SQLSelectable):
     def __init__(
         self: typing.Self,
@@ -81,6 +53,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self._select_fields: typing.Final[
             typing.Iterable[BaseField[typing.Any]]
         ] = select_fields
+        self.final_select_fields: list[BaseField[typing.Any]] = []
         self.exist_prefixes: typing.Final[list[str]] = []
 
         self._filter_statement: FilterStatement = FilterStatement()
@@ -89,6 +62,75 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self._order_by_statement: OrderByStatement = OrderByStatement()
         self._join_statement: JoinStatement = JoinStatement()
         self._field_aliases: FieldAliases = FieldAliases()
+
+        self._as_object: bool = False
+
+    def __await__(
+        self: typing.Self,
+    ) -> typing.Any:
+        return self._run_query().__await__()
+
+    async def _run_query(self: typing.Self) -> typing.Any:
+        if not self._from_table._table_meta.database_engine:
+            raise ValueError()
+        return await self._from_table._table_meta.database_engine.run_query(
+            querystring=self.querystring(),
+        )
+
+    async def execute(
+        self: typing.Self,
+        engine: BaseEngine[typing.Any],
+        as_object: bool = False,
+    ) -> typing.Any:
+        from qaspen.query_result import QueryResult
+        raw_query_result: tuple[
+            tuple[typing.Any, ...], ...,
+        ] = await engine.run_query(
+            querystring=self.querystring(),
+        )
+
+        query_result: QueryResult = QueryResult(
+            from_table=self._from_table,  # type: ignore
+            query_result=raw_query_result,
+            aliases=self._field_aliases,
+        )
+
+        if self._as_object or as_object:
+            pass
+
+        return query_result.as_list()
+
+    def as_object(self: typing.Self) -> typing.Self:
+        self._as_object = True
+        return self
+
+    def _result_as_list(
+        self: typing.Self,
+        query_result: tuple[tuple[typing.Any, ...], ...],
+    ) -> dict[str, typing.Any]:
+        result_dict: dict[str, list[dict[str, typing.Any]]] = {
+            field.aliased_field.table_name: []
+            for field in self._field_aliases.values()
+        }
+
+        for single_query_result in query_result:
+            zip_expression = zip(
+                single_query_result,
+                self._field_aliases.values(),
+            )
+
+            for values_list in result_dict.values():
+                values_list.append({})
+
+            for single_query_result, field in zip_expression:
+                table_list = result_dict[field.aliased_field.table_name]
+                last_record_dict = table_list[-1]
+
+                last_record_dict[
+                    f"_{field.aliased_field.field_name_clear}"
+                ] = single_query_result
+
+        return result_dict
 
     def where(
         self: typing.Self,
@@ -333,7 +375,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
     def querystring(self: typing.Self) -> QueryString:
         fields_to_select: list[
             BaseField[typing.Any],
-        ] = self.prepare_select_fields()
+        ] = self._prepare_select_fields()
         to_select_fields: str = ", ".join(
             [
                 field.field_name
@@ -353,9 +395,11 @@ class SelectStatement(BaseStatement, SQLSelectable):
 
         return sql_querystring
 
-    def prepare_select_fields(
+    def _prepare_select_fields(
         self: typing.Self,
     ) -> list[BaseField[typing.Any]]:
+        if self.final_select_fields:
+            return self.final_select_fields
         final_select_fields: typing.Final[list[BaseField[typing.Any]]] = []
 
         fields_to_select: list[BaseField[typing.Any]] = []
@@ -365,9 +409,10 @@ class SelectStatement(BaseStatement, SQLSelectable):
         )
 
         for field in fields_to_select:
-            aliased_field = self._field_aliases.add_annotation(
+            aliased_field = self._field_aliases.add_alias(
                 field=field,
             )
             final_select_fields.append(aliased_field)
 
+        self.final_select_fields = final_select_fields
         return final_select_fields

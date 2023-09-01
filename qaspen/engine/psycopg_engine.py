@@ -1,11 +1,14 @@
 import typing
 from qaspen.engine.base_engine import BaseEngine
 from psycopg_pool import AsyncConnectionPool
+from qaspen.engine.enums import DataBaseType
 
 from qaspen.querystring.querystring import QueryString
 
 
 class PsycopgPoolEngine(BaseEngine[AsyncConnectionPool]):
+
+    database_type: DataBaseType = DataBaseType.POSTGRESQL
 
     async def startup(self: typing.Self) -> None:
         connection_pool: AsyncConnectionPool = AsyncConnectionPool(
@@ -28,7 +31,9 @@ class PsycopgPoolEngine(BaseEngine[AsyncConnectionPool]):
         in_transaction: bool = True,
     ) -> typing.Any:
         if not self.connection:
-            raise ValueError("Engine isn't started.")
+            await self.startup()
+        if not self.connection:
+            raise ValueError()
 
         async with self.connection.connection() as async_conn:
             result_cursor = await async_conn.execute(str(querystring))

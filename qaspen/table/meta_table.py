@@ -1,5 +1,6 @@
 import dataclasses
 import typing
+from qaspen.engine.base_engine import BaseEngine
 
 from qaspen.fields.base.base_field import BaseField
 from qaspen.fields.fields import Field
@@ -12,6 +13,7 @@ class MetaTableData:
     table_fields: list[BaseField[typing.Any]] = dataclasses.field(
         default_factory=list,
     )
+    database_engine: BaseEngine[typing.Any] | None = None
 
 
 class MetaTable:

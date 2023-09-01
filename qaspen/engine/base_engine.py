@@ -1,5 +1,6 @@
 import abc
 import typing
+from qaspen.engine.enums import DataBaseType
 
 from qaspen.querystring.querystring import QueryString
 
@@ -11,13 +12,15 @@ ConnectionClass = typing.TypeVar(
 
 class BaseEngine(abc.ABC, typing.Generic[ConnectionClass]):
 
+    database_type: DataBaseType
+    connection: ConnectionClass | None = None
+
     def __init__(
         self: typing.Self,
         connection_string: str,
         **connection_parameters: typing.Any,
     ) -> None:
         self.connection_string: str = connection_string
-        self.connection: ConnectionClass | None = None
         self.connection_parameters: typing.Any = connection_parameters
 
     @abc.abstractmethod
