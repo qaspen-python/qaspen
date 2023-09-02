@@ -9,7 +9,7 @@ from qaspen.statements.statement import BaseStatement
 class OffsetStatement(BaseStatement):
     offset_number: int | None = None
 
-    def set_offset(
+    def offset(
         self: typing.Self,
         offset_number: int,
     ) -> None:

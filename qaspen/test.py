@@ -1,15 +1,6 @@
 import asyncio
-import typing
 from qaspen.engine.psycopg_engine import PsycopgPoolEngine
 from qaspen.fields.fields import TextField, VarCharField
-from qaspen.base.operators import AnyOperator, AllOperator
-from qaspen.querystring.querystring import QueryString
-from qaspen.statements.combinable_statements.join_statement import InnerJoin, Join, JoinStatement, RightOuterJoin
-from qaspen.statements.combinable_statements.order_by_statement import OrderBy
-from qaspen.statements.combinable_statements.filter_statement import (
-    FilterExclusive,
-)
-from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.base_table import BaseTable
 
 
@@ -52,7 +43,7 @@ engine = PsycopgPoolEngine(
 statement = User.select()
 profile_join = (
     statement
-    .join_on_with_return(
+    .join_with_return(
         based_on=User.user_id == Profile.user_id,
         fields=[
             Profile.nickname,
@@ -61,7 +52,7 @@ profile_join = (
     )
 )
 video_join = (
-    statement.join_on_with_return(
+    statement.join_with_return(
         based_on=profile_join.profile_id == Video.profile_id,
         fields=[
             Video.profile_id,
@@ -76,13 +67,13 @@ async def main() -> None:
     await engine.startup()
     result = (
         await statement
-        .where(
-           profile_join.nickname == "Chandr",
-        )
+        # .where(
+        #    profile_join.nickname == "Chandr",
+        # )
         .as_objects()
         .execute(engine=engine)
     )
-    print(result[0].videos.profile_id)
+    print(result)
     await engine.shutdown()
 
 

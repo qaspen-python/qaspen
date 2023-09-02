@@ -29,9 +29,9 @@ from qaspen.statements.combinable_statements.filter_statement import (
     FilterStatement,
 )
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
-from qaspen.table.meta_table import MetaTable
 
 if typing.TYPE_CHECKING:
+    from qaspen.table.base_table import BaseTable
     from qaspen.statements.union_statement import (
         UnionStatement,
     )
@@ -44,12 +44,27 @@ if typing.TYPE_CHECKING:
 
 
 class SelectStatement(BaseStatement, SQLSelectable):
+    """Main entry point for all SELECT queries.
+
+    You shouldn't create instance of this class by yourself,
+    instead you must use Table class.
+
+    Example:
+    ---------------------------
+    ```
+    class Buns(BaseTable, table_name="buns"):
+        name: VarCharField = VarCharField()
+
+
+    select_statement: SelectStatement = Buns.select()
+    ```
+    """
     def __init__(
         self: typing.Self,
-        from_table: type[MetaTable],
+        from_table: type["BaseTable"],
         select_fields: typing.Iterable[BaseField[typing.Any]],
     ) -> None:
-        self._from_table: typing.Final[type[MetaTable]] = from_table
+        self._from_table: typing.Final[type["BaseTable"]] = from_table
         self._select_fields: typing.Final[
             typing.Iterable[BaseField[typing.Any]]
         ] = select_fields
@@ -68,20 +83,37 @@ class SelectStatement(BaseStatement, SQLSelectable):
     def __await__(
         self: typing.Self,
     ) -> typing.Any:
-        return self._run_query().__await__()
+        """SelectStatement can be awaited.
 
-    async def _run_query(self: typing.Self) -> typing.Any:
-        if not self._from_table._table_meta.database_engine:
-            raise ValueError()
-        return await self._from_table._table_meta.database_engine.run_query(
-            querystring=self.querystring(),
-        )
+        Example:
+        ---------------------------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+
+        async def main() -> None:
+            list_of_buns = await Buns.select()
+            print(list_of_buns)
+        ```
+        """
+        return self._run_query().__await__()
 
     async def execute(
         self: typing.Self,
         engine: BaseEngine[typing.Any],
         as_object: bool = False,
-    ) -> typing.Any:
+    ) -> list[dict[str, typing.Any]] | list["BaseTable"]:
+        """Execute select statement.
+
+        This is manual execution.
+        You can pass specific engine and set if you want
+        to retrieve table objects instead of list of dicts.
+
+        :param engine: subclass of BaseEngine.
+        :param as_object: flag that indicates return list of objects ot not.
+
+        :returns: list of dicts or list of table instances.
+        """
         from qaspen.query_result import QueryResult
         raw_query_result: list[
             tuple[typing.Any, ...],
@@ -101,41 +133,55 @@ class SelectStatement(BaseStatement, SQLSelectable):
         return query_result.as_list()
 
     def as_objects(self: typing.Self) -> typing.Self:
+        """Set flag to return objects instead of list of dicts.
+
+        :returns: self.
+        """
         self._as_objects = True
         return self
-
-    # def _result_as_list(
-    #     self: typing.Self,
-    #     query_result: tuple[tuple[typing.Any, ...], ...],
-    # ) -> dict[str, typing.Any]:
-    #     result_dict: dict[str, list[dict[str, typing.Any]]] = {
-    #         field.aliased_field.table_name: []
-    #         for field in self._field_aliases.values()
-    #     }
-
-    #     for single_query_result in query_result:
-    #         zip_expression = zip(
-    #             single_query_result,
-    #             self._field_aliases.values(),
-    #         )
-
-    #         for values_list in result_dict.values():
-    #             values_list.append({})
-
-    #         for single_query_result, field in zip_expression:
-    #             table_list = result_dict[field.aliased_field.table_name]
-    #             last_record_dict = table_list[-1]
-
-    #             last_record_dict[
-    #                 field.aliased_field.field_name_clear
-    #             ] = single_query_result
-
-    #     return result_dict
 
     def where(
         self: typing.Self,
         *where_arguments: CombinableExpression,
     ) -> typing.Self:
+        """Add where clause to the statement.
+
+        It's possible to use this method as many times as you want.
+        If you use `where` more than one time, clauses will be connected
+        with `AND` operator.
+
+        Fields have different methods for the comparison.
+        Also, you can pass the combination of the `where` clauses.
+
+        Below you will see easy and advanced examples.
+
+        One Where Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+        statement = Buns.select().where(
+            Buns.name == "Tasty",
+        )
+        ```
+        Combination Where Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+            example_field: VarCharField = VarCharField()
+
+        statement = Buns.select().where(
+            (Buns.name == "Tasty")
+            & (Buns.description != "Not Tasty")
+            | Buns.example_field.eq("Real Example"))
+        )
+        ```
+        In this statement `&` is AND, `|` is OR.
+        """
         self._filter_statement.where(*where_arguments)
         return self
 
@@ -143,6 +189,29 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self: typing.Self,
         limit: int,
     ) -> typing.Self:
+        """Set limit to the query.
+
+        If you use this method more than 1 time, previous result
+        will be overridden.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        statement = Buns.select().limit(limit=10)
+
+        # if you will use limit() again, previous number
+        # will be overridden.
+
+        statement = statement.limit(limit=30)
+
+        # not limit is LIMIT 30.
+        ```
+        """
         self._limit_statement.limit(limit_number=limit)
         return self
 
@@ -150,7 +219,30 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self: typing.Self,
         offset: int,
     ) -> typing.Self:
-        self._offset_statement.set_offset(offset_number=offset)
+        """Set offset to the query.
+
+        If you use this method more than 1 time, previous result
+        will be overridden.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        statement = Buns.select().offset(offset=10)
+
+        # if you will use offset() again, previous number
+        # will be overridden.
+
+        statement = statement.offset(offset=30)
+
+        # not limit is OFFSET 30.
+        ```
+        """
+        self._offset_statement.offset(offset_number=offset)
         return self
 
     def limit_offset(
@@ -158,8 +250,12 @@ class SelectStatement(BaseStatement, SQLSelectable):
         limit: int,
         offset: int,
     ) -> typing.Self:
+        """Set offset and limit at the same time.
+
+        See `limit()` and `offset()` methods description.
+        """
         self._limit_statement.limit(limit_number=limit)
-        self._offset_statement.set_offset(offset_number=offset)
+        self._offset_statement.offset(offset_number=offset)
         return self
 
     def order_by(
@@ -167,17 +263,61 @@ class SelectStatement(BaseStatement, SQLSelectable):
         field: BaseField[typing.Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
-        order_by_statements: typing.Iterable[OrderBy] | None = None,
+        order_bys: typing.Iterable[OrderBy] | None = None,
     ) -> typing.Self:
+        """Set ORDER BY.
+
+        You can specify `field`, `ascending` and `nulls_first`
+        parameters and/or pass `order_bys` with OrderBy instances.
+
+        ### Parameters
+        :param field: subclass of BaseField.
+        :param ascending: if True then `ASC` else `DESC`.
+        :param nulls_first: if True then `NULLS FIRST` else `NULLS LAST`.
+        :param order_bys: list of instances of order by.
+
+        Example:
+        -----
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        # first variant
+        statement = Buns.select().order_by(
+            field=Buns.name,
+            # it's not necessary, but you can specify.
+            ascending=False,  # by default its `True`
+            nulls_first=False,  # by default its `True`
+        )
+
+        # second variant
+        order_bys = [
+            OrderBy(
+                field=Buns.name,
+                # it's not necessary, but you can specify.
+                ascending=False,  # by default its `True`
+                nulls_first=False,  # by default its `True`
+            ),
+            OrderBy(
+                field=Buns.surname,
+            ),
+        ]
+        statement = Buns.select().order_by(
+            order_bys=order_bys,
+        )
+        ```
+        """
         if field:
             self._order_by_statement.order_by(
                 field=field,
                 ascending=ascending,
                 nulls_first=nulls_first,
             )
-        if order_by_statements:
+        if order_bys:
             self._order_by_statement.order_by(
-                order_by_statements=order_by_statements
+                order_by_statements=order_bys
             )
         return self
 
@@ -186,6 +326,34 @@ class SelectStatement(BaseStatement, SQLSelectable):
         union_with: "SelectStatement",
         union_all: bool = False,
     ) -> "UnionStatement":
+        """Creates union statement.
+
+        Combines two `SelectStatement`'s and creates
+        `UnionStatement`.
+
+        ### Parameters
+        :param union_with: `SelectStatement` for union.
+        :param union_all: if True than `UNION ALL` else `UNION`.
+
+        ### Returns
+        :returns: `UnionStatement`.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        statement_1 = Buns.select()
+        statement_2 = Buns.select()
+        union = statement_1.union(
+            union_with=statement_2,
+            union_all=False,
+        )
+        ```
+        """
         from qaspen.statements.union_statement import (
             UnionStatement,
         )
@@ -199,6 +367,32 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self: typing.Self,
         intersect_with: "SelectStatement",
     ) -> "IntersectStatement":
+        """Create intersect statement.
+
+        Combines two `SelectStatement`'s and creates
+        `IntersectStatement`
+
+        ### Parameters
+        :param intersect_with: `SelectStatement` for intersect.
+
+        ### Returns
+        :returns: `IntersectStatement`.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        statement_1 = Buns.select()
+        statement_2 = Buns.select()
+        intersect = statement_1.intersect(
+            intersect_with=statement_2,
+        )
+        ```
+        """
         from qaspen.statements.intersect_statement import (
             IntersectStatement,
         )
@@ -208,6 +402,26 @@ class SelectStatement(BaseStatement, SQLSelectable):
         )
 
     def exists(self: typing.Self) -> "ExistsStatement":
+        """Create exists statement.
+
+        Create exists statement that return True or False.
+
+        ### Returns
+        :returns: `ExistsStatement`.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        exists_statement = Buns.select().where(
+            Buns.name == "CallMe",
+        ).exists()
+        ```
+        """
         from qaspen.statements.exists_statement import (
             ExistsStatement,
         )
@@ -215,33 +429,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
             select_statement=self,
         )
 
-    def _join_on(
-        self: typing.Self,
-        based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
-        join_type: JoinType,
-    ) -> typing.Self:
-        if not fields:
-            raise OnJoinFieldsError(
-                "You must specify fields to get from JOIN",
-            )
-
-        join_table: type[MetaTable] = (
-            fields[0]
-            ._field_data
-            .from_table
-        )
-
-        self._join_statement.join(
-            fields=fields,
-            join_table=join_table,
-            from_table=self._from_table,
-            on=based_on,
-            join_type=join_type,
-        )
-        return self
-
-    def join_on(
+    def join(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
@@ -252,7 +440,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
             join_type=JoinType.JOIN,
         )
 
-    def inner_join_on(
+    def inner_join(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
@@ -263,7 +451,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
             join_type=JoinType.INNERJOIN,
         )
 
-    def left_join_on(
+    def left_join(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
@@ -274,7 +462,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
             join_type=JoinType.LEFTJOIN,
         )
 
-    def right_join_on(
+    def right_join(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
@@ -285,7 +473,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
             join_type=JoinType.RIGHTJOIN,
         )
 
-    def full_outer_join_on(
+    def full_outer_join(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
@@ -296,23 +484,23 @@ class SelectStatement(BaseStatement, SQLSelectable):
             join_type=JoinType.FULLOUTERJOIN,
         )
 
-    def join_on_with_return(
+    def join_with_return(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> Join:
-        self.join_on(
+        self.join(
             based_on=based_on,
             fields=fields,
         )
         return self._join_statement.join_expressions[-1]
 
-    def inner_join_on_with_return(
+    def inner_join_with_return(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> InnerJoin:
-        self.inner_join_on(
+        self.inner_join(
             based_on=based_on,
             fields=fields,
         )
@@ -321,12 +509,12 @@ class SelectStatement(BaseStatement, SQLSelectable):
             self._join_statement.join_expressions[-1],
         )
 
-    def left_join_on_with_return(
+    def left_join_with_return(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> LeftOuterJoin:
-        self.left_join_on(
+        self.left_join(
             based_on=based_on,
             fields=fields,
         )
@@ -335,12 +523,12 @@ class SelectStatement(BaseStatement, SQLSelectable):
             self._join_statement.join_expressions[-1],
         )
 
-    def right_join_on_with_return(
+    def right_join_with_return(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> RightOuterJoin:
-        self.right_join_on(
+        self.right_join(
             based_on=based_on,
             fields=fields,
         )
@@ -349,12 +537,12 @@ class SelectStatement(BaseStatement, SQLSelectable):
             self._join_statement.join_expressions[-1],
         )
 
-    def full_outer_join_on_with_return(
+    def full_outer_join_with_return(
         self: typing.Self,
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> FullOuterJoin:
-        self.full_outer_join_on(
+        self.full_outer_join(
             based_on=based_on,
             fields=fields,
         )
@@ -394,6 +582,41 @@ class SelectStatement(BaseStatement, SQLSelectable):
         sql_querystring += self._offset_statement.querystring()
 
         return sql_querystring
+
+    def _join_on(
+        self: typing.Self,
+        based_on: CombinableExpression,
+        fields: list[Field[typing.Any]],
+        join_type: JoinType,
+    ) -> typing.Self:
+        if not fields:
+            raise OnJoinFieldsError(
+                "You must specify fields to get from JOIN",
+            )
+
+        join_table: type["BaseTable"] = (
+            fields[0]
+            ._field_data
+            .from_table
+        )
+
+        self._join_statement.join(
+            fields=fields,
+            join_table=join_table,
+            from_table=self._from_table,
+            on=based_on,
+            join_type=join_type,
+        )
+        return self
+
+    async def _run_query(self: typing.Self) -> typing.Any:
+        if not self._from_table._table_meta.database_engine:
+            raise AttributeError(
+                "There is no database engine.",
+            )
+        return await self._from_table._table_meta.database_engine.run_query(
+            querystring=self.querystring(),
+        )
 
     def _prepare_select_fields(
         self: typing.Self,

@@ -20,32 +20,6 @@ class BaseTable(MetaTable):
         )
         return select_statement
 
-    # @classmethod
-    # def update(
-    #     cls: type["BaseTable"],
-    #     update_fields: dict[BaseField[typing.Any], typing.Any],
-    # ) -> UpdateStatement:
-    #     return UpdateStatement(
-    #         update_fields=update_fields,
-    #         from_table=cls,
-    #     )
-
-    # @classmethod
-    # def delete(cls: type["BaseTable"]) -> Statement:
-    #     return Statement._delete(
-    #         from_table=cls,
-    #     )
-
-    # @classmethod
-    # def insert(
-    #     cls: type["BaseTable"],
-    #     *insert_records: "BaseTable",
-    # ) -> Statement:
-    #     return Statement._insert(
-    #         from_table=cls,
-    #         insert_records=insert_records,
-    #     )
-
     @classmethod
     def all_fields(cls: type["BaseTable"]) -> list[BaseField[typing.Any]]:
         return cls._table_meta.table_fields
