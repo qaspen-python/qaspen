@@ -63,7 +63,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self._join_statement: JoinStatement = JoinStatement()
         self._field_aliases: FieldAliases = FieldAliases()
 
-        self._as_object: bool = False
+        self._as_objects: bool = False
 
     def __await__(
         self: typing.Self,
@@ -95,42 +95,42 @@ class SelectStatement(BaseStatement, SQLSelectable):
             aliases=self._field_aliases,
         )
 
-        if self._as_object or as_object:
-            pass
+        if self._as_objects or as_object:
+            return query_result.as_objects()
 
         return query_result.as_list()
 
-    def as_object(self: typing.Self) -> typing.Self:
-        self._as_object = True
+    def as_objects(self: typing.Self) -> typing.Self:
+        self._as_objects = True
         return self
 
-    def _result_as_list(
-        self: typing.Self,
-        query_result: tuple[tuple[typing.Any, ...], ...],
-    ) -> dict[str, typing.Any]:
-        result_dict: dict[str, list[dict[str, typing.Any]]] = {
-            field.aliased_field.table_name: []
-            for field in self._field_aliases.values()
-        }
+    # def _result_as_list(
+    #     self: typing.Self,
+    #     query_result: tuple[tuple[typing.Any, ...], ...],
+    # ) -> dict[str, typing.Any]:
+    #     result_dict: dict[str, list[dict[str, typing.Any]]] = {
+    #         field.aliased_field.table_name: []
+    #         for field in self._field_aliases.values()
+    #     }
 
-        for single_query_result in query_result:
-            zip_expression = zip(
-                single_query_result,
-                self._field_aliases.values(),
-            )
+    #     for single_query_result in query_result:
+    #         zip_expression = zip(
+    #             single_query_result,
+    #             self._field_aliases.values(),
+    #         )
 
-            for values_list in result_dict.values():
-                values_list.append({})
+    #         for values_list in result_dict.values():
+    #             values_list.append({})
 
-            for single_query_result, field in zip_expression:
-                table_list = result_dict[field.aliased_field.table_name]
-                last_record_dict = table_list[-1]
+    #         for single_query_result, field in zip_expression:
+    #             table_list = result_dict[field.aliased_field.table_name]
+    #             last_record_dict = table_list[-1]
 
-                last_record_dict[
-                    f"_{field.aliased_field.field_name_clear}"
-                ] = single_query_result
+    #             last_record_dict[
+    #                 field.aliased_field.field_name_clear
+    #             ] = single_query_result
 
-        return result_dict
+    #     return result_dict
 
     def where(
         self: typing.Self,

@@ -26,7 +26,6 @@ class Field(BaseField[FieldType], SQLSelectable):
     def __init__(
         self: typing.Self,
         *pos_arguments: typing.Any,
-        field_value: FieldType | None = None,
         is_null: bool = False,
         default: FieldType | None = None,
         db_field_name: str | None = None,
@@ -42,7 +41,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         self._is_null: bool = is_null
         self._default: FieldType | None = default
-        self._field_value: FieldType | None = field_value
+        self._field_value: FieldType | None = None
 
         if db_field_name:
             self._field_name: str = db_field_name
@@ -51,7 +50,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name if db_field_name else self._field_name,
-            field_value=field_value or default,
+            field_value=None,
             is_null=is_null,
             default=default,
         )
@@ -544,12 +543,12 @@ class BaseStringField(Field[str]):
     def _build_fields_sql_type(self: typing.Self) -> str:
         return f"{self._default_field_type}({self.max_length})"
 
-    def __set__(self: typing.Self, _instance: object, value: str) -> None:
+    def __set__(self: typing.Self, instance: object, value: str) -> None:
         if not isinstance(value, str):
             raise TypeError(
                 f"Can't assign not string type to {self.__class__.__name__}"
             )
-        self._field_value = value
+        instance.__dict__[self._field_data.field_name] = value
 
 
 class VarCharField(BaseStringField):

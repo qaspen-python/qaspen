@@ -38,12 +38,6 @@ engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/postgres",
 )
 
-
-u = User(
-    user_id="123",
-)
-print(u.surname)
-
 # async def run_query(query: str) -> typing.Any:
 #     import psycopg
 #     aconn = await psycopg.AsyncConnection.connect(
@@ -70,6 +64,7 @@ video_join = (
     statement.join_on_with_return(
         based_on=profile_join.profile_id == Video.profile_id,
         fields=[
+            Video.profile_id,
             Video.views_count,
             Video.status,
         ]
@@ -79,15 +74,15 @@ video_join = (
 
 async def main() -> None:
     await engine.startup()
-    print(
-        (
-            await statement
-            .where(
-               profile_join.nickname == "Chandr",
-            )
-            .execute(engine=engine)
+    result = (
+        await statement
+        .where(
+           profile_join.nickname == "Chandr",
         )
+        .as_objects()
+        .execute(engine=engine)
     )
+    print(result[0].videos.profile_id)
     await engine.shutdown()
 
 

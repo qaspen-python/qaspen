@@ -48,3 +48,34 @@ class QueryResult:
                     ] = single_query_result
 
         return result_list
+
+    def as_objects(self: typing.Self) -> list[BaseTable]:
+        result_objects: list[BaseTable] = []
+
+        for single_query_result in self.query_result:
+            zip_expression = zip(
+                single_query_result,
+                self.aliases.values(),
+            )
+
+            temporary_dict: dict[
+                type[BaseTable], dict[str, typing.Any]
+            ] = {}
+
+            for single_query_result, field in zip_expression:
+                model_params_dict = temporary_dict.setdefault(
+                    field.aliased_field._field_data.from_table,
+                    {},
+                )
+                model_params_dict[
+                    field.aliased_field.field_name_clear
+                ] = single_query_result
+
+            main_table_params = temporary_dict.pop(self.from_table)
+            main_table = self.from_table(**main_table_params)
+            for model, model_params in temporary_dict.items():
+                setattr(main_table, model._table_name(), model(**model_params))
+
+            result_objects.append(main_table)
+
+        return result_objects
