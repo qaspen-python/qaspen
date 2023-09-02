@@ -431,9 +431,47 @@ class SelectStatement(BaseStatement, SQLSelectable):
 
     def join(
         self: typing.Self,
-        based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
+        based_on: CombinableExpression,
     ) -> typing.Self:
+        """Add `JOIN` to the SelectStatement.
+
+        You can specify what fields you want to get from
+        the joined table.
+        And set `ON` condition, it can be a combination.
+
+        :param based_on: Field's comparisons.
+        :param fields: fields to retrieve.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        class Cookies(BaseTable, table_name="cookies"):
+            bun_name: VarCharField = VarCharField()
+            filling: VarCharField = VarCharField()
+            topping: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select()
+            .join(
+                fields=[
+                    Cookies.filling,
+                    Cookies.topping,
+                ],
+                based_on=Buns.name == Cookies.bun_name,
+            )
+
+        )
+        ```
+
+        :returns: `SelectStatement`
+        """
         return self._join_on(
             based_on=based_on,
             fields=fields,
@@ -445,6 +483,44 @@ class SelectStatement(BaseStatement, SQLSelectable):
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> typing.Self:
+        """Add `INNER JOIN` to the SelectStatement.
+
+        You can specify what fields you want to get from
+        the joined table.
+        And set `ON` condition, it can be a combination.
+
+        :param based_on: Field's comparisons.
+        :param fields: fields to retrieve.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        class Cookies(BaseTable, table_name="cookies"):
+            bun_name: VarCharField = VarCharField()
+            filling: VarCharField = VarCharField()
+            topping: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select()
+            .inner_join(
+                fields=[
+                    Cookies.filling,
+                    Cookies.topping,
+                ],
+                based_on=Buns.name == Cookies.bun_name,
+            )
+
+        )
+        ```
+
+        :returns: `SelectStatement`
+        """
         return self._join_on(
             based_on=based_on,
             fields=fields,
@@ -456,6 +532,44 @@ class SelectStatement(BaseStatement, SQLSelectable):
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> typing.Self:
+        """Add `LEFT JOIN` to the SelectStatement.
+
+        You can specify what fields you want to get from
+        the joined table.
+        And set `ON` condition, it can be a combination.
+
+        :param based_on: Field's comparisons.
+        :param fields: fields to retrieve.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        class Cookies(BaseTable, table_name="cookies"):
+            bun_name: VarCharField = VarCharField()
+            filling: VarCharField = VarCharField()
+            topping: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select()
+            .left_join(
+                fields=[
+                    Cookies.filling,
+                    Cookies.topping,
+                ],
+                based_on=Buns.name == Cookies.bun_name,
+            )
+
+        )
+        ```
+
+        :returns: `SelectStatement`
+        """
         return self._join_on(
             based_on=based_on,
             fields=fields,
@@ -467,6 +581,44 @@ class SelectStatement(BaseStatement, SQLSelectable):
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> typing.Self:
+        """Add `RIGHT JOIN` to the SelectStatement.
+
+        You can specify what fields you want to get from
+        the joined table.
+        And set `ON` condition, it can be a combination.
+
+        :param based_on: Field's comparisons.
+        :param fields: fields to retrieve.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        class Cookies(BaseTable, table_name="cookies"):
+            bun_name: VarCharField = VarCharField()
+            filling: VarCharField = VarCharField()
+            topping: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select()
+            .right_join(
+                fields=[
+                    Cookies.filling,
+                    Cookies.topping,
+                ],
+                based_on=Buns.name == Cookies.bun_name,
+            )
+
+        )
+        ```
+
+        :returns: `SelectStatement`
+        """
         return self._join_on(
             based_on=based_on,
             fields=fields,
@@ -478,6 +630,44 @@ class SelectStatement(BaseStatement, SQLSelectable):
         based_on: CombinableExpression,
         fields: list[Field[typing.Any]],
     ) -> typing.Self:
+        """Add `FULL OUTER JOIN` to the SelectStatement.
+
+        You can specify what fields you want to get from
+        the joined table.
+        And set `ON` condition, it can be a combination.
+
+        :param based_on: Field's comparisons.
+        :param fields: fields to retrieve.
+
+        Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        class Cookies(BaseTable, table_name="cookies"):
+            bun_name: VarCharField = VarCharField()
+            filling: VarCharField = VarCharField()
+            topping: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select()
+            .full_outer_join(
+                fields=[
+                    Cookies.filling,
+                    Cookies.topping,
+                ],
+                based_on=Buns.name == Cookies.bun_name,
+            )
+
+        )
+        ```
+
+        :returns: `SelectStatement`
+        """
         return self._join_on(
             based_on=based_on,
             fields=fields,
