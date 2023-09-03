@@ -1,13 +1,13 @@
 import typing
-from qaspen.engine.base_engine import BaseEngine
-from psycopg_pool import AsyncConnectionPool
-from qaspen.engine.enums import DataBaseType
 
+from psycopg_pool import AsyncConnectionPool
+
+from qaspen.engine.base_engine import BaseEngine
+from qaspen.engine.enums import DataBaseType
 from qaspen.querystring.querystring import QueryString
 
 
 class PsycopgPoolEngine(BaseEngine[AsyncConnectionPool]):
-
     database_type: DataBaseType = DataBaseType.POSTGRESQL
 
     async def startup(self: typing.Self) -> None:

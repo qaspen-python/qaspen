@@ -2,6 +2,7 @@ import typing
 
 from qaspen.fields.base.base_field import BaseField
 from qaspen.statements.select_statement import SelectStatement
+
 # from qaspen.statements.update_statement import UpdateStatement
 from qaspen.table.meta_table import MetaTable
 

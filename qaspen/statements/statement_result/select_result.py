@@ -1,9 +1,10 @@
 import typing
+
 from qaspen.fields.aliases import FieldAliases
 from qaspen.statements.statement_result.base_result import (
     ListableStatementResult,
-    RawableStatementResult,
     ObjecttableStatementResult,
+    RawableStatementResult,
 )
 from qaspen.table.base_table import BaseTable
 
@@ -13,7 +14,6 @@ class SelectStatementResult(
     ListableStatementResult[list[dict[str, typing.Any]]],
     ObjecttableStatementResult[BaseTable],
 ):
-
     def __init__(
         self: typing.Self,
         from_table: type[BaseTable],
@@ -37,8 +37,8 @@ class SelectStatementResult(
 
             for single_query_result, field in zip_expression:
                 is_from_table: bool = (
-                   field.aliased_field._field_data.from_table
-                   is self.from_table
+                    field.aliased_field._field_data.from_table
+                    is self.from_table
                 )
 
                 result_dict = result_list[-1]
@@ -68,7 +68,8 @@ class SelectStatementResult(
             )
 
             temporary_dict: dict[
-                type[BaseTable], dict[str, typing.Any]
+                type[BaseTable],
+                dict[str, typing.Any],
             ] = {}
 
             for single_query_result, field in zip_expression:

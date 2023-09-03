@@ -1,9 +1,8 @@
 import abc
 import typing
+
 from qaspen.engine.enums import DataBaseType
-
 from qaspen.querystring.querystring import QueryString
-
 
 ConnectionClass = typing.TypeVar(
     "ConnectionClass",
@@ -11,7 +10,6 @@ ConnectionClass = typing.TypeVar(
 
 
 class BaseEngine(abc.ABC, typing.Generic[ConnectionClass]):
-
     database_type: DataBaseType
     connection: ConnectionClass | None = None
 

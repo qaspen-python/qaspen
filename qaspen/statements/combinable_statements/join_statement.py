@@ -3,28 +3,26 @@ import enum
 import functools
 import operator
 import typing
+
 from qaspen.exceptions import OnJoinComparisonError
 from qaspen.fields.fields import Field
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
-    ExpressionsCombination
+    ExpressionsCombination,
 )
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
     FilterBetween,
     FilterExclusive,
 )
-
 from qaspen.statements.statement import BaseStatement
-
 
 if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
 
 class Join(CombinableExpression):
-
     join_type: str = "JOIN"
 
     def __init__(
@@ -96,7 +94,7 @@ class Join(CombinableExpression):
             (
                 expression.field,
                 expression.comparison_value,
-            )
+            ),
         )
 
         if_left_to_change: typing.Final[bool] = all(
@@ -104,22 +102,19 @@ class Join(CombinableExpression):
                 isinstance(expression.field, Field),
                 expression.field._field_data.from_table._table_name()
                 == self._join_table._table_name(),
-                not expression.field._field_data.in_join
+                not expression.field._field_data.in_join,
             ),
         )
 
         is_right_to_change: typing.Final[bool] = (
             isinstance(expression.comparison_value, Field)
-            and
-            (expression.comparison_value.table_name)
+            and (expression.comparison_value.table_name)
             == self._join_table._table_name()
             and not expression.comparison_value._field_data.in_join
         )
 
         if if_left_to_change:
-            expression.field = (
-                expression.field._with_prefix(self._alias)
-            )
+            expression.field = expression.field._with_prefix(self._alias)
         if is_right_to_change:
             expression.comparison_value = (
                 expression.comparison_value._with_prefix(  # type: ignore
@@ -147,15 +142,12 @@ class Join(CombinableExpression):
         )
 
         if is_field_to_change:
-            expression.field = (
-                expression.field._with_prefix(self._alias)
-            )
+            expression.field = expression.field._with_prefix(self._alias)
             return expression
 
         is_left_comparison_to_change: typing.Final[bool] = (
             isinstance(expression.left_comparison_value, Field)
-            and
-            expression.left_comparison_value.table_name
+            and expression.left_comparison_value.table_name
             == self._join_table._table_name()
             and not expression.left_comparison_value._field_data.in_join
         )
@@ -169,8 +161,7 @@ class Join(CombinableExpression):
 
         is_right_comparison_to_change: typing.Final[bool] = (
             isinstance(expression.right_comparison_value, Field)
-            and
-            expression.right_comparison_value.table_name
+            and expression.right_comparison_value.table_name
             == self._join_table._table_name()
             and not expression.right_comparison_value._field_data.in_join
         )
@@ -198,8 +189,8 @@ class Join(CombinableExpression):
         field: Field[typing.Any],
     ) -> None:
         is_field_from_from_table: bool = (
-           field._field_data.from_table._table_name()
-           == self._from_table._table_name()
+            field._field_data.from_table._table_name()
+            == self._from_table._table_name()
         )
         if_field_from_join_table: bool = (
             field._field_data.from_table._table_name()
@@ -210,14 +201,14 @@ class Join(CombinableExpression):
             (
                 is_field_from_from_table,
                 if_field_from_join_table,
-            )
+            ),
         )
         if not available_condition:
             raise OnJoinComparisonError(
                 f"It's impossible to use field from table "
                 f"`{field._field_data.from_table}` "
                 f"in join with FROM table "
-                f"`{self._from_table}` and JOIN table `{self._join_table}`"
+                f"`{self._from_table}` and JOIN table `{self._join_table}`",
             )
         return None
 
@@ -236,12 +227,12 @@ class Join(CombinableExpression):
 
     def _process_select_fields(
         self: typing.Self,
-        fields: typing.Iterable[Field[typing.Any]]
+        fields: typing.Iterable[Field[typing.Any]],
     ) -> list[Field[typing.Any]]:
         fields_with_prefix: list[Field[typing.Any]] = []
         for field in fields:
             fields_with_prefix.append(
-                field._with_prefix(self._alias)
+                field._with_prefix(self._alias),
             )
         return fields_with_prefix
 
@@ -297,7 +288,7 @@ class JoinStatement(BaseStatement):
                 join_table=join_table,
                 from_table=from_table,
                 on=on,
-            )
+            ),
         )
 
     def add_join(
@@ -318,8 +309,7 @@ class JoinStatement(BaseStatement):
             operator.add,
             [
                 join_expression.querystring()
-                for join_expression
-                in self.join_expressions
+                for join_expression in self.join_expressions
             ],
         )
         return final_join

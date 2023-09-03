@@ -1,5 +1,7 @@
 import copy
 import typing
+
+from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.exceptions import (
     FieldComparisonError,
@@ -7,11 +9,8 @@ from qaspen.exceptions import (
     FilterComparisonError,
 )
 from qaspen.fields import operators
-
 from qaspen.fields.base.base_field import BaseField, FieldData, FieldType
-
 from qaspen.fields.utils import validate_max_length
-from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
@@ -20,7 +19,6 @@ from qaspen.statements.combinable_statements.filter_statement import (
 
 
 class Field(BaseField[FieldType], SQLSelectable):
-
     _available_comparison_types: tuple[type, ...]
 
     def __init__(
@@ -36,7 +34,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         if is_null and default:
             raise FieldDeclarationError(
                 "It's not possible to specify is_null and default. "
-                "Specify either is_null or default"
+                "Specify either is_null or default",
             )
 
         self._is_null: bool = is_null
@@ -64,7 +62,7 @@ class Field(BaseField[FieldType], SQLSelectable):
             raise FilterComparisonError(
                 "It's not possible to specify subquery "
                 "with positional arguments in `contains` method. "
-                "Please choose either subquery or positional arguments."
+                "Please choose either subquery or positional arguments.",
             )
 
         for comparison_value in comparison_values:
@@ -76,7 +74,7 @@ class Field(BaseField[FieldType], SQLSelectable):
                 raise FieldComparisonError(
                     f"It's impossible to use `IN` operator "
                     f"to compare {self.__class__.__name__} "
-                    f"and {type(comparison_value)}"
+                    f"and {type(comparison_value)}",
                 )
 
         where_parameters: dict[str, typing.Any] = {
@@ -100,7 +98,7 @@ class Field(BaseField[FieldType], SQLSelectable):
             raise FilterComparisonError(
                 "It's not possible to specify subquery "
                 "with positional arguments in `not_contains` method. "
-                "Please choose either subquery or positional arguments."
+                "Please choose either subquery or positional arguments.",
             )
 
         for comparison_value in comparison_values:
@@ -112,7 +110,7 @@ class Field(BaseField[FieldType], SQLSelectable):
                 raise FieldComparisonError(
                     f"It's impossible to use `NOT IN` operator "
                     f"to compare {self.__class__.__name__} "
-                    f"and {type(comparison_value)}"
+                    f"and {type(comparison_value)}",
                 )
 
         where_parameters: dict[str, typing.Any] = {
@@ -142,7 +140,7 @@ class Field(BaseField[FieldType], SQLSelectable):
                     right_value,
                     self._available_comparison_types,
                 ),
-            )
+            ),
         )
         if is_valid_type:
             return FilterBetween(
@@ -155,7 +153,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         raise FieldComparisonError(
             f"Incorrect type of one of the values "
             f"in `BETWEEN operator`. "
-            f"You can use one of these - {self._available_comparison_types}"
+            f"You can use one of these - {self._available_comparison_types}",
         )
 
     def _make_field_create_statement(
@@ -182,7 +180,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: typing.Any
+        comparison_value: typing.Any,
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -198,7 +196,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         raise FieldComparisonError(
             f"It's impossible to use `!=` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def eq(
@@ -225,7 +223,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         raise FieldComparisonError(
             f"It's impossible to use `!=` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def neq(
@@ -247,7 +245,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         raise FieldComparisonError(
             f"It's impossible to use `>` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def gt(
@@ -269,7 +267,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         raise FieldComparisonError(
             f"It's impossible to use `>=` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def gte(
@@ -291,7 +289,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         raise FieldComparisonError(
             f"It's impossible to use `<` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def lt(
@@ -313,7 +311,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         raise FieldComparisonError(
             f"It's impossible to use `<=` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def lte(
@@ -324,7 +322,6 @@ class Field(BaseField[FieldType], SQLSelectable):
 
 
 class BaseStringField(Field[str]):
-
     _available_comparison_types: tuple[type, ...] = (
         str,
         Field,
@@ -369,9 +366,7 @@ class BaseStringField(Field[str]):
         if max_length:
             validate_max_length(max_length=max_length)
 
-        self.max_length: typing.Final[int] = (
-            max_length if max_length else 100
-        )
+        self.max_length: typing.Final[int] = max_length if max_length else 100
 
     def contains(
         self: typing.Self,
@@ -402,17 +397,13 @@ class BaseStringField(Field[str]):
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: (
-            str | Field[FieldType] | AnyOperator | AllOperator
-        ),
+        comparison_value: (str | Field[FieldType] | AnyOperator | AllOperator),
     ) -> Filter:
         return super().__eq__(comparison_value)
 
     def eq(
         self: typing.Self,
-        comparison_value: (
-            str | Field[FieldType] | AnyOperator | AllOperator
-        ),
+        comparison_value: (str | Field[FieldType] | AnyOperator | AllOperator),
     ) -> Filter:
         return super().eq(comparison_value)
 
@@ -489,7 +480,7 @@ class BaseStringField(Field[str]):
         raise FieldComparisonError(
             f"It's impossible to use `LIKE` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def not_like(
@@ -505,7 +496,7 @@ class BaseStringField(Field[str]):
         raise FieldComparisonError(
             f"It's impossible to use `NOT LIKE` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def ilike(
@@ -521,7 +512,7 @@ class BaseStringField(Field[str]):
         raise FieldComparisonError(
             f"It's impossible to use `ILIKE` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def not_ilike(
@@ -537,7 +528,7 @@ class BaseStringField(Field[str]):
         raise FieldComparisonError(
             f"It's impossible to use `NOT ILIKE` operator "
             f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}"
+            f"and {type(comparison_value)}",
         )
 
     def _build_fields_sql_type(self: typing.Self) -> str:
@@ -546,7 +537,7 @@ class BaseStringField(Field[str]):
     def __set__(self: typing.Self, instance: object, value: str) -> None:
         if not isinstance(value, str):
             raise TypeError(
-                f"Can't assign not string type to {self.__class__.__name__}"
+                f"Can't assign not string type to {self.__class__.__name__}",
             )
         instance.__dict__[self._field_data.field_name] = value
 

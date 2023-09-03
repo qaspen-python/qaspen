@@ -1,7 +1,7 @@
 import dataclasses
 import typing
-from qaspen.engine.base_engine import BaseEngine
 
+from qaspen.engine.base_engine import BaseEngine
 from qaspen.fields.base.base_field import BaseField
 from qaspen.fields.fields import Field
 
@@ -17,7 +17,6 @@ class MetaTableData:
 
 
 class MetaTable:
-
     _table_meta: MetaTableData = MetaTableData()
 
     def __init_subclass__(
@@ -89,8 +88,7 @@ class MetaTable:
     ) -> list[BaseField[typing.Any]]:
         table_fields: typing.Final[list[BaseField[typing.Any]]] = [
             field_class
-            for field_class
-            in cls.__dict__.values()
+            for field_class in cls.__dict__.values()
             if isinstance(field_class, BaseField)
         ]
 

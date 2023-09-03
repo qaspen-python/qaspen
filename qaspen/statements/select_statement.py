@@ -1,4 +1,5 @@
 import typing
+
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base_engine import BaseEngine
 from qaspen.exceptions import OnJoinFieldsError
@@ -10,6 +11,9 @@ from qaspen.statements.base import ObjectExecutable
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
+from qaspen.statements.combinable_statements.filter_statement import (
+    FilterStatement,
+)
 from qaspen.statements.combinable_statements.join_statement import (
     FullOuterJoin,
     InnerJoin,
@@ -17,34 +21,24 @@ from qaspen.statements.combinable_statements.join_statement import (
     JoinStatement,
     JoinType,
     LeftOuterJoin,
-    RightOuterJoin
+    RightOuterJoin,
 )
-from qaspen.statements.statement import BaseStatement
-
-from qaspen.statements.sub_statements.limit_statement import LimitStatement
 from qaspen.statements.combinable_statements.order_by_statement import (
     OrderBy,
     OrderByStatement,
 )
-from qaspen.statements.combinable_statements.filter_statement import (
-    FilterStatement,
-)
+from qaspen.statements.statement import BaseStatement
+from qaspen.statements.sub_statements.limit_statement import LimitStatement
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 
 if typing.TYPE_CHECKING:
+    from qaspen.statements.exists_statement import ExistsStatement
+    from qaspen.statements.intersect_statement import IntersectStatement
     from qaspen.statements.statement_result.select_result import (
         SelectStatementResult,
     )
+    from qaspen.statements.union_statement import UnionStatement
     from qaspen.table.base_table import BaseTable
-    from qaspen.statements.union_statement import (
-        UnionStatement,
-    )
-    from qaspen.statements.intersect_statement import (
-        IntersectStatement,
-    )
-    from qaspen.statements.exists_statement import (
-        ExistsStatement,
-    )
 
 
 class SelectStatement(
@@ -67,6 +61,7 @@ class SelectStatement(
     select_statement: SelectStatement = Buns.select()
     ```
     """
+
     def __init__(
         self: typing.Self,
         from_table: type["BaseTable"],
@@ -127,6 +122,7 @@ class SelectStatement(
         from qaspen.statements.statement_result.select_result import (
             SelectStatementResult,
         )
+
         raw_query_result: list[
             tuple[typing.Any, ...],
         ] = await engine.run_query(
@@ -134,7 +130,7 @@ class SelectStatement(
         )
 
         query_result: SelectStatementResult = SelectStatementResult(
-            from_table=self._from_table,  # type: ignore
+            from_table=self._from_table,
             query_result=raw_query_result,
             aliases=self._field_aliases,
         )
@@ -318,7 +314,7 @@ class SelectStatement(
             )
         if order_bys:
             self._order_by_statement.order_by(
-                order_by_statements=order_bys
+                order_by_statements=order_bys,
             )
         return self
 
@@ -355,9 +351,8 @@ class SelectStatement(
         )
         ```
         """
-        from qaspen.statements.union_statement import (
-            UnionStatement,
-        )
+        from qaspen.statements.union_statement import UnionStatement
+
         return UnionStatement(
             left_expression=self,
             right_expression=union_with,
@@ -394,9 +389,8 @@ class SelectStatement(
         )
         ```
         """
-        from qaspen.statements.intersect_statement import (
-            IntersectStatement,
-        )
+        from qaspen.statements.intersect_statement import IntersectStatement
+
         return IntersectStatement(
             left_expression=self,
             right_expression=intersect_with,
@@ -423,9 +417,8 @@ class SelectStatement(
         ).exists()
         ```
         """
-        from qaspen.statements.exists_statement import (
-            ExistsStatement,
-        )
+        from qaspen.statements.exists_statement import ExistsStatement
+
         self._select_fields = []
         for join in self._join_statement.join_expressions:
             join._fields = []
@@ -1011,10 +1004,7 @@ class SelectStatement(
             BaseField[typing.Any],
         ] = self._prepare_select_fields()
         to_select_fields: str = ", ".join(
-            [
-                field.field_name
-                for field in fields_to_select
-            ],
+            [field.field_name for field in fields_to_select],
         )
         sql_querystring = QueryString(
             to_select_fields or "1",
@@ -1040,11 +1030,7 @@ class SelectStatement(
                 "You must specify fields to get from JOIN",
             )
 
-        join_table: type["BaseTable"] = (
-            fields[0]
-            ._field_data
-            .from_table
-        )
+        join_table: type["BaseTable"] = fields[0]._field_data.from_table
 
         self._join_statement.join(
             fields=fields,

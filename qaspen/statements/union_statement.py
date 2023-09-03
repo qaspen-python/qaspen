@@ -1,8 +1,9 @@
 import typing
+
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
-    CombinableExpression
+    CombinableExpression,
 )
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.statements.statement import BaseStatement
@@ -24,7 +25,7 @@ class Union(CombinableExpression):
         return QueryString(
             self.left_expression.querystring(),
             self.right_expression.querystring(),
-            sql_template="{} " + union_operator + " {}"
+            sql_template="{} " + union_operator + " {}",
         )
 
 

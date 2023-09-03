@@ -1,7 +1,7 @@
 import dataclasses
 import typing
-from qaspen.querystring.querystring import QueryString
 
+from qaspen.querystring.querystring import QueryString
 from qaspen.statements.statement import BaseStatement
 
 

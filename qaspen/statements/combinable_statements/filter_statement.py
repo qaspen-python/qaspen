@@ -2,14 +2,13 @@ import dataclasses
 import functools
 import operator
 import typing
+
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.fields.base.base_field import BaseField
-
-
 from qaspen.fields.operators import BaseOperator
 from qaspen.querystring.querystring import QueryString, WhereQueryString
 from qaspen.statements.combinable_statements.combinations import (
-    CombinableExpression
+    CombinableExpression,
 )
 from qaspen.statements.statement import BaseStatement
 from qaspen.utils.fields_utils import transform_value_to_sql
@@ -30,9 +29,8 @@ class Filter(CombinableExpression):
         comparison_value: (
             EmptyValue | BaseField[typing.Any] | typing.Any
         ) = EMPTY_VALUE,
-        comparison_values: EmptyValue | typing.Iterable[
-            typing.Any,
-        ] = EMPTY_VALUE,
+        comparison_values: EmptyValue
+        | typing.Iterable[typing.Any,] = EMPTY_VALUE,
     ) -> None:
         self.field: BaseField[typing.Any] = field
         self.operator: type[BaseOperator] = operator
@@ -53,9 +51,8 @@ class Filter(CombinableExpression):
             compare_value = ", ".join(
                 [
                     transform_value_to_sql(comparison_value)
-                    for comparison_value
-                    in self.comparison_values  # type: ignore[union-attr]
-                ]
+                    for comparison_value in self.comparison_values  # type: ignore[union-attr]  # noqa: E501
+                ],
             )
 
         return WhereQueryString(
@@ -101,7 +98,6 @@ class FilterBetween(CombinableExpression):
 
 
 class FilterExclusive(CombinableExpression):
-
     def __init__(
         self: typing.Self,
         comparison: CombinableExpression,
@@ -142,8 +138,7 @@ class FilterStatement(BaseStatement):
                     *filter_expression.querystring().template_arguments,
                     sql_template=filter_expression.querystring().sql_template,
                 )
-                for filter_expression
-                in self.filter_expressions
+                for filter_expression in self.filter_expressions
             ],
         )
 

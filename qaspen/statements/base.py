@@ -3,7 +3,6 @@ import typing
 
 from qaspen.engine.base_engine import BaseEngine
 
-
 StatementResultType = typing.TypeVar(
     "StatementResultType",
 )
@@ -13,11 +12,9 @@ class Executable(abc.ABC, typing.Generic[StatementResultType]):
     """Show that statement can be executed."""
 
     @abc.abstractmethod
-    def __await__(self: typing.Self) -> typing.Generator[
-        None,
-        None,
-        StatementResultType
-    ]:
+    def __await__(
+        self: typing.Self,
+    ) -> typing.Generator[None, None, StatementResultType]:
         """Make statement awaitable."""
 
     @abc.abstractmethod

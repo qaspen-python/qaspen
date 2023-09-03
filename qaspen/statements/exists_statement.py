@@ -1,4 +1,5 @@
 import typing
+
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base_engine import BaseEngine
 from qaspen.exceptions import QueryResultLookupError
@@ -56,9 +57,7 @@ class ExistsStatement(
 
         :param engine: subclass of BaseEngine.
         """
-        raw_query_result: list[
-            tuple[bool, ...],
-        ] = await engine.run_query(
+        raw_query_result: list[tuple[bool, ...],] = await engine.run_query(
             querystring=self.querystring_for_select(),
         )
 
@@ -67,7 +66,7 @@ class ExistsStatement(
         except LookupError as exc:
             raise QueryResultLookupError(
                 "Cannot get result for ExistsStatement. "
-                "Please check your statement."
+                "Please check your statement.",
             ) from exc
 
     async def _run_query(
@@ -79,10 +78,6 @@ class ExistsStatement(
             )
         return await self.execute(
             engine=(
-                self
-                ._select_statement
-                ._from_table
-                ._table_meta
-                .database_engine
+                self._select_statement._from_table._table_meta.database_engine
             ),
         )

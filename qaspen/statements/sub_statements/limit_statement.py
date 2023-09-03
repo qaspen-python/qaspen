@@ -1,7 +1,7 @@
 import dataclasses
 import typing
-from qaspen.querystring.querystring import QueryString
 
+from qaspen.querystring.querystring import QueryString
 from qaspen.statements.statement import BaseStatement
 
 
@@ -20,5 +20,5 @@ class LimitStatement(BaseStatement):
             return QueryString.empty()
         return QueryString(
             self.limit_number,
-            sql_template="LIMIT {}"
+            sql_template="LIMIT {}",
         )

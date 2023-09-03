@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: black
         name: Format with Black
-        entry: poetry run black ./qaspen
+        entry: poetry run black
         language: system
         types: [python]
 
@@ -37,11 +37,9 @@ repos:
 
       - id: ruff
         name: Check with ruff
-        entry: poetry run ruff
+        entry: poetry run ruff check --force-exclude
         language: system
-        pass_filenames: false
         types: [ python ]
-        args: [python]
 
       - id: mypy
         name: Validate types with MyPy

@@ -2,7 +2,6 @@ import typing
 
 
 class QueryString:
-
     add_delimiter: str = " "
 
     def __init__(
@@ -30,8 +29,7 @@ class QueryString:
             return self
 
         self.sql_template += (
-            f"{self.add_delimiter}"
-            f"{additional_querystring.sql_template}"
+            f"{self.add_delimiter}" f"{additional_querystring.sql_template}"
         )
         self.template_arguments.extend(
             additional_querystring.template_arguments,
@@ -51,5 +49,4 @@ class OrderByQueryString(QueryString):
 
 
 class WhereQueryString(QueryString):
-
     add_delimiter: str = " AND "

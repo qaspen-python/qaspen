@@ -3,7 +3,6 @@ import copy
 import dataclasses
 import typing
 
-
 if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
@@ -26,7 +25,6 @@ class FieldData(typing.Generic[FieldType]):
 
 
 class BaseField(abc.ABC, typing.Generic[FieldType]):
-
     _field_data: FieldData[FieldType]
 
     def __set_name__(
@@ -68,10 +66,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
             self._field_data.prefix
             or self._field_data.from_table._table_name()
         )
-        field_name: str = (
-            f"{prefix}."
-            f"{self._field_data.field_name}"
-        )
+        field_name: str = f"{prefix}." f"{self._field_data.field_name}"
         if prefix := self._field_data.alias:
             field_name += f" AS {prefix}"
 

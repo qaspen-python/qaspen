@@ -1,11 +1,10 @@
-from collections import UserDict
 import typing
+from collections import UserDict
 
 from qaspen.fields.base.base_field import BaseField
 
 
 class FieldAlias:
-
     def __init__(
         self: typing.Self,
         aliased_field: BaseField[typing.Any],

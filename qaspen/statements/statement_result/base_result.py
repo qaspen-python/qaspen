@@ -1,7 +1,6 @@
 import abc
 import typing
 
-
 ListResultType = typing.TypeVar(
     "ListResultType",
 )

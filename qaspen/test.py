@@ -1,4 +1,5 @@
 import asyncio
+
 from qaspen.engine.psycopg_engine import PsycopgPoolEngine
 from qaspen.fields.fields import TextField, VarCharField
 from qaspen.table.base_table import BaseTable
@@ -32,39 +33,30 @@ engine = PsycopgPoolEngine(
 
 statement = User.select()
 statement._from_table._table_meta.database_engine = engine
-profile_join = (
-    statement
-    .join_and_return(
-        based_on=User.user_id == Profile.user_id,
-        fields=[
-            Profile.nickname,
-            Profile.description,
-        ],
-    )
+profile_join = statement.join_and_return(
+    based_on=User.user_id == Profile.user_id,
+    fields=[
+        Profile.nickname,
+        Profile.description,
+    ],
 )
-video_join = (
-    statement.join_and_return(
-        based_on=profile_join.profile_id == Video.profile_id,
-        fields=[
-            Video.profile_id,
-            Video.views_count,
-            Video.status,
-        ]
-    )
+video_join = statement.join_and_return(
+    based_on=profile_join.profile_id == Video.profile_id,
+    fields=[
+        Video.profile_id,
+        Video.views_count,
+        Video.status,
+    ],
 )
 
 
 async def main() -> None:
     await engine.startup()
-    result = (
-        await statement
-        .where(
-           User.name.contains(
-               subquery=User.select([User.name]).where(User.name == "Sasha"),
-           ),
-        )
-        .exists()
-    )
+    result = await statement.where(
+        User.name.contains(
+            subquery=User.select([User.name]).where(User.name == "Sasha"),
+        ),
+    ).exists()
     print(result)
     await engine.shutdown()
 

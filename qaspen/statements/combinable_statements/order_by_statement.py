@@ -58,7 +58,7 @@ class OrderByStatement(BaseStatement):
                     field=field,
                     ascending=ascending,
                     nulls_first=nulls_first,
-                )
+                ),
             )
 
         if order_by_statements:
@@ -73,8 +73,7 @@ class OrderByStatement(BaseStatement):
             operator.add,
             [
                 order_by_expression.querystring()
-                for order_by_expression
-                in self.order_by_expressions
+                for order_by_expression in self.order_by_expressions
             ],
         )
 
