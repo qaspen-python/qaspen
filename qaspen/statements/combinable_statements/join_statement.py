@@ -17,7 +17,10 @@ from qaspen.statements.combinable_statements.filter_statement import (
 )
 
 from qaspen.statements.statement import BaseStatement
-from qaspen.table.meta_table import MetaTable
+
+
+if typing.TYPE_CHECKING:
+    from qaspen.table.base_table import BaseTable
 
 
 class Join(CombinableExpression):
@@ -27,13 +30,13 @@ class Join(CombinableExpression):
     def __init__(
         self: typing.Self,
         fields: typing.Iterable[Field[typing.Any]],
-        from_table: type[MetaTable],
-        join_table: type[MetaTable],
+        from_table: type["BaseTable"],
+        join_table: type["BaseTable"],
         on: CombinableExpression,
         join_alias: str,
     ) -> None:
-        self._from_table: typing.Final[type[MetaTable]] = from_table
-        self._join_table: typing.Final[type[MetaTable]] = join_table
+        self._from_table: typing.Final[type["BaseTable"]] = from_table
+        self._join_table: typing.Final[type["BaseTable"]] = join_table
         self._based_on: CombinableExpression = on
         self._alias: str = join_alias
         self._fields: list[Field[typing.Any]] = self._process_select_fields(
@@ -282,8 +285,8 @@ class JoinStatement(BaseStatement):
     def join(
         self: typing.Self,
         fields: typing.Iterable[Field[typing.Any]],
-        join_table: type[MetaTable],
-        from_table: type[MetaTable],
+        join_table: type["BaseTable"],
+        from_table: type["BaseTable"],
         on: CombinableExpression,
         join_type: JoinType,
     ) -> None:

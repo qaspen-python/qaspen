@@ -72,10 +72,6 @@ class MetaTable:
             raise AttributeError(
                 f"Table `{cls.__name__}` doesn't have `{field_name}` field",
             )
-    # @classmethod
-    # def __getattr__(cls: type["MetaTable"], name: str) -> None:
-    #     print(type(cls.__dict__[name]))
-    #     print(123, name)
 
     @classmethod
     def _table_name(cls: type["MetaTable"]) -> str:
