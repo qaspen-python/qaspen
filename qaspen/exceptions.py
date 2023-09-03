@@ -32,3 +32,11 @@ class OnJoinComparisonError(OnJoinError):
 
 class OnJoinFieldsError(OnJoinError):
     pass
+
+
+class QueryResultError(QaspenBaseError):
+    pass
+
+
+class QueryResultLookupError(QueryResultError):
+    pass

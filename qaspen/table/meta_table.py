@@ -58,6 +58,12 @@ class MetaTable:
                     new_field_value,
                 )
 
+    def __getattr__(
+        self: typing.Self,
+        attribute: str,
+    ) -> typing.Any:
+        return self.__dict__[attribute]
+
     @classmethod
     def get_field(
         cls: type["MetaTable"],

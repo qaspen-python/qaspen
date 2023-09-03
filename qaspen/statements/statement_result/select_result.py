@@ -1,9 +1,18 @@
 import typing
 from qaspen.fields.aliases import FieldAliases
+from qaspen.statements.statement_result.base_result import (
+    ListableStatementResult,
+    RawableStatementResult,
+    ObjecttableStatementResult,
+)
 from qaspen.table.base_table import BaseTable
 
 
-class QueryResult:
+class SelectStatementResult(
+    RawableStatementResult,
+    ListableStatementResult[list[dict[str, typing.Any]]],
+    ObjecttableStatementResult[BaseTable],
+):
 
     def __init__(
         self: typing.Self,

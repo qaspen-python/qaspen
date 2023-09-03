@@ -48,7 +48,6 @@ class UnionStatement(BaseStatement, SQLSelectable):
         select_statement: SelectStatement,
         union_all: bool = False,
     ) -> typing.Self:
-        """"""
         self.union_statement = Union(
             left_expression=self.union_statement,
             right_expression=select_statement,

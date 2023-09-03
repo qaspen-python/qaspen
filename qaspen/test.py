@@ -29,18 +29,9 @@ engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/postgres",
 )
 
-# async def run_query(query: str) -> typing.Any:
-#     import psycopg
-#     aconn = await psycopg.AsyncConnection.connect(
-#         "postgres://postgres:12345@localhost:5432/postgres",
-#     )
-#     async with aconn:
-#         async with aconn.cursor() as cur:
-#             await cur.execute(query)
-#             print(await cur.fetchall())
-
 
 statement = User.select()
+statement._from_table._table_meta.database_engine = engine
 profile_join = (
     statement
     .join_and_return(
@@ -67,11 +58,12 @@ async def main() -> None:
     await engine.startup()
     result = (
         await statement
-        # .where(
-        #    profile_join.nickname == "Chandr",
-        # )
-        .as_objects()
-        .execute(engine=engine)
+        .where(
+           User.name.contains(
+               subquery=User.select([User.name]).where(User.name == "Sasha"),
+           ),
+        )
+        .exists()
     )
     print(result)
     await engine.shutdown()

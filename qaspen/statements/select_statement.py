@@ -6,6 +6,7 @@ from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base.base_field import BaseField
 from qaspen.fields.fields import Field
 from qaspen.querystring.querystring import QueryString
+from qaspen.statements.base import ObjectExecutable
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
@@ -31,6 +32,9 @@ from qaspen.statements.combinable_statements.filter_statement import (
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 
 if typing.TYPE_CHECKING:
+    from qaspen.statements.statement_result.select_result import (
+        SelectStatementResult,
+    )
     from qaspen.table.base_table import BaseTable
     from qaspen.statements.union_statement import (
         UnionStatement,
@@ -43,7 +47,11 @@ if typing.TYPE_CHECKING:
     )
 
 
-class SelectStatement(BaseStatement, SQLSelectable):
+class SelectStatement(
+    BaseStatement,
+    SQLSelectable,
+    ObjectExecutable["SelectStatementResult"],
+):
     """Main entry point for all SELECT queries.
 
     You shouldn't create instance of this class by yourself,
@@ -65,8 +73,8 @@ class SelectStatement(BaseStatement, SQLSelectable):
         select_fields: typing.Iterable[BaseField[typing.Any]],
     ) -> None:
         self._from_table: typing.Final[type["BaseTable"]] = from_table
-        self._select_fields: typing.Final[
-            typing.Iterable[BaseField[typing.Any]]
+        self._select_fields: typing.Iterable[
+            BaseField[typing.Any],
         ] = select_fields
         self.final_select_fields: list[BaseField[typing.Any]] = []
         self.exist_prefixes: typing.Final[list[str]] = []
@@ -82,7 +90,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
 
     def __await__(
         self: typing.Self,
-    ) -> typing.Any:
+    ) -> typing.Generator[None, None, "SelectStatementResult"]:
         """SelectStatement can be awaited.
 
         Example:
@@ -102,43 +110,36 @@ class SelectStatement(BaseStatement, SQLSelectable):
         self: typing.Self,
         engine: BaseEngine[typing.Any],
         as_object: bool = False,
-    ) -> list[dict[str, typing.Any]] | list["BaseTable"]:
+    ) -> "SelectStatementResult":
         """Execute select statement.
 
         This is manual execution.
         You can pass specific engine and set if you want
         to retrieve table objects instead of list of dicts.
 
+        ### Parameters
         :param engine: subclass of BaseEngine.
         :param as_object: flag that indicates return list of objects ot not.
 
+        ### Returns
         :returns: list of dicts or list of table instances.
         """
-        from qaspen.query_result import QueryResult
+        from qaspen.statements.statement_result.select_result import (
+            SelectStatementResult,
+        )
         raw_query_result: list[
             tuple[typing.Any, ...],
         ] = await engine.run_query(
             querystring=self.querystring(),
         )
 
-        query_result: QueryResult = QueryResult(
+        query_result: SelectStatementResult = SelectStatementResult(
             from_table=self._from_table,  # type: ignore
             query_result=raw_query_result,
             aliases=self._field_aliases,
         )
 
-        if self._as_objects or as_object:
-            return query_result.as_objects()
-
-        return query_result.as_list()
-
-    def as_objects(self: typing.Self) -> typing.Self:
-        """Set flag to return objects instead of list of dicts.
-
-        :returns: self.
-        """
-        self._as_objects = True
-        return self
+        return query_result
 
     def where(
         self: typing.Self,
@@ -425,6 +426,9 @@ class SelectStatement(BaseStatement, SQLSelectable):
         from qaspen.statements.exists_statement import (
             ExistsStatement,
         )
+        self._select_fields = []
+        for join in self._join_statement.join_expressions:
+            join._fields = []
         return ExistsStatement(
             select_statement=self,
         )
@@ -1013,7 +1017,7 @@ class SelectStatement(BaseStatement, SQLSelectable):
             ],
         )
         sql_querystring = QueryString(
-            to_select_fields,
+            to_select_fields or "1",
             self._from_table._table_meta.table_name,
             sql_template="SELECT {} FROM {}",
         )
@@ -1051,13 +1055,13 @@ class SelectStatement(BaseStatement, SQLSelectable):
         )
         return self
 
-    async def _run_query(self: typing.Self) -> typing.Any:
+    async def _run_query(self: typing.Self) -> "SelectStatementResult":
         if not self._from_table._table_meta.database_engine:
             raise AttributeError(
                 "There is no database engine.",
             )
-        return await self._from_table._table_meta.database_engine.run_query(
-            querystring=self.querystring(),
+        return await self.execute(
+            engine=self._from_table._table_meta.database_engine,
         )
 
     def _prepare_select_fields(
