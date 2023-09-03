@@ -1,7 +1,7 @@
 import typing
 from collections import UserDict
 
-from qaspen.fields.base.base_field import BaseField
+from qaspen.fields.base_field import BaseField
 
 
 class FieldAlias:

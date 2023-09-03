@@ -4,7 +4,7 @@ import operator
 import typing
 
 from qaspen.base.sql_base import SQLSelectable
-from qaspen.fields.base.base_field import BaseField
+from qaspen.fields.base_field import BaseField
 from qaspen.fields.operators import BaseOperator
 from qaspen.querystring.querystring import QueryString, WhereQueryString
 from qaspen.statements.combinable_statements.combinations import (

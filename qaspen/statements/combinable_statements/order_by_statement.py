@@ -3,7 +3,7 @@ import functools
 import operator
 import typing
 
-from qaspen.fields.base.base_field import BaseField
+from qaspen.fields.base_field import BaseField
 from qaspen.querystring.querystring import OrderByQueryString, QueryString
 from qaspen.statements.statement import BaseStatement
 

@@ -9,7 +9,7 @@ from qaspen.exceptions import (
     FilterComparisonError,
 )
 from qaspen.fields import operators
-from qaspen.fields.base.base_field import BaseField, FieldData, FieldType
+from qaspen.fields.base_field import BaseField, FieldData, FieldType
 from qaspen.fields.utils import validate_max_length
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (

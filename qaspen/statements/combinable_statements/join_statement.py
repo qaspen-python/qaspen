@@ -51,7 +51,7 @@ class Join(CombinableExpression):
         self._based_on = self._change_combinable_expression(self._based_on)
         return QueryString(
             self.join_type,
-            self._join_table._table_name(),
+            self._join_table.table_name(),
             self._alias,
             self._based_on.querystring(),
             sql_template="{} {} AS {} ON {}",
@@ -100,8 +100,8 @@ class Join(CombinableExpression):
         if_left_to_change: typing.Final[bool] = all(
             (
                 isinstance(expression.field, Field),
-                expression.field._field_data.from_table._table_name()
-                == self._join_table._table_name(),
+                expression.field._field_data.from_table.table_name()
+                == self._join_table.table_name(),
                 not expression.field._field_data.in_join,
             ),
         )
@@ -109,7 +109,7 @@ class Join(CombinableExpression):
         is_right_to_change: typing.Final[bool] = (
             isinstance(expression.comparison_value, Field)
             and (expression.comparison_value.table_name)
-            == self._join_table._table_name()
+            == self._join_table.table_name()
             and not expression.comparison_value._field_data.in_join
         )
 
@@ -137,8 +137,8 @@ class Join(CombinableExpression):
         )
 
         is_field_to_change: bool = (
-            expression.field._field_data.from_table._table_name()
-            == self._join_table._table_name()
+            expression.field._field_data.from_table.table_name()
+            == self._join_table.table_name()
         )
 
         if is_field_to_change:
@@ -148,7 +148,7 @@ class Join(CombinableExpression):
         is_left_comparison_to_change: typing.Final[bool] = (
             isinstance(expression.left_comparison_value, Field)
             and expression.left_comparison_value.table_name
-            == self._join_table._table_name()
+            == self._join_table.table_name()
             and not expression.left_comparison_value._field_data.in_join
         )
 
@@ -162,7 +162,7 @@ class Join(CombinableExpression):
         is_right_comparison_to_change: typing.Final[bool] = (
             isinstance(expression.right_comparison_value, Field)
             and expression.right_comparison_value.table_name
-            == self._join_table._table_name()
+            == self._join_table.table_name()
             and not expression.right_comparison_value._field_data.in_join
         )
         if is_right_comparison_to_change:
@@ -189,12 +189,12 @@ class Join(CombinableExpression):
         field: Field[typing.Any],
     ) -> None:
         is_field_from_from_table: bool = (
-            field._field_data.from_table._table_name()
-            == self._from_table._table_name()
+            field._field_data.from_table.table_name()
+            == self._from_table.table_name()
         )
         if_field_from_join_table: bool = (
-            field._field_data.from_table._table_name()
-            == self._join_table._table_name()
+            field._field_data.from_table.table_name()
+            == self._join_table.table_name()
         )
 
         available_condition: bool = any(

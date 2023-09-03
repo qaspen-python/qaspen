@@ -84,7 +84,7 @@ class SelectStatementResult(
             main_table_params = temporary_dict.pop(self.from_table)
             main_table = self.from_table(**main_table_params)
             for model, model_params in temporary_dict.items():
-                setattr(main_table, model._table_name(), model(**model_params))
+                setattr(main_table, model.table_name(), model(**model_params))
 
             result_objects.append(main_table)
 

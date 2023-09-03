@@ -4,7 +4,7 @@ from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base_engine import BaseEngine
 from qaspen.exceptions import OnJoinFieldsError
 from qaspen.fields.aliases import FieldAliases
-from qaspen.fields.base.base_field import BaseField
+from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import ObjectExecutable

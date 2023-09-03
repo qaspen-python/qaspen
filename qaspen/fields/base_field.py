@@ -14,8 +14,10 @@ FieldType = typing.TypeVar(
 
 @dataclasses.dataclass
 class FieldData(typing.Generic[FieldType]):
+    """All field data."""
+
     field_name: str
-    from_table: type["BaseTable"] = None  # type: ignore
+    from_table: type["BaseTable"] = None  # type: ignore[assignment]
     is_null: bool = False
     field_value: FieldType | None = None
     default: FieldType | None = None
@@ -25,6 +27,8 @@ class FieldData(typing.Generic[FieldType]):
 
 
 class BaseField(abc.ABC, typing.Generic[FieldType]):
+    """Base field class for all Fields."""
+
     _field_data: FieldData[FieldType]
 
     def __set_name__(
@@ -32,6 +36,18 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         owner: typing.Any,
         field_name: str,
     ) -> None:
+        """Set name for the field.
+
+        field_name is equal to the name of the Field variable.
+
+        Example:
+        -------
+        ```
+        class MyTable(BaseTable):
+            # name of the field in the database is `meme_lord`
+            meme_lord: VarCharField = VarCharField()
+        ```
+        """
         self._field_data.from_table = owner
         self._field_data.field_name = field_name
 
@@ -43,7 +59,8 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
 
     @property
     def table_name(self: typing.Self) -> str:
-        return self._field_data.from_table._table_name()
+        """Return the table name of this field."""
+        return self._field_data.from_table.table_name()
 
     def _with_prefix(self: typing.Self, prefix: str) -> "BaseField[FieldType]":
         field: BaseField[FieldType] = copy.deepcopy(self)
@@ -57,16 +74,16 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
 
     @property
     def field_name_clear(self: typing.Self) -> str:
+        """Return name of the field without prefix and alias."""
         return self._field_data.field_name
 
     @property
     def field_name(self: typing.Self) -> str:
         """Return field name with prefix and alias."""
         prefix: str = (
-            self._field_data.prefix
-            or self._field_data.from_table._table_name()
+            self._field_data.prefix or self._field_data.from_table.table_name()
         )
-        field_name: str = f"{prefix}." f"{self._field_data.field_name}"
+        field_name: str = f"{prefix}.{self._field_data.field_name}"
         if prefix := self._field_data.alias:
             field_name += f" AS {prefix}"
 
@@ -74,10 +91,12 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
 
     @property
     def default(self: typing.Self) -> FieldType | None:
+        """Return default value of the field."""
         return self._field_data.default
 
     @property
     def is_null(self: typing.Self) -> bool:
+        """Return flag that field can be `NULL`."""
         return self._field_data.is_null
 
     @property

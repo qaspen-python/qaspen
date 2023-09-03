@@ -2,7 +2,7 @@ import dataclasses
 import typing
 
 from qaspen.engine.base_engine import BaseEngine
-from qaspen.fields.base.base_field import BaseField
+from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
 
 
@@ -79,7 +79,7 @@ class MetaTable:
             )
 
     @classmethod
-    def _table_name(cls: type["MetaTable"]) -> str:
+    def table_name(cls: type["MetaTable"]) -> str:
         return cls._table_meta.table_name
 
     @classmethod
