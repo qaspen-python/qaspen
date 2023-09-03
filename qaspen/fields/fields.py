@@ -321,6 +321,9 @@ class Field(BaseField[FieldType], SQLSelectable):
         return self.__le__(comparison_value)
 
 
+StringFieldCompareTypes = str | AnyOperator | AllOperator
+
+
 class BaseStringField(Field[str]):
     _available_comparison_types: tuple[type, ...] = (
         str,
@@ -397,73 +400,73 @@ class BaseStringField(Field[str]):
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: (str | Field[FieldType] | AnyOperator | AllOperator),
+        comparison_value: Field[FieldType] | StringFieldCompareTypes,
     ) -> Filter:
         return super().__eq__(comparison_value)
 
     def eq(
         self: typing.Self,
-        comparison_value: (str | Field[FieldType] | AnyOperator | AllOperator),
+        comparison_value: Field[FieldType] | StringFieldCompareTypes,
     ) -> Filter:
         return super().eq(comparison_value)
 
     def __ne__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().__ne__(comparison_value)
 
     def neq(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().neq(comparison_value)
 
     def __gt__(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().__gt__(comparison_value)
 
     def gt(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().gt(comparison_value)
 
     def __ge__(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().__ge__(comparison_value)
 
     def gte(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().gte(comparison_value)
 
     def __lt__(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().__lt__(comparison_value)
 
     def lt(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().lt(comparison_value)
 
     def __le__(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().__le__(comparison_value)
 
     def lte(
         self: typing.Self,
-        comparison_value: str | AnyOperator | AllOperator,
+        comparison_value: StringFieldCompareTypes,
     ) -> Filter:
         return super().lte(comparison_value)
 
