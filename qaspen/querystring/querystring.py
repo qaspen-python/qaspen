@@ -39,9 +39,7 @@ class QueryString:
         return self
 
     def __str__(self: typing.Self) -> str:
-        return self.sql_template.format(
-            *self.template_arguments,
-        )
+        return self.querystring()
 
 
 class EmptyQueryString(QueryString):
