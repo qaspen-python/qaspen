@@ -43,7 +43,7 @@ engine = PsycopgPoolEngine(
 statement = User.select()
 profile_join = (
     statement
-    .join_with_return(
+    .join_and_return(
         based_on=User.user_id == Profile.user_id,
         fields=[
             Profile.nickname,
@@ -52,7 +52,7 @@ profile_join = (
     )
 )
 video_join = (
-    statement.join_with_return(
+    statement.join_and_return(
         based_on=profile_join.profile_id == Video.profile_id,
         fields=[
             Video.profile_id,

@@ -272,7 +272,6 @@ class JoinType(enum.Enum):
 
 @dataclasses.dataclass
 class JoinStatement(BaseStatement):
-    operator: str = "JOIN"
     join_expressions: list[Join] = dataclasses.field(
         default_factory=list,
     )
