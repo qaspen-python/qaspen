@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: black
         name: Format with Black
-        entry: poetry run black
+        entry: poetry run black ./qaspen
         language: system
         types: [python]
 
