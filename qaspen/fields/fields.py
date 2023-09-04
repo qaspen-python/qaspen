@@ -17,6 +17,8 @@ from qaspen.statements.combinable_statements.filter_statement import (
     FilterBetween,
 )
 
+OperatorTypes = AnyOperator | AllOperator
+
 
 class Field(BaseField[FieldType], SQLSelectable):
     _available_comparison_types: tuple[type, ...]
@@ -55,7 +57,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def contains(
         self: typing.Self,
-        *comparison_values: typing.Any,
+        *comparison_values: FieldType,
         subquery: SQLSelectable | None = None,
     ) -> Filter:
         if subquery and comparison_values:
@@ -91,7 +93,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def not_contains(
         self: typing.Self,
-        *comparison_values: typing.Any,
+        *comparison_values: FieldType,
         subquery: SQLSelectable | None = None,
     ) -> Filter:
         if subquery and comparison_values:
@@ -127,8 +129,8 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def between(
         self: typing.Self,
-        left_value: typing.Any,
-        right_value: typing.Any,
+        left_value: FieldType | "Field[typing.Any]",
+        right_value: FieldType | "Field[typing.Any]",
     ) -> FilterBetween:
         is_valid_type: typing.Final[bool] = all(
             (
@@ -180,7 +182,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | "Field[typing.Any]" | OperatorTypes,
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -201,13 +203,13 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def eq(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | "Field[typing.Any]" | OperatorTypes,
     ) -> Filter:
         return self.__eq__(comparison_value)
 
     def __ne__(  # type: ignore[override]
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -228,13 +230,13 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def neq(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         return self.__ne__(comparison_value)
 
     def __gt__(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -250,13 +252,13 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def gt(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         return self.__gt__(comparison_value)
 
     def __ge__(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -272,13 +274,13 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def gte(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         return self.__ge__(comparison_value)
 
     def __lt__(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -294,13 +296,13 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def lt(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         return self.__lt__(comparison_value)
 
     def __le__(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -316,7 +318,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def lte(
         self: typing.Self,
-        comparison_value: typing.Any,
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         return self.__le__(comparison_value)
 
@@ -370,105 +372,6 @@ class BaseStringField(Field[str]):
             validate_max_length(max_length=max_length)
 
         self.max_length: typing.Final[int] = max_length if max_length else 100
-
-    def contains(
-        self: typing.Self,
-        *comparison_values: str,
-        subquery: SQLSelectable | None = None,
-    ) -> Filter:
-        return super().contains(
-            *comparison_values,
-            subquery=subquery,
-        )
-
-    def not_contains(
-        self: typing.Self,
-        *comparison_values: str,
-        subquery: SQLSelectable | None = None,
-    ) -> Filter:
-        return super().not_contains(
-            *comparison_values,
-            subquery=subquery,
-        )
-
-    def between(
-        self: typing.Self,
-        left_value: str | Field[FieldType],
-        right_value: str | Field[FieldType],
-    ) -> FilterBetween:
-        return super().between(left_value, right_value)
-
-    def __eq__(  # type: ignore[override]
-        self: typing.Self,
-        comparison_value: Field[FieldType] | StringFieldCompareTypes,
-    ) -> Filter:
-        return super().__eq__(comparison_value)
-
-    def eq(
-        self: typing.Self,
-        comparison_value: Field[FieldType] | StringFieldCompareTypes,
-    ) -> Filter:
-        return super().eq(comparison_value)
-
-    def __ne__(  # type: ignore[override]
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().__ne__(comparison_value)
-
-    def neq(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().neq(comparison_value)
-
-    def __gt__(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().__gt__(comparison_value)
-
-    def gt(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().gt(comparison_value)
-
-    def __ge__(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().__ge__(comparison_value)
-
-    def gte(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().gte(comparison_value)
-
-    def __lt__(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().__lt__(comparison_value)
-
-    def lt(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().lt(comparison_value)
-
-    def __le__(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().__le__(comparison_value)
-
-    def lte(
-        self: typing.Self,
-        comparison_value: StringFieldCompareTypes,
-    ) -> Filter:
-        return super().lte(comparison_value)
 
     def like(
         self: typing.Self,
@@ -559,3 +462,31 @@ class TextField(BaseStringField):
     @typing.final
     def _build_fields_sql_type(self: typing.Self) -> str:
         return self._field_sql_type
+
+
+IntegerFieldCompareTypes = int | AnyOperator | AllOperator
+
+
+class BaseIntegerField(Field[int]):
+    """Base field for all integer fields."""
+
+    _available_comparison_types: tuple[type, ...] = (
+        int,
+        Field,
+        AnyOperator,
+        AllOperator,
+    )
+
+    def __init__(
+        self: typing.Self,
+        *pos_arguments: typing.Any,
+        is_null: bool = False,
+        default: int | None = None,
+        db_field_name: str | None = None,
+    ) -> None:
+        super().__init__(
+            *pos_arguments,
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )

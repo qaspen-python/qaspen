@@ -30,7 +30,6 @@ engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/postgres",
 )
 
-
 statement = User.select()
 statement._from_table._table_meta.database_engine = engine
 profile_join = statement.join_and_return(
@@ -61,14 +60,4 @@ async def main() -> None:
     await engine.shutdown()
 
 
-# async def main() -> None:
-#     await run_query(query=str(query))
-
-
 asyncio.run(main())
-
-# a = User(
-#     user_id="123",
-# )
-
-# print(a.name)
