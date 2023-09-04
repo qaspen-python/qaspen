@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 import typing
 
@@ -32,7 +33,6 @@ class MetaTable:
         if not table_name:
             table_name = cls.__name__.lower()
 
-        cls.abstract = abstract  # type: ignore[attr-defined]
         table_fields: typing.Final[
             list[BaseField[typing.Any]],
         ] = cls._parse_table_fields()
@@ -47,6 +47,11 @@ class MetaTable:
 
     def __init__(self: typing.Self, **fields_values: typing.Any) -> None:
         for table_field in self._table_meta.table_fields:
+            setattr(
+                self,
+                table_field.field_name_clear,
+                copy.deepcopy(table_field),
+            )
             new_field_value: typing.Any | None = fields_values.get(
                 table_field.field_name_clear,
             )
@@ -92,7 +97,7 @@ class MetaTable:
             if isinstance(field_class, BaseField)
         ]
 
-        for table_field in table_fields:
-            setattr(cls, table_field.field_name_clear, table_field)
+        # for table_field in table_fields:
+        #     setattr(cls, table_field.field_name_clear, table_field)
 
         return table_fields

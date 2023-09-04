@@ -6,6 +6,7 @@ from qaspen.base.sql_base import SQLSelectable
 from qaspen.exceptions import (
     FieldComparisonError,
     FieldDeclarationError,
+    FieldValueValidationError,
     FilterComparisonError,
 )
 from qaspen.fields import operators
@@ -17,11 +18,15 @@ from qaspen.statements.combinable_statements.filter_statement import (
     FilterBetween,
 )
 
+if typing.TYPE_CHECKING:
+    from qaspen.table.base_table import BaseTable
+
 OperatorTypes = AnyOperator | AllOperator
 
 
 class Field(BaseField[FieldType], SQLSelectable):
     _available_comparison_types: tuple[type, ...]
+    _set_available_types: tuple[type, ...]
 
     def __init__(
         self: typing.Self,
@@ -40,13 +45,15 @@ class Field(BaseField[FieldType], SQLSelectable):
             )
 
         self._is_null: bool = is_null
-        self._default: FieldType | None = default
-        self._field_value: FieldType | None = None
 
         if db_field_name:
             self._field_name: str = db_field_name
         else:
             self._field_name = ""
+
+        self._default: FieldType | None = self._validate_default_value(
+            default_value=default,
+        )
 
         self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name if db_field_name else self._field_name,
@@ -54,6 +61,36 @@ class Field(BaseField[FieldType], SQLSelectable):
             is_null=is_null,
             default=default,
         )
+
+    def __get__(
+        self: typing.Self,
+        instance: "BaseTable | None",
+        owner: type["BaseTable"],
+    ) -> "Field[FieldType]":
+        try:
+            return typing.cast(
+                Field[FieldType],
+                instance.__dict__[self.field_name_clear],
+            )
+        except (AttributeError, KeyError):
+            return typing.cast(
+                Field[FieldType],
+                owner.__dict__[self.field_name_clear],
+            )
+
+    def __set__(self: typing.Self, instance: object, value: FieldType) -> None:
+        if isinstance(value, self.__class__):
+            instance.__dict__[self.field_name_clear] = value
+            return
+        if not isinstance(value, self._set_available_types):
+            raise TypeError(
+                f"Can't assign not string type to {self.__class__.__name__}",
+            )
+        self._validate_field_value(
+            field_value=value,
+        )
+        field: Field[FieldType] = instance.__dict__[self.field_name_clear]
+        field._field_data.field_value = value
 
     def contains(
         self: typing.Self,
@@ -176,9 +213,6 @@ class Field(BaseField[FieldType], SQLSelectable):
             self.field_name,
             sql_template="{}",
         )
-
-    def __str__(self: typing.Self) -> str:
-        return str(self._field_value)
 
     def __eq__(  # type: ignore[override]
         self: typing.Self,
@@ -322,8 +356,41 @@ class Field(BaseField[FieldType], SQLSelectable):
     ) -> Filter:
         return self.__le__(comparison_value)
 
+    def _validate_field_value(
+        self: typing.Self,
+        field_value: FieldType | None,
+    ) -> None:
+        """Validate field value.
 
-StringFieldCompareTypes = str | AnyOperator | AllOperator
+        If `field_value` is None but field declared as NOT NULL,
+        throw an error.
+
+        :param field_value: new value for the field.
+
+        :raises FieldValueValidationError: if the `max_length` is exceeded.
+        """
+        if field_value is None and self._is_null:
+            return
+        if field_value is None and not self._is_null:
+            raise FieldValueValidationError(
+                f"You can't assign `None` to the field "
+                f"that declared as `NOT NULL`",
+            )
+
+    def _validate_default_value(
+        self: typing.Self,
+        default_value: FieldType | None,
+    ) -> None:
+        if default_value is None:
+            return
+        try:
+            self._validate_field_value(
+                field_value=default_value,
+            )
+        except FieldValueValidationError as exc:
+            raise FieldValueValidationError(
+                f"Wrong default value in the field {self._field_name}",
+            ) from exc
 
 
 class BaseStringField(Field[str]):
@@ -333,6 +400,7 @@ class BaseStringField(Field[str]):
         AnyOperator,
         AllOperator,
     )
+    _set_available_types: tuple[type, ...] = (str,)
 
     @typing.overload
     def __init__(
@@ -361,17 +429,17 @@ class BaseStringField(Field[str]):
         default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
+        if max_length:
+            validate_max_length(max_length=max_length)
+
+        self._max_length: int = max_length if max_length else 100
+
         super().__init__(
             *pos_arguments,
             is_null=is_null,
             default=default,
             db_field_name=db_field_name,
         )
-
-        if max_length:
-            validate_max_length(max_length=max_length)
-
-        self.max_length: typing.Final[int] = max_length if max_length else 100
 
     def like(
         self: typing.Self,
@@ -437,34 +505,98 @@ class BaseStringField(Field[str]):
             f"and {type(comparison_value)}",
         )
 
-    def _build_fields_sql_type(self: typing.Self) -> str:
-        return f"{self._default_field_type}({self.max_length})"
+    def _validate_field_value(
+        self: typing.Self,
+        field_value: str | None,
+    ) -> None:
+        """Validate field value.
 
-    def __set__(self: typing.Self, instance: object, value: str) -> None:
-        if not isinstance(value, str):
-            raise TypeError(
-                f"Can't assign not string type to {self.__class__.__name__}",
+        If new value has length more that `max_length`, throw an error.
+
+        :param field_value: new value for the field.
+
+        :raises FieldValueValidationError: if the `max_length` is exceeded.
+        """
+        super()._validate_field_value(
+            field_value=field_value,
+        )
+
+        if field_value and len(field_value) <= self._max_length:
+            return
+        elif field_value and len(field_value) > self._max_length:
+            raise FieldValueValidationError(
+                f"You cannot set value with length {len(field_value)} "
+                f"to the {self.__class__.__name__} with "
+                f"`max_length` - {self._max_length}",
             )
-        instance.__dict__[self._field_data.field_name] = value
 
-
-class VarCharField(BaseStringField):
-    pass
-
-
-class CharField(BaseStringField):
-    pass
-
-
-class TextField(BaseStringField):
-    _field_sql_type: typing.Literal["TEXT"] = "TEXT"
-
-    @typing.final
     def _build_fields_sql_type(self: typing.Self) -> str:
-        return self._field_sql_type
+        return f"{self._default_field_type}({self._max_length})"
 
 
-IntegerFieldCompareTypes = int | AnyOperator | AllOperator
+class VarChar(BaseStringField):
+    """Varchar Field.
+
+    Behave like normal PostgreSQL VARCHAR field.
+    """
+
+
+class Text(Field[str]):
+    """Text field.
+
+    Behave like normal PostgreSQL TEXT field.
+    """
+
+    _set_available_types: tuple[type, ...] = (str,)
+
+
+class Char(Field[str]):
+    """Char field.
+
+    You cannot specify `max_length` parameter for this Field,
+    it's always 1.
+
+    If you want more characters, use `VarChar` field.
+    """
+
+    _set_available_types: tuple[type, ...] = (str,)
+
+    def __init__(
+        self: typing.Self,
+        *pos_arguments: typing.Any,
+        is_null: bool = False,
+        default: str | None = None,
+        db_field_name: str | None = None,
+    ) -> None:
+        super().__init__(
+            *pos_arguments,
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )
+
+    def _validate_field_value(
+        self: typing.Self,
+        field_value: str | None,
+    ) -> None:
+        """Validate field value.
+
+        If value length not equal 1 raise an error.
+
+        :param field_value: new value for the field.
+
+        :raises FieldValueValidationError: if value length not equal 1.
+        """
+        if not field_value:
+            return
+        if len(field_value) == 1:
+            return
+
+        raise FieldValueValidationError(
+            f"CHAR field must always contain "
+            f"only one character. "
+            f"You tried to set {field_value}",
+        )
 
 
 class BaseIntegerField(Field[int]):
@@ -476,6 +608,9 @@ class BaseIntegerField(Field[int]):
         AnyOperator,
         AllOperator,
     )
+    _set_available_types: tuple[type, ...] = (int,)
+    _available_max_value: int
+    _available_min_value: int
 
     def __init__(
         self: typing.Self,
@@ -483,10 +618,62 @@ class BaseIntegerField(Field[int]):
         is_null: bool = False,
         default: int | None = None,
         db_field_name: str | None = None,
+        maximum: int | None = None,
+        minimum: int | None = None,
     ) -> None:
+        # TODO: Added CHECK constraint to these params
+        self._maximum: int | None = maximum
+        self._minimum: int | None = minimum
+
         super().__init__(
             *pos_arguments,
             is_null=is_null,
             default=default,
             db_field_name=db_field_name,
         )
+
+    def _validate_field_value(
+        self: typing.Self,
+        field_value: int | None,
+    ) -> None:
+        """Validate field value.
+
+        Check maximum and minimum values, if validation failed
+        raise an error.
+
+        :param field_value: new value for the field.
+
+        :raises FieldValueValidationError: if value is too big or small.
+        """
+        super()._validate_field_value(
+            field_value=field_value,
+        )
+        if field_value and field_value > self._available_max_value:
+            raise FieldValueValidationError(
+                f"Field value - {field_value} "
+                f"is bigger than field {self.__class__.__name__} "
+                f"can accommodate - {self._available_max_value}",
+            )
+        if field_value and field_value < self._available_min_value:
+            raise FieldValueValidationError(
+                f"Field value - {field_value} "
+                f"is less than field {self.__class__.__name__} "
+                f"can accommodate - {self._available_min_value}",
+            )
+        if field_value and self._maximum and field_value > self._maximum:
+            raise FieldValueValidationError(
+                f"Field value - {field_value} "
+                f"is bigger than maximum you set {self._maximum}",
+            )
+        if field_value and self._minimum and field_value < self._minimum:
+            raise FieldValueValidationError(
+                f"Field value - {field_value} "
+                f"is less than minimum you set {self._minimum}",
+            )
+
+
+class SmallInt(BaseIntegerField):
+    """Integer SmallInt field."""
+
+    _available_max_value: int = 32767
+    _available_min_value: int = -32768

@@ -6,6 +6,10 @@ class FieldBaseError(QaspenBaseError):
     pass
 
 
+class FieldValueValidationError(FieldBaseError):
+    pass
+
+
 class FieldDeclarationError(FieldBaseError):
     pass
 

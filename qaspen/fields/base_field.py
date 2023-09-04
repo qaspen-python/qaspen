@@ -57,6 +57,33 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
     ) -> str:
         ...
 
+    @abc.abstractmethod
+    def _validate_field_value(
+        self: typing.Self,
+        field_value: FieldType | None,
+    ) -> None:
+        """Validate field value.
+
+        It must raise an error if something goes wrong
+        or not return anything.
+        """
+        ...
+
+    @abc.abstractmethod
+    def _validate_default_value(
+        self: typing.Self,
+        default_value: FieldType | None,
+    ) -> None:
+        """Validate field default value.
+
+        It must raise an error in validation failed.
+        """
+        ...
+
+    @property
+    def value(self: typing.Self) -> FieldType | None:
+        return self._field_data.field_value
+
     @property
     def table_name(self: typing.Self) -> str:
         """Return the table name of this field."""

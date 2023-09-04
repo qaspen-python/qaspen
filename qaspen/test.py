@@ -1,30 +1,40 @@
 import asyncio
 
 from qaspen.engine.psycopg_engine import PsycopgPoolEngine
-from qaspen.fields.fields import TextField, VarCharField
+from qaspen.fields.fields import Text, VarChar
 from qaspen.table.base_table import BaseTable
 
 
 class User(BaseTable, table_name="users"):
-    user_id: VarCharField = VarCharField(default="1")
-    name: VarCharField = VarCharField()
-    surname: VarCharField = VarCharField(default="Kiselev")
-    description: TextField = TextField(default="Zopa")
+    user_id: VarChar = VarChar(default="1", max_length=5)
+    name: VarChar = VarChar()
+    surname: VarChar = VarChar(default="Kiselev")
+    description: Text = Text(default="Zopa")
 
 
 class Profile(BaseTable, table_name="profiles"):
-    profile_id: VarCharField = VarCharField(default="1")
-    user_id: VarCharField = VarCharField(default="1")
-    nickname: VarCharField = VarCharField(default="memeLord")
-    description: TextField = TextField(default="MemeDesc")
+    profile_id: VarChar = VarChar(default="1")
+    user_id: VarChar = VarChar(default="1")
+    nickname: VarChar = VarChar(default="memeLord")
+    description: Text = Text(default="MemeDesc")
 
 
 class Video(BaseTable, table_name="videos"):
-    video_id: VarCharField = VarCharField(default="1")
-    profile_id: VarCharField = VarCharField(default="Sasha")
-    views_count: VarCharField = VarCharField(default="20")
-    status: VarCharField = VarCharField()
+    video_id: VarChar = VarChar(default="1")
+    profile_id: VarChar = VarChar(default="Sasha")
+    views_count: VarChar = VarChar()
+    status: VarChar = VarChar()
 
+
+u1 = User()
+u1.user_id = "555"
+print("U1", u1.user_id.value)
+
+u2 = User()
+print("U2", u2.user_id.value)
+
+# u3 = User()
+# print("U3", u3.user_id._field_value)
 
 engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/postgres",
@@ -55,8 +65,8 @@ async def main() -> None:
         User.name.contains(
             subquery=User.select([User.name]).where(User.name == "Sasha"),
         ),
-    ).exists()
-    print(result)
+    )
+    print(result.as_list())
     await engine.shutdown()
 
 
