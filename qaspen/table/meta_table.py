@@ -97,7 +97,4 @@ class MetaTable:
             if isinstance(field_class, BaseField)
         ]
 
-        # for table_field in table_fields:
-        #     setattr(cls, table_field.field_name_clear, table_field)
-
         return table_fields

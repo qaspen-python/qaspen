@@ -1,7 +1,8 @@
 import asyncio
 
 from qaspen.engine.psycopg_engine import PsycopgPoolEngine
-from qaspen.fields.fields import Text, VarChar
+from qaspen.fields.integer_fields import SmallInt
+from qaspen.fields.string_fields import Text, VarChar
 from qaspen.table.base_table import BaseTable
 
 
@@ -10,6 +11,7 @@ class User(BaseTable, table_name="users"):
     name: VarChar = VarChar()
     surname: VarChar = VarChar(default="Kiselev")
     description: Text = Text(default="Zopa")
+    sm = SmallInt()
 
 
 class Profile(BaseTable, table_name="profiles"):
@@ -27,14 +29,7 @@ class Video(BaseTable, table_name="videos"):
 
 
 u1 = User()
-u1.user_id = "555"
-print("U1", u1.user_id.value)
 
-u2 = User()
-print("U2", u2.user_id.value)
-
-# u3 = User()
-# print("U3", u3.user_id._field_value)
 
 engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/postgres",
@@ -61,12 +56,12 @@ video_join = statement.join_and_return(
 
 async def main() -> None:
     await engine.startup()
-    result = await statement.where(
-        User.name.contains(
-            subquery=User.select([User.name]).where(User.name == "Sasha"),
-        ),
-    )
-    print(result.as_list())
+    # result = await statement.where(
+    #     User.name.contains(
+    #         subquery=User.select([User.name]).where(User.name == "Sasha"),
+    #     ),
+    # )
+    # print(result.as_list())
     await engine.shutdown()
 
 
