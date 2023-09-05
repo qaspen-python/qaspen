@@ -148,7 +148,8 @@ class BaseStringField(Field[str]):
                 f"`max_length` - {self._max_length}",
             )
 
-    def _build_fields_sql_type(self: typing.Self) -> str:
+    @property
+    def _sql_type(self: typing.Self) -> str:
         return f"{self._default_field_type}({self._max_length})"
 
 

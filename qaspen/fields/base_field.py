@@ -138,5 +138,6 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
     def _default_field_type(self: typing.Self) -> str:
         return self.__class__.__name__.upper()
 
-    def _build_fields_sql_type(self: typing.Self) -> str:
+    @property
+    def _sql_type(self: typing.Self) -> str:
         return self._default_field_type

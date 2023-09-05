@@ -43,19 +43,12 @@ class Field(BaseField[FieldType], SQLSelectable):
                 "Specify either is_null or default",
             )
 
-        self._is_null: bool = is_null
-
-        if db_field_name:
-            self._field_name: str = db_field_name
-        else:
-            self._field_name = ""
-
         self._default: FieldType | None = self._validate_default_value(
             default_value=default,
         )
 
         self._field_data: FieldData[FieldType] = FieldData(
-            field_name=db_field_name if db_field_name else self._field_name,
+            field_name=db_field_name if db_field_name else "",
             field_value=None,
             is_null=is_null,
             default=default,
@@ -202,7 +195,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         self: typing.Self,
     ) -> str:
         return (
-            f"{self._field_name} {self._build_fields_sql_type()} "
+            f"{self.field_name_clear} {self._sql_type} "
             f"{self._field_null} {self._field_default}"
         )
 
@@ -372,9 +365,9 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         :raises FieldValueValidationError: if the `max_length` is exceeded.
         """
-        if field_value is None and self._is_null:
+        if field_value is None and self.is_null:
             return
-        if field_value is None and not self._is_null:
+        if field_value is None and not self.is_null:
             raise FieldValueValidationError(
                 f"You can't assign `None` to the field "
                 f"that declared as `NOT NULL`",
@@ -392,5 +385,5 @@ class Field(BaseField[FieldType], SQLSelectable):
             )
         except FieldValueValidationError as exc:
             raise FieldValueValidationError(
-                f"Wrong default value in the field {self._field_name}",
+                f"Wrong default value in the field {self.field_name_clear}",
             ) from exc

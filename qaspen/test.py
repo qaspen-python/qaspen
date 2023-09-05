@@ -1,7 +1,7 @@
 import asyncio
 
 from qaspen.engine.psycopg_engine import PsycopgPoolEngine
-from qaspen.fields.integer_fields import SmallInt
+from qaspen.fields.integer_fields import Serial
 from qaspen.fields.string_fields import Text, VarChar
 from qaspen.table.base_table import BaseTable
 
@@ -11,7 +11,7 @@ class User(BaseTable, table_name="users"):
     name: VarChar = VarChar()
     surname: VarChar = VarChar(default="Kiselev")
     description: Text = Text(default="Zopa")
-    sm = SmallInt()
+    sm = Serial()
 
 
 class Profile(BaseTable, table_name="profiles"):
@@ -26,6 +26,9 @@ class Video(BaseTable, table_name="videos"):
     profile_id: VarChar = VarChar(default="Sasha")
     views_count: VarChar = VarChar()
     status: VarChar = VarChar()
+
+
+print(User.sm._make_field_create_statement())
 
 
 u1 = User()
