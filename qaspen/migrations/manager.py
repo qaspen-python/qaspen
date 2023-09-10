@@ -2,6 +2,7 @@ import dataclasses
 import typing
 
 from qaspen.engine.base_engine import BaseEngine
+from qaspen.migrations.migration import Migration
 
 
 @dataclasses.dataclass
@@ -33,3 +34,9 @@ class MigrationManager:
 
     def rollback(self: typing.Self) -> None:
         pass
+
+    def retrieve_migrations(
+        self: typing.Self,
+        path_to_migrations: str,
+    ) -> list[Migration]:
+        return []
