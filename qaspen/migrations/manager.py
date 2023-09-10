@@ -24,16 +24,44 @@ class MigrationManager:
         pass
 
     def init_db(self: typing.Self) -> None:
-        pass
+        """Initialize the database.
+
+        Create new table with name `qaspen`.
+        This table will be used as a migration-data table.
+        """
 
     def migrate(self: typing.Self) -> None:
-        pass
+        """Create new migrations."""
 
-    def apply(self: typing.Self) -> None:
-        pass
+    def apply(
+        self: typing.Self,
+        migration: Migration,
+    ) -> None:
+        """Apply the migration.
 
-    def rollback(self: typing.Self) -> None:
-        pass
+        Run all operations in the `apply_operations`
+        array.
+        Do it in the transaction by default, but it is
+        possible to set flag `in_transaction` to `False` in the
+        migration to turn off this mechanism.
+
+        :param migration: migration to apply.
+        """
+
+    def rollback(
+        self: typing.Self,
+        migration: Migration,
+    ) -> None:
+        """Rollback the migration.
+
+        Run all operations in the `rollback_operations`
+        array.
+        Do it in the transaction by default, but it is
+        possible to set flag `in_transaction` to `False` in the
+        migration to turn off this mechanism.
+
+        :param migration: migration to rollback.
+        """
 
     def retrieve_migrations(
         self: typing.Self,
