@@ -36,3 +36,11 @@ class BaseEngine(abc.ABC, typing.Generic[ConnectionClass]):
         in_transaction: bool = True,
     ) -> list[tuple[typing.Any, ...]]:
         ...
+
+    @abc.abstractmethod
+    async def run_query_without_result(
+        self: typing.Self,
+        querystring: QueryString,
+        in_transaction: bool = True,
+    ) -> None:
+        ...

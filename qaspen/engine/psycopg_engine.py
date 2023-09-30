@@ -37,4 +37,18 @@ class PsycopgPoolEngine(BaseEngine[AsyncConnectionPool]):
 
         async with self.connection.connection() as async_conn:
             result_cursor = await async_conn.execute(str(querystring))
-            return await result_cursor.fetchall()
+            result = await result_cursor.fetchall()
+            return result
+
+    async def run_query_without_result(
+        self: typing.Self,
+        querystring: QueryString,
+        in_transaction: bool = True,
+    ) -> None:
+        if not self.connection:
+            await self.startup()
+        if not self.connection:
+            raise ValueError()
+
+        async with self.connection.connection() as async_conn:
+            await async_conn.execute(str(querystring))

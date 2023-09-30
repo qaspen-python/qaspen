@@ -51,6 +51,17 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         self._field_data.from_table = owner
         self._field_data.field_name = field_name
 
+    def _is_the_same_field(
+        self: typing.Self,
+        second_field: "BaseField[FieldType]",
+    ) -> bool:
+        """Compare two fields.
+
+        Return `True` if they are the same, else `False`.
+        They are equal if they `_field_data`s are the same.
+        """
+        return self._field_data == second_field._field_data
+
     @abc.abstractmethod
     def _make_field_create_statement(
         self: typing.Self,

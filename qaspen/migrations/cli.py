@@ -1,6 +1,14 @@
+import asyncio
+
 import typer
 
+from qaspen.engine.psycopg_engine import PsycopgPoolEngine
+from qaspen.migrations.manager import MigrationManager
+
 cli_app: typer.Typer = typer.Typer()
+engine = PsycopgPoolEngine(
+    connection_string="postgres://postgres:12345@localhost:5432/qaspendb",
+)
 
 
 @cli_app.command(
@@ -22,4 +30,12 @@ def rollback() -> None:
 
 @cli_app.command()
 def init_db() -> None:
-    print("In init_db command")
+    async def init_db() -> None:
+        await engine.startup()
+        migration_manager = MigrationManager(
+            db_engine=engine,
+        )
+        await migration_manager.init_db()
+        await engine.shutdown()
+
+    asyncio.run(init_db())
