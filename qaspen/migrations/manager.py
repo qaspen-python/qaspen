@@ -33,7 +33,7 @@ class MigrationManager:
     async def init_db(self: typing.Self) -> None:
         """Initialize the database.
 
-        Create new table with name `qaspen`.
+        Create new table with name `qaspen_metadata`.
         This table will be used as a migration-data table.
         """
         table_name: typing.Final = "qaspen_metadata"
