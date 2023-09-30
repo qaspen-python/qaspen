@@ -216,7 +216,7 @@ class Join(CombinableExpression):
         self: typing.Self,
         field_name: str,
     ) -> Field[typing.Any]:
-        field_from_join: Field[typing.Any] = self._join_table.get_field(
+        field_from_join: Field[typing.Any] = self._join_table.retrieve_field(
             field_name=field_name,
         )
         field_from_join_with_alias: Field[

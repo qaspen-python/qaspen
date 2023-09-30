@@ -46,6 +46,6 @@ multi_line_output = 3
 line_length = 79
 
 [tool.qaspen]
-models_file = "/U/suck/cock"
+models_file = ""
 models_folder = ""
 migrations_folder = ""

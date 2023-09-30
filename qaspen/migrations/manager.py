@@ -5,6 +5,7 @@ import psycopg
 
 from qaspen.engine.base_engine import BaseEngine
 from qaspen.migrations.migration import Migration
+from qaspen.migrations.settings import Settings
 from qaspen.querystring.querystring import QueryString
 
 
@@ -25,6 +26,7 @@ class MigrationManager:
         self._migration_manager_meta = MigrationManagerMeta(
             db_engine=db_engine,
         )
+        self.settings: typing.Final = Settings()
 
     @property
     def _db_engine(self) -> BaseEngine[typing.Any]:
@@ -111,9 +113,3 @@ class MigrationManager:
 
         :param migration: migration to rollback.
         """
-
-    def retrieve_migrations(
-        self: typing.Self,
-        path_to_migrations: str,
-    ) -> list[Migration]:
-        return []

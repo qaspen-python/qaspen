@@ -5,6 +5,7 @@ from qaspen.fields.integer_fields import Serial
 from qaspen.fields.string_fields import Text, VarChar
 from qaspen.migrations.manager import MigrationManager
 from qaspen.table.base_table import BaseTable
+from qaspen.table.meta_table import MetaTable
 
 
 class User(BaseTable, table_name="users"):
@@ -30,6 +31,7 @@ class Video(BaseTable, table_name="videos"):
 
 
 print(User.sm._make_field_create_statement())
+print(MetaTable._retrieve_not_abstract_subclasses())
 
 
 engine = PsycopgPoolEngine(

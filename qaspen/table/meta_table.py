@@ -4,7 +4,6 @@ import typing
 
 from qaspen.engine.base_engine import BaseEngine
 from qaspen.fields.base_field import BaseField
-from qaspen.fields.fields import Field
 
 
 @dataclasses.dataclass
@@ -19,6 +18,7 @@ class MetaTableData:
 
 class MetaTable:
     _table_meta: MetaTableData = MetaTableData()
+    _subclasses: list[type["MetaTable"]] = []
 
     def __init_subclass__(
         cls: type["MetaTable"],
@@ -26,10 +26,6 @@ class MetaTable:
         abstract: bool = False,
         **kwargs: typing.Any,
     ) -> None:
-        if abstract:
-            super().__init_subclass__(**kwargs)
-            return
-
         if not table_name:
             table_name = cls.__name__.lower()
 
@@ -42,6 +38,8 @@ class MetaTable:
             abstract=abstract,
             table_fields=table_fields,
         )
+
+        cls._subclasses.append(cls)
 
         super().__init_subclass__(**kwargs)
 
@@ -69,25 +67,6 @@ class MetaTable:
         return self.__dict__[attribute]
 
     @classmethod
-    def get_field(
-        cls: type["MetaTable"],
-        field_name: str,
-    ) -> Field[typing.Any]:
-        try:
-            return typing.cast(
-                Field[typing.Any],
-                cls.__dict__[field_name],
-            )
-        except LookupError:
-            raise AttributeError(
-                f"Table `{cls.__name__}` doesn't have `{field_name}` field",
-            )
-
-    @classmethod
-    def table_name(cls: type["MetaTable"]) -> str:
-        return cls._table_meta.table_name
-
-    @classmethod
     def _parse_table_fields(
         cls: type["MetaTable"],
     ) -> list[BaseField[typing.Any]]:
@@ -98,3 +77,13 @@ class MetaTable:
         ]
 
         return table_fields
+
+    @classmethod
+    def _retrieve_not_abstract_subclasses(
+        cls: type["MetaTable"],
+    ) -> list[type["MetaTable"]]:
+        return [
+            subclass
+            for subclass in cls._subclasses
+            if not subclass._table_meta.abstract
+        ]
