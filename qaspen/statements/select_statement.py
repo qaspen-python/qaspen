@@ -1,7 +1,7 @@
 import typing
 
 from qaspen.base.sql_base import SQLSelectable
-from qaspen.engine.base_engine import BaseEngine
+from qaspen.engine.base import BaseEngine
 from qaspen.exceptions import OnJoinFieldsError
 from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base_field import BaseField
@@ -103,7 +103,7 @@ class SelectStatement(
 
     async def execute(
         self: typing.Self,
-        engine: BaseEngine[typing.Any],
+        engine: BaseEngine[typing.Any, typing.Any],
         as_object: bool = False,
     ) -> "SelectStatementResult":
         """Execute select statement.

@@ -3,7 +3,7 @@ import typing
 
 import psycopg
 
-from qaspen.engine.base_engine import BaseEngine
+from qaspen.engine.base import BaseEngine
 from qaspen.migrations.migration import Migration
 from qaspen.migrations.settings import Settings
 from qaspen.querystring.querystring import QueryString
@@ -13,7 +13,7 @@ from qaspen.querystring.querystring import QueryString
 class MigrationManagerMeta:
     """Meta information for migration manager."""
 
-    db_engine: BaseEngine[typing.Any]
+    db_engine: BaseEngine[typing.Any, typing.Any]
 
 
 class MigrationManager:
@@ -22,14 +22,18 @@ class MigrationManager:
     It creates new migrations, compare tables, do all the stuff.
     """
 
-    def __init__(self: typing.Self, db_engine: BaseEngine[typing.Any]) -> None:
+    def __init__(
+        self: typing.Self,
+        db_engine: BaseEngine[typing.Any, typing.Any],
+    ) -> None:
+        self.metadata_table: typing.Final = "qaspen_metadata"
         self._migration_manager_meta = MigrationManagerMeta(
             db_engine=db_engine,
         )
         self.settings: typing.Final = Settings()
 
     @property
-    def _db_engine(self) -> BaseEngine[typing.Any]:
+    def _db_engine(self) -> BaseEngine[typing.Any, typing.Any]:
         return self._migration_manager_meta.db_engine
 
     async def init_db(self: typing.Self) -> None:
@@ -38,13 +42,12 @@ class MigrationManager:
         Create new table with name `qaspen_metadata`.
         This table will be used as a migration-data table.
         """
-        table_name: typing.Final = "qaspen_metadata"
         is_table_exist = True
 
         try:
             await self._db_engine.run_query(
                 querystring=QueryString(
-                    table_name,
+                    self.metadata_table,
                     sql_template="SELECT 1 FROM {}",
                 ),
             )
@@ -52,11 +55,14 @@ class MigrationManager:
             is_table_exist = False
 
         if is_table_exist:
-            print(f"Qaspen table {table_name} is already exist in database!")
+            print(
+                f"Qaspen table {self.metadata_table} "
+                f"is already exist in database!",
+            )
             return
 
         create_table_qs: typing.Final = QueryString(
-            table_name,
+            self.metadata_table,
             sql_template="""
             CREATE TABLE {} (
                 id SERIAL,
@@ -81,8 +87,20 @@ class MigrationManager:
 
         print("Database was successfully initialized!")
 
-    def migrate(self: typing.Self) -> None:
+    async def migrate(self: typing.Self) -> None:
         """Create new migrations."""
+        retrieve_last_migration_info_qs: typing.Final = QueryString(
+            sql_template="""
+                SELECT
+                    migration_name,
+                    is_applied,
+                    version,
+                    tables_state
+                FROM
+                    {}
+                ORDER BY id DESC
+            """,
+        )
 
     def apply(
         self: typing.Self,

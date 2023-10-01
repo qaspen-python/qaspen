@@ -2,13 +2,25 @@ import typing
 
 from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
+from qaspen.migrations.inheritance import (
+    MigrationCreate,
+    MigrationDelete,
+    MigrationUpdate,
+)
+from qaspen.querystring.querystring import QueryString
 from qaspen.statements.select_statement import SelectStatement
 
 # from qaspen.statements.update_statement import UpdateStatement
 from qaspen.table.meta_table import MetaTable
 
 
-class BaseTable(MetaTable, abstract=True):
+class BaseTable(
+    MetaTable,
+    MigrationCreate,
+    MigrationDelete,
+    MigrationUpdate,
+    abstract=True,
+):
     @classmethod
     def select(
         cls: type["BaseTable"],
@@ -44,3 +56,24 @@ class BaseTable(MetaTable, abstract=True):
     @classmethod
     def table_name(cls: type["BaseTable"]) -> str:
         return cls._table_meta.table_name
+
+    @classmethod
+    def _create_entity_statement(cls: type["BaseTable"]) -> QueryString:
+        return QueryString(
+            cls.table_name,
+            sql_template="CREATE TABLE {}",
+        )
+
+    @classmethod
+    def _delete_entity_statement(cls: type["BaseTable"]) -> QueryString:
+        return QueryString(
+            cls.table_name,
+            sql_template="DROP TABLE {}",
+        )
+
+    @classmethod
+    def _update_entity_statement(cls: type["BaseTable"]) -> QueryString:
+        return QueryString(
+            cls.table_name,
+            sql_template="ALTER TABLE {}",
+        )

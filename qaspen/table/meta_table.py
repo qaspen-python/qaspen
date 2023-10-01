@@ -2,7 +2,7 @@ import copy
 import dataclasses
 import typing
 
-from qaspen.engine.base_engine import BaseEngine
+from qaspen.engine.base import BaseEngine
 from qaspen.fields.base_field import BaseField
 
 
@@ -13,7 +13,7 @@ class MetaTableData:
     table_fields: list[BaseField[typing.Any]] = dataclasses.field(
         default_factory=list,
     )
-    database_engine: BaseEngine[typing.Any] | None = None
+    database_engine: BaseEngine[typing.Any, typing.Any] | None = None
 
 
 class MetaTable:

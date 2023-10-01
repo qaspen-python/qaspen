@@ -1,6 +1,8 @@
 import asyncio
 
-from qaspen.engine.psycopg_engine import PsycopgPoolEngine
+from psycopg_pool import AsyncConnectionPool
+
+from qaspen.engine.psycopgpool_engine import PsycopgPoolEngine
 from qaspen.fields.integer_fields import Serial
 from qaspen.fields.string_fields import Text, VarChar
 from qaspen.migrations.manager import MigrationManager
@@ -40,16 +42,33 @@ engine = PsycopgPoolEngine(
 mm = MigrationManager(db_engine=engine)
 
 
+# async def main() -> None:
+#     await engine.startup()
+#     await mm.init_db()
+#     # result = await statement.where(
+#     #     User.name.contains(
+#     #         subquery=User.select([User.name]).where(User.name == "Sasha"),
+#     #     ),
+#     # )
+#     # print(result.as_list())
+#     await engine.shutdown()
+
+
 async def main() -> None:
-    await engine.startup()
-    await mm.init_db()
-    # result = await statement.where(
-    #     User.name.contains(
-    #         subquery=User.select([User.name]).where(User.name == "Sasha"),
-    #     ),
-    # )
-    # print(result.as_list())
-    await engine.shutdown()
+    pool = AsyncConnectionPool(
+        conninfo="postgres://postgres:12345@localhost:5432/qaspendb",
+    )
+    await pool.open()
+    conn = await pool.getconn()
+    # cur = conn.cursor()
+    # cur2 = conn.cursor()
+
+    await conn.execute(
+        query="INSERT INTO for_test(name) VALUES ('500')",
+    )
+    await conn.execute(
+        query="INSERT INTO for_test(name) VALUES ('100')",
+    )
 
 
 asyncio.run(main())

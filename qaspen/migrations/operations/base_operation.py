@@ -1,31 +1,28 @@
 import abc
 import typing
 
-from qaspen.engine.base_engine import BaseEngine
+from qaspen.engine.base import BaseTransaction, SingleConnection
 from qaspen.querystring.querystring import QueryString
 
 
 class Operation(abc.ABC):
     """Base class for all possible operations in migrations."""
 
-    def __init__(
-        self: typing.Self,
-    ) -> None:
-        pass
-
     @abc.abstractmethod
     def statement(self: typing.Self) -> QueryString:
         """Return QueryString that can be used in migration."""
 
-    @abc.abstractmethod
-    def retrieve_engine(self: typing.Self) -> BaseEngine[typing.Any]:
-        """Find engine and use it."""
-
-    async def execute(self: typing.Self) -> None:
+    async def execute(
+        self: typing.Self,
+        transaction: BaseTransaction[SingleConnection],
+    ) -> None:
         """Run operation.
 
         Execute operation in the database.
+
+        :param transaction: transaction instance. It's the same
+            for the whole migration.
         """
-        await self.retrieve_engine().run_query(
-            self.statement(),
+        await transaction.run_query_without_result(
+            querystring=self.statement(),
         )

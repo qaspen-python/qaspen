@@ -1,8 +1,9 @@
+"""CLI for Qaspen migrations."""
 import asyncio
 
 import typer
 
-from qaspen.engine.psycopg_engine import PsycopgPoolEngine
+from qaspen.engine.psycopgpool_engine import PsycopgPoolEngine
 from qaspen.migrations.manager import MigrationManager
 
 cli_app: typer.Typer = typer.Typer()
