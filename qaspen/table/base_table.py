@@ -7,10 +7,9 @@ from qaspen.migrations.inheritance import (
     MigrationDelete,
     MigrationUpdate,
 )
+from qaspen.migrations.operations.create_table import CreateTableOperation
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.select_statement import SelectStatement
-
-# from qaspen.statements.update_statement import UpdateStatement
 from qaspen.table.meta_table import MetaTable
 
 
@@ -58,10 +57,12 @@ class BaseTable(
         return cls._table_meta.table_name
 
     @classmethod
-    def _create_entity_statement(cls: type["BaseTable"]) -> QueryString:
-        return QueryString(
-            cls.table_name,
-            sql_template="CREATE TABLE {}",
+    def _create_operation(cls: type["BaseTable"]) -> CreateTableOperation:
+        return CreateTableOperation(
+            table_name=cls.table_name(),
+            fields={
+                field.field_name_clear: field for field in cls.all_fields()
+            },
         )
 
     @classmethod

@@ -64,11 +64,12 @@ async def main() -> None:
     # cur2 = conn.cursor()
 
     await conn.execute(
-        query="INSERT INTO for_test(name) VALUES ('500')",
+        query="INSERT INTO for_test(name) VALUES ('500'); INSERT INTO for_test(name) VALUES ('100');",
     )
-    await conn.execute(
-        query="INSERT INTO for_test(name) VALUES ('100')",
-    )
+    # await conn.execute(
+    #     query="INSERT INTO for_test(name) VALUES ('100')",
+    # )
+    await conn.commit()
 
 
 asyncio.run(main())

@@ -1,6 +1,7 @@
 """Classes for tables and fields to support migrations."""
 import abc
 
+from qaspen.migrations.operations.base_operation import Operation
 from qaspen.querystring.querystring import QueryString
 
 
@@ -12,7 +13,7 @@ class MigrationCreate(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _create_entity_statement(cls: type["MigrationCreate"]) -> QueryString:
+    def _create_operation(cls: type["MigrationCreate"]) -> Operation:
         pass
 
 

@@ -50,3 +50,7 @@ class OrderByQueryString(QueryString):
 
 class WhereQueryString(QueryString):
     add_delimiter: str = " AND "
+
+
+class FullStatementQueryString(QueryString):
+    add_delimiter: str = "; "
