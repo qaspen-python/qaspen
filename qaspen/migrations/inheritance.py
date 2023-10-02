@@ -67,6 +67,10 @@ class ClassAsString(abc.ABC):
     `turn_into_string` will create string like `MyTable(name="GoodGood")`
     """
 
+    @property
+    def migration_class_name(self: typing.Self) -> str:
+        return self.__class__.__name__
+
     def turn_into_string(self: typing.Self) -> str:
         parameters_name = [
             parameter
@@ -84,4 +88,4 @@ class ClassAsString(abc.ABC):
             f"{key}={value.__repr__()}" for key, value in args_dict.items()
         )
 
-        return f"{self.__class__.__name__}({args_str})"
+        return f"{self.migration_class_name}({args_str})"

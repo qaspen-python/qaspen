@@ -107,6 +107,7 @@ class MigrationManager:
             list[BaseTable],
             MetaTable._retrieve_not_abstract_subclasses(),
         )
+        print(exist_tables[0].__module__)
         content = template.render(
             apply_operations=[
                 f"{exist_table._create_operation().turn_into_string()},"

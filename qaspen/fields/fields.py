@@ -388,3 +388,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
             raise FieldValueValidationError(
                 f"Wrong default value in the field {self.field_name_clear}",
             ) from exc
+
+    @property
+    def migration_class_name(self: typing.Self) -> str:
+        return f"fields.{super().migration_class_name}"

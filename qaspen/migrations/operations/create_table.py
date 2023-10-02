@@ -44,14 +44,14 @@ class CreateTableOperation(Operation, ClassAsString):
         )
         parameters_string += f", {self.process_fields_param()}"
 
-        return f"{self.__class__.__name__}({parameters_string})"
+        return f"\toperations.{self.__class__.__name__}({parameters_string})"
 
     def process_fields_param(self: typing.Self) -> str:
         field_param_str: str = "fields={"
-        for field_name, field_value in self.fields.items():
-            field_param_str += (
-                f"'{field_name}': {field_value.turn_into_string()},"
-            )
+        field_param_str += ", ".join(
+            f"'{field_name}': {field_value.turn_into_string()}"
+            for field_name, field_value in self.fields.items()
+        )
         field_param_str += "}"
 
         return field_param_str
