@@ -1,4 +1,4 @@
-"""Operation when we want to create table."""
+"""All possible operations with table."""
 import inspect
 import typing
 
@@ -19,6 +19,8 @@ class CreateTableOperation(Operation, ClassAsString):
         self.table_name: typing.Final = table_name
         self.fields: typing.Final = fields
         self.additional_options: typing.Final = additional_options
+
+        self.string_representation: typing.Final = self.turn_into_string()
 
     def statement(self: typing.Self) -> QueryString:
         return QueryString(

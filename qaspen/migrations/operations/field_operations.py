@@ -15,3 +15,17 @@ class CreateFieldOperation(Operation, FieldData[FieldType]):
 
     def migration_string(self: typing.Self) -> str:
         return "CreateFieldOperation()"
+
+
+class DeleteTableOperation(Operation):
+    def __init__(
+        self: typing.Self,
+        table_name: str,
+    ) -> None:
+        self.table_name: typing.Final = table_name
+
+    def statement(self: typing.Self) -> QueryString:
+        return QueryString(
+            self.table_name,
+            sql_template="DROP TABLE {}",
+        )

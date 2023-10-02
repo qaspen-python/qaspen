@@ -1,7 +1,13 @@
 """Class that creates migrations."""
+import dataclasses
 import typing
 
 from qaspen.table.meta_table import MetaTable
+
+
+@dataclasses.dataclass
+class MigrationOperations:
+    table_create_operations: list[str]
 
 
 class MigrationCreator:

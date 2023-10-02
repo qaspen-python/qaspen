@@ -1,3 +1,4 @@
+"""Manager and entrypoint for work with migrations."""
 import dataclasses
 import os
 import typing
@@ -107,10 +108,9 @@ class MigrationManager:
             list[BaseTable],
             MetaTable._retrieve_not_abstract_subclasses(),
         )
-        print(exist_tables[0].__module__)
         content = template.render(
             apply_operations=[
-                f"{exist_table._create_operation().turn_into_string()},"
+                f"{exist_table._create_operation().string_representation},"
                 for exist_table in exist_tables
             ],
         )

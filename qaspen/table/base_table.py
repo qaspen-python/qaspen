@@ -7,7 +7,7 @@ from qaspen.migrations.inheritance import (
     MigrationDelete,
     MigrationUpdate,
 )
-from qaspen.migrations.operations.create_table import CreateTableOperation
+from qaspen.migrations.operations.table_operations import CreateTableOperation
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
@@ -61,7 +61,8 @@ class BaseTable(
         return CreateTableOperation(
             table_name=cls.table_name(),
             fields={
-                field.field_name_clear: field for field in cls.all_fields()
+                field.field_name_clear: field  # type: ignore[misc]
+                for field in cls.all_fields()
             },
         )
 

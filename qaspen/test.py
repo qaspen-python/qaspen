@@ -29,6 +29,9 @@ class Video(BaseTable, table_name="videos"):
     status: VarChar = VarChar()
 
 
+print(VarChar().__class__.__module__)
+
+
 engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/qaspendb",
 )

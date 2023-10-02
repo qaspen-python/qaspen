@@ -71,7 +71,8 @@ class ClassAsString(abc.ABC):
     def migration_class_name(self: typing.Self) -> str:
         return self.__class__.__name__
 
-    def turn_into_string(self: typing.Self) -> str:
+    @property
+    def class_parameter_as_string(self: typing.Self) -> str:
         parameters_name = [
             parameter
             for parameter in inspect.signature(
@@ -84,8 +85,9 @@ class ClassAsString(abc.ABC):
             value = self.__dict__.get(arg_name)
             args_dict[arg_name] = value
 
-        args_str = ", ".join(
+        return ", ".join(
             f"{key}={value.__repr__()}" for key, value in args_dict.items()
         )
 
-        return f"{self.migration_class_name}({args_str})"
+    def turn_into_string(self: typing.Self) -> str:
+        return f"{self.migration_class_name}({self.class_parameter_as_string})"
