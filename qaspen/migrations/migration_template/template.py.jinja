@@ -1,13 +1,11 @@
-
-
 class Migration:
     ID = ...
     REFERENCE = ...
     DATETIME = ...
-    TRANSACTION = true
+    IN_TRANSACTION = True
 
-    APPLY_OPERATIONS = [
-
+    APPLY_OPERATIONS = [{% for apply_operation in apply_operations %}
+    {{ apply_operation }} {% endfor %}
     ]
     ROLLBACK_OPERATIONS = [
 

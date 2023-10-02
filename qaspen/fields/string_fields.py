@@ -41,7 +41,7 @@ class BaseStringField(Field[str]):
 
     def __init__(
         self: typing.Self,
-        *pos_arguments: typing.Any,
+        *args: typing.Any,
         max_length: int | None = 255,
         is_null: bool = False,
         default: str | None = None,
@@ -53,7 +53,7 @@ class BaseStringField(Field[str]):
         self._max_length: int = max_length if max_length else 100
 
         super().__init__(
-            *pos_arguments,
+            *args,
             is_null=is_null,
             default=default,
             db_field_name=db_field_name,

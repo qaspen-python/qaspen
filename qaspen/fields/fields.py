@@ -11,6 +11,7 @@ from qaspen.exceptions import (
 )
 from qaspen.fields import operators
 from qaspen.fields.base_field import BaseField, FieldData, FieldType
+from qaspen.migrations.inheritance import ClassAsString
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
@@ -23,18 +24,18 @@ if typing.TYPE_CHECKING:
 OperatorTypes = AnyOperator | AllOperator
 
 
-class Field(BaseField[FieldType], SQLSelectable):
+class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
     _available_comparison_types: tuple[type, ...]
     _set_available_types: tuple[type, ...]
 
     def __init__(
         self: typing.Self,
-        *pos_arguments: typing.Any,
+        *args: typing.Any,
         is_null: bool = False,
         default: FieldType | None = None,
         db_field_name: str | None = None,
     ) -> None:
-        if pos_arguments:
+        if args:
             raise FieldDeclarationError("Use only keyword arguments.")
 
         if is_null and default:

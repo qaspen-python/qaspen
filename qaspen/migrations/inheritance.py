@@ -1,8 +1,12 @@
 """Classes for tables and fields to support migrations."""
 import abc
+import inspect
+import typing
 
-from qaspen.migrations.operations.base_operation import Operation
 from qaspen.querystring.querystring import QueryString
+
+if typing.TYPE_CHECKING:
+    from qaspen.migrations.operations.base_operation import Operation
 
 
 class MigrationCreate(abc.ABC):
@@ -13,7 +17,7 @@ class MigrationCreate(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def _create_operation(cls: type["MigrationCreate"]) -> Operation:
+    def _create_operation(cls: type["MigrationCreate"]) -> "Operation":
         pass
 
 
@@ -40,3 +44,44 @@ class MigrationUpdate(abc.ABC):
     @abc.abstractmethod
     def _update_entity_statement(cls: type["MigrationUpdate"]) -> QueryString:
         pass
+
+
+class ClassAsString(abc.ABC):
+    """Class that allows class instance to be turned into a string.
+
+    For example:
+    ------
+    You have a class:
+    ```
+    class MyTable(ClassAsString):
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+        def turn_into_string(self) -> str:
+            ...
+
+
+    my_table = MyTable("GoodGood")
+    my_table.turn_into_string()
+    ```
+    `turn_into_string` will create string like `MyTable(name="GoodGood")`
+    """
+
+    def turn_into_string(self: typing.Self) -> str:
+        parameters_name = [
+            parameter
+            for parameter in inspect.signature(
+                self.__class__.__init__,
+            ).parameters.keys()
+            if parameter not in ("self", "args", "kwargs")
+        ]
+        args_dict = {}
+        for arg_name in parameters_name:
+            value = self.__dict__.get(arg_name)
+            args_dict[arg_name] = value
+
+        args_str = ", ".join(
+            f"{key}={value.__repr__()}" for key, value in args_dict.items()
+        )
+
+        return f"{self.__class__.__name__}({args_str})"

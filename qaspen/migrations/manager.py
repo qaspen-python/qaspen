@@ -1,12 +1,25 @@
 import dataclasses
+import os
 import typing
 
+import jinja2
 import psycopg
 
 from qaspen.engine.base import BaseEngine
 from qaspen.migrations.migration import Migration
 from qaspen.migrations.settings import Settings
 from qaspen.querystring.querystring import QueryString
+from qaspen.table.base_table import BaseTable
+from qaspen.table.meta_table import MetaTable
+
+TEMPLATE_DIRECTORY = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "migration_template",
+)
+
+JINJA_ENV = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(searchpath=TEMPLATE_DIRECTORY),
+)
 
 
 @dataclasses.dataclass
@@ -89,18 +102,18 @@ class MigrationManager:
 
     async def migrate(self: typing.Self) -> None:
         """Create new migrations."""
-        retrieve_last_migration_info_qs: typing.Final = QueryString(
-            sql_template="""
-                SELECT
-                    migration_name,
-                    is_applied,
-                    version,
-                    tables_state
-                FROM
-                    {}
-                ORDER BY id DESC
-            """,
+        template = JINJA_ENV.get_template("template.py.jinja")
+        exist_tables: list[BaseTable] = typing.cast(
+            list[BaseTable],
+            MetaTable._retrieve_not_abstract_subclasses(),
         )
+        content = template.render(
+            apply_operations=[
+                f"{exist_table._create_operation().turn_into_string()},"
+                for exist_table in exist_tables
+            ],
+        )
+        print(content)
 
     def apply(
         self: typing.Self,
