@@ -40,6 +40,3 @@ class Operation(ClassAsString, abc.ABC):
         await transaction.run_query_without_result(
             querystring=self.statement(),
         )
-
-    # def process_parameters(self: typing.Self) -> ProcessedParameters:
-    #     pass

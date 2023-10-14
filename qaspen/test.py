@@ -1,9 +1,7 @@
 import asyncio
 
 from qaspen.engine.psycopgpool_engine import PsycopgPoolEngine
-from qaspen.fields.integer_fields import Serial
 from qaspen.fields.string_fields import Text, VarChar
-from qaspen.migrations.manager import MigrationManager
 from qaspen.table.base_table import BaseTable
 
 
@@ -12,7 +10,7 @@ class User(BaseTable, table_name="users"):
     name: VarChar = VarChar()
     surname: VarChar = VarChar(default="Kiselev")
     description: Text = Text(default="Zopa")
-    sm = Serial()
+    sm: VarChar = VarChar()
 
 
 class Profile(BaseTable, table_name="profiles"):
@@ -29,44 +27,37 @@ class Video(BaseTable, table_name="videos"):
     status: VarChar = VarChar()
 
 
-print(VarChar().__class__.__module__)
-
-
 engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/qaspendb",
 )
-mm = MigrationManager(db_engine=engine)
-# async def main() -> None:
-#     await engine.startup()
-#     await mm.init_db()
-#     # result = await statement.where(
-#     #     User.name.contains(
-#     #         subquery=User.select([User.name]).where(User.name == "Sasha"),
-#     #     ),
-#     # )
-#     # print(result.as_list())
-#     await engine.shutdown()
 
 
 async def main() -> None:
-    # pool = AsyncConnectionPool(
-    #     conninfo="postgres://postgres:12345@localhost:5432/qaspendb",
-    # )
-    # await pool.open()
-    # conn = await pool.getconn()
-    # # cur = conn.cursor()
-    # # cur2 = conn.cursor()
+    await engine.startup()
+    AliasedUser = User.aliased(alias="NotMe")
+    AliasedProfile = Profile.aliased(alias="NotProfile")
+    AliasedVideo = Video.aliased(alias="NotVideo")
 
-    # await conn.execute(
-    #     query="INSERT INTO for_test(name) VALUES ('500'); INSERT INTO for_test(name) VALUES ('100');",
-    # )
-    # # await conn.execute(
-    # #     query="INSERT INTO for_test(name) VALUES ('100')",
-    # # )
-    # await conn.commit()
+    statement = (
+        AliasedUser.select()
+        .left_join(
+            fields=[
+                AliasedProfile.nickname,
+            ],
+            based_on=AliasedProfile.user_id == AliasedUser.user_id,
+        )
+        .left_join(
+            fields=[
+                AliasedVideo.profile_id,
+            ],
+            based_on=AliasedProfile.profile_id == AliasedVideo.profile_id,
+        )
+    )
+    r = await statement.execute(engine=engine)
+    print(r.as_list())
+    user_r = r.as_objects()[0]
 
     await engine.startup()
-    await mm.migrate()
 
 
 asyncio.run(main())

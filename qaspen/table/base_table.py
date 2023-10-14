@@ -1,30 +1,32 @@
+import copy
 import typing
 
 from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
-from qaspen.migrations.inheritance import (
-    MigrationCreate,
-    MigrationDelete,
-    MigrationUpdate,
-)
-from qaspen.migrations.operations.table_operations import CreateTableOperation
-from qaspen.querystring.querystring import QueryString
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
+
+T_ = typing.TypeVar(
+    "T_",
+    bound="type[BaseTable]",
+)
 
 
 class BaseTable(
     MetaTable,
-    MigrationCreate,
-    MigrationDelete,
-    MigrationUpdate,
     abstract=True,
 ):
     @classmethod
     def select(
-        cls: type["BaseTable"],
+        cls: T_,
         select_fields: typing.Iterable[BaseField[typing.Any]] | None = None,
     ) -> SelectStatement:
+        """Create SelectStatement based on table.
+
+        :param select_fields: fields to select. By default select all possible fields.
+
+        :returns: SelectStatement.
+        """
         if not select_fields:
             select_fields = cls.all_fields()
         select_statement: typing.Final[SelectStatement] = SelectStatement(
@@ -35,10 +37,40 @@ class BaseTable(
 
     @classmethod
     def all_fields(cls: type["BaseTable"]) -> list[BaseField[typing.Any]]:
+        """Return all fields in the table.
+
+        :returns: list of fields.
+        """
         return cls._table_meta.table_fields
 
     @classmethod
-    def retrieve_field(
+    def aliased(cls: T_, alias: str) -> T_:
+        """Add alias to the table.
+
+        It'll be used in queries instead of real table name.
+
+        :param alias: string alias to the table.
+
+        :returns: the same table but with the alias.
+        """
+        copied_table: typing.Final = copy.deepcopy(cls)
+        copied_table._table_meta.alias = alias
+        return copied_table
+
+    @classmethod
+    def original_table_name(cls: type["BaseTable"]) -> str:
+        return cls._table_meta.table_name
+
+    @classmethod
+    def table_name(cls: type["BaseTable"]) -> str:
+        """Return the original table name or alias to it.
+
+        :returns: original table name or alias.
+        """
+        return cls._table_meta.alias or cls.original_table_name()
+
+    @classmethod
+    def _retrieve_field(
         cls: type["BaseTable"],
         field_name: str,
     ) -> Field[typing.Any]:
@@ -51,31 +83,3 @@ class BaseTable(
             raise AttributeError(
                 f"Table `{cls.__name__}` doesn't have `{field_name}` field",
             )
-
-    @classmethod
-    def table_name(cls: type["BaseTable"]) -> str:
-        return cls._table_meta.table_name
-
-    @classmethod
-    def _create_operation(cls: type["BaseTable"]) -> CreateTableOperation:
-        return CreateTableOperation(
-            table_name=cls.table_name(),
-            fields={
-                field.field_name_clear: field  # type: ignore[misc]
-                for field in cls.all_fields()
-            },
-        )
-
-    @classmethod
-    def _delete_entity_statement(cls: type["BaseTable"]) -> QueryString:
-        return QueryString(
-            cls.table_name,
-            sql_template="DROP TABLE {}",
-        )
-
-    @classmethod
-    def _update_entity_statement(cls: type["BaseTable"]) -> QueryString:
-        return QueryString(
-            cls.table_name,
-            sql_template="ALTER TABLE {}",
-        )

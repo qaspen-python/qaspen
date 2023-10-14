@@ -14,6 +14,7 @@ class MetaTableData:
         default_factory=list,
     )
     database_engine: BaseEngine[typing.Any, typing.Any] | None = None
+    alias: str | None = None
 
 
 class MetaTable:
@@ -47,16 +48,16 @@ class MetaTable:
         for table_field in self._table_meta.table_fields:
             setattr(
                 self,
-                table_field.field_name_clear,
+                table_field.original_field_name,
                 copy.deepcopy(table_field),
             )
             new_field_value: typing.Any | None = fields_values.get(
-                table_field.field_name_clear,
+                table_field.original_field_name,
             )
             if new_field_value:
                 setattr(
                     self,
-                    table_field.field_name_clear,
+                    table_field.original_field_name,
                     new_field_value,
                 )
 

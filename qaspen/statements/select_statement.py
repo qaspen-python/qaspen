@@ -1000,17 +1000,7 @@ class SelectStatement(
 
         :returns: QueryString.
         """
-        fields_to_select: list[
-            BaseField[typing.Any],
-        ] = self._prepare_select_fields()
-        to_select_fields: str = ", ".join(
-            [field.field_name for field in fields_to_select],
-        )
-        sql_querystring = QueryString(
-            to_select_fields or "1",
-            self._from_table._table_meta.table_name,
-            sql_template="SELECT {} FROM {}",
-        )
+        sql_querystring = self._select_from()
         sql_querystring += self._join_statement.querystring()
         sql_querystring += self._filter_statement.querystring()
         sql_querystring += self._order_by_statement.querystring()
@@ -1071,3 +1061,21 @@ class SelectStatement(
 
         self.final_select_fields = final_select_fields
         return final_select_fields
+
+    def _select_from(self: typing.Self) -> QueryString:
+        to_select_fields: str = ", ".join(
+            [field.field_name for field in self._prepare_select_fields()],
+        )
+        if self._from_table._table_meta.alias:
+            return QueryString(
+                to_select_fields or "1",
+                self._from_table._table_meta.table_name,
+                self._from_table._table_meta.alias,
+                sql_template="SELECT {} FROM {} as {}",
+            )
+
+        return QueryString(
+            to_select_fields or "1",
+            self._from_table._table_meta.table_name,
+            sql_template="SELECT {} FROM {}",
+        )

@@ -63,12 +63,12 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         try:
             return typing.cast(
                 Field[FieldType],
-                instance.__dict__[self.field_name_clear],
+                instance.__dict__[self.original_field_name],
             )
         except (AttributeError, KeyError):
             return typing.cast(
                 Field[FieldType],
-                owner.__dict__[self.field_name_clear],
+                owner.__dict__[self.original_field_name],
             )
 
     def __set__(
@@ -77,7 +77,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         value: FieldType,
     ) -> None:
         if isinstance(value, self.__class__):
-            instance.__dict__[self.field_name_clear] = value
+            instance.__dict__[self.original_field_name] = value
             return
         if not isinstance(value, self._set_available_types):
             raise TypeError(
@@ -86,7 +86,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         self._validate_field_value(
             field_value=value,
         )
-        field: Field[FieldType] = instance.__dict__[self.field_name_clear]
+        field: Field[FieldType] = instance.__dict__[self.original_field_name]
         field._field_data.field_value = value
 
     def contains(
@@ -196,7 +196,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         self: typing.Self,
     ) -> str:
         return (
-            f"{self.field_name_clear} {self._sql_type} "
+            f"{self.original_field_name} {self._sql_type} "
             f"{self._field_null} {self._field_default}"
         )
 
@@ -386,7 +386,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
             )
         except FieldValueValidationError as exc:
             raise FieldValueValidationError(
-                f"Wrong default value in the field {self.field_name_clear}",
+                f"Wrong default value in the field {self.original_field_name}",
             ) from exc
 
     @property

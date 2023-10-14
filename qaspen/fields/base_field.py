@@ -98,7 +98,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
     @property
     def table_name(self: typing.Self) -> str:
         """Return the table name of this field."""
-        return self._field_data.from_table.table_name()
+        return self._field_data.from_table.original_table_name()
 
     def _with_prefix(self: typing.Self, prefix: str) -> "BaseField[FieldType]":
         field: BaseField[FieldType] = copy.deepcopy(self)
@@ -111,7 +111,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         return field
 
     @property
-    def field_name_clear(self: typing.Self) -> str:
+    def original_field_name(self: typing.Self) -> str:
         """Return name of the field without prefix and alias."""
         return self._field_data.field_name
 

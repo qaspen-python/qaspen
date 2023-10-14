@@ -5,6 +5,7 @@ import operator
 import typing
 
 from qaspen.exceptions import OnJoinComparisonError
+from qaspen.fields.base_field import BaseField, FieldType
 from qaspen.fields.fields import Field
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
@@ -51,10 +52,24 @@ class Join(CombinableExpression):
         self._based_on = self._change_combinable_expression(self._based_on)
         return QueryString(
             self.join_type,
-            self._join_table.table_name(),
-            self._alias,
+            self._join_table.original_table_name(),
+            self._join_table._table_meta.alias or self._alias,
             self._based_on.querystring(),
             sql_template="{} {} AS {} ON {}",
+        )
+
+    def _prefixed_field(
+        self: typing.Self,
+        field: Field[FieldType] | BaseField[FieldType],
+    ) -> Field[FieldType]:
+        return typing.cast(
+            Field[FieldType],
+            field._with_prefix(
+                prefix=(
+                    field._field_data.from_table._table_meta.alias
+                    or self._alias
+                ),
+            ),
         )
 
     def _change_combinable_expression(
@@ -100,8 +115,8 @@ class Join(CombinableExpression):
         if_left_to_change: typing.Final[bool] = all(
             (
                 isinstance(expression.field, Field),
-                expression.field._field_data.from_table.table_name()
-                == self._join_table.table_name(),
+                expression.field._field_data.from_table.original_table_name()
+                == self._join_table.original_table_name(),
                 not expression.field._field_data.in_join,
             ),
         )
@@ -109,17 +124,23 @@ class Join(CombinableExpression):
         is_right_to_change: typing.Final[bool] = (
             isinstance(expression.comparison_value, Field)
             and (expression.comparison_value.table_name)
-            == self._join_table.table_name()
+            == self._join_table.original_table_name()
             and not expression.comparison_value._field_data.in_join
         )
 
         if if_left_to_change:
-            expression.field = expression.field._with_prefix(self._alias)
+            # expression.field = expression.field._with_prefix(self._alias)
+            expression.field = self._prefixed_field(
+                field=expression.field,
+            )
         if is_right_to_change:
-            expression.comparison_value = (
-                expression.comparison_value._with_prefix(  # type: ignore
-                    self._alias,
-                )
+            # expression.comparison_value = (
+            #     expression.comparison_value._with_prefix(  # type: ignore
+            #         self._alias,
+            #     )
+            # )
+            expression.comparison_value = self._prefixed_field(
+                field=expression.comparison_value,  # type: ignore
             )
 
         return expression
@@ -137,39 +158,48 @@ class Join(CombinableExpression):
         )
 
         is_field_to_change: bool = (
-            expression.field._field_data.from_table.table_name()
-            == self._join_table.table_name()
+            expression.field._field_data.from_table.original_table_name()
+            == self._join_table.original_table_name()
         )
 
         if is_field_to_change:
-            expression.field = expression.field._with_prefix(self._alias)
+            # expression.field = expression.field._with_prefix(self._alias)
+            expression.field = self._prefixed_field(
+                field=expression.field,
+            )
             return expression
 
         is_left_comparison_to_change: typing.Final[bool] = (
             isinstance(expression.left_comparison_value, Field)
             and expression.left_comparison_value.table_name
-            == self._join_table.table_name()
+            == self._join_table.original_table_name()
             and not expression.left_comparison_value._field_data.in_join
         )
 
         if is_left_comparison_to_change:
-            expression.left_comparison_value = (
-                expression.left_comparison_value._with_prefix(
-                    self._alias,
-                )
+            # expression.left_comparison_value = (
+            #     expression.left_comparison_value._with_prefix(
+            #         self._alias,
+            #     )
+            # )
+            expression.left_comparison_value = self._prefixed_field(
+                field=expression.left_comparison_value,
             )
 
         is_right_comparison_to_change: typing.Final[bool] = (
             isinstance(expression.right_comparison_value, Field)
             and expression.right_comparison_value.table_name
-            == self._join_table.table_name()
+            == self._join_table.original_table_name()
             and not expression.right_comparison_value._field_data.in_join
         )
         if is_right_comparison_to_change:
-            expression.right_comparison_value = (
-                expression.right_comparison_value._with_prefix(
-                    self._alias,
-                )
+            # expression.right_comparison_value = (
+            #     expression.right_comparison_value._with_prefix(
+            #         self._alias,
+            #     )
+            # )
+            expression.right_comparison_value = self._prefixed_field(
+                field=expression.right_comparison_value,
             )
 
         return expression
@@ -189,12 +219,12 @@ class Join(CombinableExpression):
         field: Field[typing.Any],
     ) -> None:
         is_field_from_from_table: bool = (
-            field._field_data.from_table.table_name()
-            == self._from_table.table_name()
+            field._field_data.from_table.original_table_name()
+            == self._from_table.original_table_name()
         )
         if_field_from_join_table: bool = (
-            field._field_data.from_table.table_name()
-            == self._join_table.table_name()
+            field._field_data.from_table.original_table_name()
+            == self._join_table.original_table_name()
         )
 
         available_condition: bool = any(
@@ -216,12 +246,15 @@ class Join(CombinableExpression):
         self: typing.Self,
         field_name: str,
     ) -> Field[typing.Any]:
-        field_from_join: Field[typing.Any] = self._join_table.retrieve_field(
+        field_from_join: Field[typing.Any] = self._join_table._retrieve_field(
             field_name=field_name,
         )
         field_from_join_with_alias: Field[
             typing.Any,
-        ] = field_from_join._with_prefix(self._alias)
+        ] = self._prefixed_field(  # type: ignore
+            field=field_from_join,
+            prefix=self._alias,
+        )
         field_from_join_with_alias._field_data.in_join = True
         return field_from_join_with_alias
 
@@ -232,7 +265,9 @@ class Join(CombinableExpression):
         fields_with_prefix: list[Field[typing.Any]] = []
         for field in fields:
             fields_with_prefix.append(
-                field._with_prefix(self._alias),
+                self._prefixed_field(
+                    field=field,
+                ),
             )
         return fields_with_prefix
 

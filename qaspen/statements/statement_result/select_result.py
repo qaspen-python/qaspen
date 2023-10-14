@@ -45,7 +45,7 @@ class SelectStatementResult(
 
                 if is_from_table:
                     result_dict[
-                        field.aliased_field.field_name_clear
+                        field.aliased_field.original_field_name
                     ] = single_query_result
                 else:
                     joined_results = result_dict.setdefault(
@@ -53,7 +53,7 @@ class SelectStatementResult(
                         {},
                     )
                     joined_results[
-                        field.aliased_field.field_name_clear
+                        field.aliased_field.original_field_name
                     ] = single_query_result
 
         return result_list
@@ -78,13 +78,17 @@ class SelectStatementResult(
                     {},
                 )
                 model_params_dict[
-                    field.aliased_field.field_name_clear
+                    field.aliased_field.original_field_name
                 ] = single_query_result
 
             main_table_params = temporary_dict.pop(self.from_table)
             main_table = self.from_table(**main_table_params)
             for model, model_params in temporary_dict.items():
-                setattr(main_table, model.table_name(), model(**model_params))
+                setattr(
+                    main_table,
+                    model.original_table_name(),
+                    model(**model_params),
+                )
 
             result_objects.append(main_table)
 
