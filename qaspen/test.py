@@ -48,11 +48,15 @@ async def main() -> None:
         )
         .left_join(
             fields=[
-                AliasedVideo.profile_id,
+                AliasedVideo.views_count,
             ],
-            based_on=AliasedProfile.profile_id == AliasedVideo.profile_id,
+            based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
         )
     )
+    statement = statement.where(
+        AliasedVideo.views_count >= "10",
+    )
+    print(statement.querystring())
     r = await statement.execute(engine=engine)
     print(r.as_list())
     user_r = r.as_objects()[0]

@@ -218,6 +218,9 @@ class Join(CombinableExpression):
         self: typing.Self,
         field: Field[typing.Any],
     ) -> None:
+        if field._field_data.from_table.is_aliased():
+            return
+
         is_field_from_from_table: bool = (
             field._field_data.from_table.original_table_name()
             == self._from_table.original_table_name()
@@ -240,7 +243,6 @@ class Join(CombinableExpression):
                 f"in join with FROM table "
                 f"`{self._from_table}` and JOIN table `{self._join_table}`",
             )
-        return None
 
     def _field_from_join(
         self: typing.Self,

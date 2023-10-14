@@ -58,6 +58,14 @@ class BaseTable(
         return copied_table
 
     @classmethod
+    def is_aliased(cls: type["BaseTable"]) -> bool:
+        """Return flag that says does the table have an alias.
+
+        :returns: boolean flag.
+        """
+        return bool(cls._table_meta.alias)
+
+    @classmethod
     def original_table_name(cls: type["BaseTable"]) -> str:
         return cls._table_meta.table_name
 
