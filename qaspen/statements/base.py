@@ -38,7 +38,6 @@ class ObjectExecutable(Executable[StatementResultType]):
     async def execute(
         self: typing.Self,
         engine: BaseEngine[typing.Any, typing.Any],
-        as_objects: bool = False,
     ) -> StatementResultType:
         """Execute SQL query and return result."""
 

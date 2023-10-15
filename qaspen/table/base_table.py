@@ -8,7 +8,7 @@ from qaspen.table.meta_table import MetaTable
 
 T_ = typing.TypeVar(
     "T_",
-    bound="type[BaseTable]",
+    bound="BaseTable",
 )
 
 
@@ -18,7 +18,7 @@ class BaseTable(
 ):
     @classmethod
     def select(
-        cls: T_,
+        cls: type[T_],
         select_fields: typing.Iterable[BaseField[typing.Any]] | None = None,
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
@@ -44,7 +44,7 @@ class BaseTable(
         return cls._table_meta.table_fields
 
     @classmethod
-    def aliased(cls: T_, alias: str) -> T_:
+    def aliased(cls: type[T_], alias: str) -> type[T_]:
         """Add alias to the table.
 
         It'll be used in queries instead of real table name.

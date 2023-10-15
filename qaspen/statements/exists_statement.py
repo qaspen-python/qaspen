@@ -3,12 +3,13 @@ import typing
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
 from qaspen.exceptions import QueryResultLookupError
+from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import Executable
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
-from qaspen.statements.select_statement import FromTable, SelectStatement
+from qaspen.statements.select_statement import SelectStatement
 from qaspen.statements.statement import BaseStatement
 
 

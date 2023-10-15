@@ -6,6 +6,7 @@ from qaspen.exceptions import OnJoinFieldsError
 from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
+from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import ObjectExecutable
 from qaspen.statements.combinable_statements.combinations import (
@@ -41,16 +42,10 @@ if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
 
-FromTable = typing.TypeVar(
-    "FromTable",
-    bound="type[BaseTable]",
-)
-
-
 class SelectStatement(
     BaseStatement,
     SQLSelectable,
-    ObjectExecutable["SelectStatementResult"],
+    ObjectExecutable["SelectStatementResult[FromTable]"],
     typing.Generic[FromTable],
 ):
     """Main entry point for all SELECT queries.
@@ -71,10 +66,10 @@ class SelectStatement(
 
     def __init__(
         self: typing.Self,
-        from_table: FromTable,
+        from_table: type[FromTable],
         select_fields: typing.Iterable[BaseField[typing.Any]],
     ) -> None:
-        self._from_table: typing.Final[FromTable] = from_table
+        self._from_table: typing.Final[type[FromTable]] = from_table
         self._select_fields: typing.Iterable[
             BaseField[typing.Any],
         ] = select_fields
@@ -92,7 +87,7 @@ class SelectStatement(
 
     def __await__(
         self: typing.Self,
-    ) -> typing.Generator[None, None, "SelectStatementResult"]:
+    ) -> typing.Generator[None, None, "SelectStatementResult[FromTable]"]:
         """SelectStatement can be awaited.
 
         Example:
@@ -111,8 +106,7 @@ class SelectStatement(
     async def execute(
         self: typing.Self,
         engine: BaseEngine[typing.Any, typing.Any],
-        as_object: bool = False,
-    ) -> "SelectStatementResult":
+    ) -> "SelectStatementResult[FromTable]":
         """Execute select statement.
 
         This is manual execution.
@@ -121,7 +115,6 @@ class SelectStatement(
 
         ### Parameters
         :param engine: subclass of BaseEngine.
-        :param as_object: flag that indicates return list of objects ot not.
 
         ### Returns
         :returns: list of dicts or list of table instances.
@@ -136,7 +129,7 @@ class SelectStatement(
             querystring=self.querystring(),
         )
 
-        query_result: SelectStatementResult = SelectStatementResult(
+        query_result: SelectStatementResult[FromTable] = SelectStatementResult(
             from_table=self._from_table,
             query_result=raw_query_result,
             aliases=self._field_aliases,
@@ -1038,7 +1031,9 @@ class SelectStatement(
         )
         return self
 
-    async def _run_query(self: typing.Self) -> "SelectStatementResult":
+    async def _run_query(
+        self: typing.Self,
+    ) -> "SelectStatementResult[FromTable]":
         if not self._from_table._table_meta.database_engine:
             raise AttributeError(
                 "There is no database engine.",

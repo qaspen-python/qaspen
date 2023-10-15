@@ -1,6 +1,7 @@
 import typing
 
 from qaspen.fields.aliases import FieldAliases
+from qaspen.qaspen_types import FromTable
 from qaspen.statements.statement_result.base_result import (
     ListableStatementResult,
     ObjecttableStatementResult,
@@ -12,17 +13,18 @@ from qaspen.table.base_table import BaseTable
 class SelectStatementResult(
     RawableStatementResult,
     ListableStatementResult[list[dict[str, typing.Any]]],
-    ObjecttableStatementResult[BaseTable],
+    ObjecttableStatementResult[FromTable],
+    typing.Generic[FromTable],
 ):
     def __init__(
         self: typing.Self,
-        from_table: type[BaseTable],
+        from_table: type[FromTable],
         query_result: list[tuple[typing.Any, ...]],
         aliases: FieldAliases,
     ) -> None:
-        self.from_table = from_table
-        self.query_result = query_result
-        self.aliases = aliases
+        self.from_table: typing.Final = from_table
+        self.query_result: typing.Final = query_result
+        self.aliases: typing.Final = aliases
 
     def as_list(self: typing.Self) -> list[dict[str, typing.Any]]:
         result_list: list[dict[str, typing.Any]] = []
@@ -58,8 +60,8 @@ class SelectStatementResult(
 
         return result_list
 
-    def as_objects(self: typing.Self) -> list[BaseTable]:
-        result_objects: list[BaseTable] = []
+    def as_objects(self: typing.Self) -> list[FromTable]:
+        result_objects: list[FromTable] = []
 
         for single_query_result in self.query_result:
             zip_expression = zip(
