@@ -20,7 +20,7 @@ class BaseTable(
     def select(
         cls: T_,
         select_fields: typing.Iterable[BaseField[typing.Any]] | None = None,
-    ) -> SelectStatement:
+    ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
         :param select_fields: fields to select. By default select all possible fields.
@@ -29,7 +29,7 @@ class BaseTable(
         """
         if not select_fields:
             select_fields = cls.all_fields()
-        select_statement: typing.Final[SelectStatement] = SelectStatement(
+        select_statement: typing.Final[SelectStatement[T_]] = SelectStatement(
             select_fields=select_fields,
             from_table=cls,
         )

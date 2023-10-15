@@ -5,19 +5,21 @@ from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
-from qaspen.statements.select_statement import SelectStatement
+from qaspen.statements.select_statement import FromTable, SelectStatement
 from qaspen.statements.statement import BaseStatement
 
 
 class Union(CombinableExpression):
     def __init__(
         self: typing.Self,
-        left_expression: "SelectStatement | Union",
-        right_expression: SelectStatement,
+        left_expression: "SelectStatement[FromTable] | Union",
+        right_expression: SelectStatement[FromTable],
         union_all: bool = False,
     ) -> None:
-        self.left_expression: SelectStatement | "Union" = left_expression
-        self.right_expression: SelectStatement = right_expression
+        self.left_expression: SelectStatement[
+            FromTable
+        ] | "Union" = left_expression
+        self.right_expression: SelectStatement[FromTable] = right_expression
         self.union_all: bool = union_all
 
     def querystring(self: typing.Self) -> QueryString:
@@ -34,8 +36,8 @@ class UnionStatement(BaseStatement, SQLSelectable):
 
     def __init__(
         self: typing.Self,
-        left_expression: SelectStatement | Union,
-        right_expression: SelectStatement,
+        left_expression: SelectStatement[FromTable] | Union,
+        right_expression: SelectStatement[FromTable],
         union_all: bool = False,
     ) -> None:
         self.union_statement: Union = Union(
@@ -46,7 +48,7 @@ class UnionStatement(BaseStatement, SQLSelectable):
 
     def union(
         self: typing.Self,
-        select_statement: SelectStatement,
+        select_statement: SelectStatement[FromTable],
         union_all: bool = False,
     ) -> typing.Self:
         self.union_statement = Union(

@@ -5,18 +5,20 @@ from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
-from qaspen.statements.select_statement import SelectStatement
+from qaspen.statements.select_statement import FromTable, SelectStatement
 from qaspen.statements.statement import BaseStatement
 
 
 class Intersect(CombinableExpression):
     def __init__(
         self: typing.Self,
-        left_expression: "SelectStatement | Intersect",
-        right_expression: SelectStatement,
+        left_expression: "SelectStatement[FromTable] | Intersect",
+        right_expression: SelectStatement[FromTable],
     ) -> None:
-        self.left_expression: SelectStatement | "Intersect" = left_expression
-        self.right_expression: SelectStatement = right_expression
+        self.left_expression: SelectStatement[
+            FromTable
+        ] | "Intersect" = left_expression
+        self.right_expression: SelectStatement[FromTable] = right_expression
 
     def querystring(self: typing.Self) -> QueryString:
         return QueryString(
@@ -31,8 +33,8 @@ class IntersectStatement(BaseStatement, SQLSelectable):
 
     def __init__(
         self: typing.Self,
-        left_expression: SelectStatement | Intersect,
-        right_expression: SelectStatement,
+        left_expression: SelectStatement[FromTable] | Intersect,
+        right_expression: SelectStatement[FromTable],
     ) -> None:
         self.intersect_statement: Intersect = Intersect(
             left_expression=left_expression,
@@ -41,7 +43,7 @@ class IntersectStatement(BaseStatement, SQLSelectable):
 
     def intersect(
         self: typing.Self,
-        select_statement: SelectStatement,
+        select_statement: SelectStatement[FromTable],
     ) -> typing.Self:
         self.intersect_statement = Intersect(
             left_expression=self.intersect_statement,

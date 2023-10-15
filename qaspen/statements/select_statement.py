@@ -41,10 +41,17 @@ if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
 
+FromTable = typing.TypeVar(
+    "FromTable",
+    bound="type[BaseTable]",
+)
+
+
 class SelectStatement(
     BaseStatement,
     SQLSelectable,
     ObjectExecutable["SelectStatementResult"],
+    typing.Generic[FromTable],
 ):
     """Main entry point for all SELECT queries.
 
@@ -64,10 +71,10 @@ class SelectStatement(
 
     def __init__(
         self: typing.Self,
-        from_table: type["BaseTable"],
+        from_table: FromTable,
         select_fields: typing.Iterable[BaseField[typing.Any]],
     ) -> None:
-        self._from_table: typing.Final[type["BaseTable"]] = from_table
+        self._from_table: typing.Final[FromTable] = from_table
         self._select_fields: typing.Iterable[
             BaseField[typing.Any],
         ] = select_fields
@@ -320,7 +327,7 @@ class SelectStatement(
 
     def union(
         self: typing.Self,
-        union_with: "SelectStatement",
+        union_with: "SelectStatement[FromTable]",
         union_all: bool = False,
     ) -> "UnionStatement":
         """Creates union statement.
@@ -361,7 +368,7 @@ class SelectStatement(
 
     def intersect(
         self: typing.Self,
-        intersect_with: "SelectStatement",
+        intersect_with: "SelectStatement[FromTable]",
     ) -> "IntersectStatement":
         """Create intersect statement.
 

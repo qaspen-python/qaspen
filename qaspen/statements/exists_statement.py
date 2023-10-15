@@ -8,7 +8,7 @@ from qaspen.statements.base import Executable
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
-from qaspen.statements.select_statement import SelectStatement
+from qaspen.statements.select_statement import FromTable, SelectStatement
 from qaspen.statements.statement import BaseStatement
 
 
@@ -20,10 +20,10 @@ class ExistsStatement(
 ):
     def __init__(
         self: typing.Self,
-        select_statement: SelectStatement,
+        select_statement: SelectStatement[FromTable],
     ) -> None:
         self._select_statement: typing.Final[
-            SelectStatement,
+            SelectStatement[FromTable],
         ] = select_statement
 
     def __await__(self: typing.Self) -> typing.Any:
