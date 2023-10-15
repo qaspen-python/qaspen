@@ -23,7 +23,7 @@ class Profile(BaseTable, table_name="profiles"):
 class Video(BaseTable, table_name="videos"):
     video_id: VarChar = VarChar(default="1")
     profile_id: VarChar = VarChar(default="Sasha")
-    views_count: VarChar = VarChar()
+    views_count: Text = Text(is_null=True)
     status: VarChar = VarChar()
 
 
@@ -61,6 +61,7 @@ async def main() -> None:
     for i in r.as_list():
         print(i)
     user_r = r.as_objects()[0]
+    print(r.as_objects()[1].videos.views_count.value)
     print(user_r.profiles.description.value)
 
     await engine.startup()

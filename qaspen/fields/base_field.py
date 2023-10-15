@@ -12,6 +12,13 @@ FieldType = typing.TypeVar(
 )
 
 
+class EmptyFieldValue:
+    """Indicates that field wasn't queried from the database."""
+
+    def __str__(self: typing.Self) -> str:
+        return self.__class__.__name__
+
+
 @dataclasses.dataclass
 class FieldData(typing.Generic[FieldType]):
     """All field data."""
@@ -19,7 +26,7 @@ class FieldData(typing.Generic[FieldType]):
     field_name: str
     from_table: type["BaseTable"] = None  # type: ignore[assignment]
     is_null: bool = False
-    field_value: FieldType | None = None
+    field_value: FieldType | EmptyFieldValue | None = EmptyFieldValue()
     default: FieldType | None = None
     prefix: str = ""
     alias: str = ""
@@ -92,7 +99,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         ...
 
     @property
-    def value(self: typing.Self) -> FieldType | None:
+    def value(self: typing.Self) -> FieldType | EmptyFieldValue | None:
         return self._field_data.field_value
 
     @property

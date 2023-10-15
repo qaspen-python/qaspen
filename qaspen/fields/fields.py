@@ -10,7 +10,12 @@ from qaspen.exceptions import (
     FilterComparisonError,
 )
 from qaspen.fields import operators
-from qaspen.fields.base_field import BaseField, FieldData, FieldType
+from qaspen.fields.base_field import (
+    BaseField,
+    EmptyFieldValue,
+    FieldData,
+    FieldType,
+)
 from qaspen.migrations.inheritance import ClassAsString
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
@@ -50,7 +55,6 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
 
         self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name if db_field_name else "",
-            field_value=None,
             is_null=is_null,
             default=default,
         )
@@ -74,19 +78,35 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
     def __set__(
         self: typing.Self,
         instance: object,
-        value: FieldType,
+        value: FieldType | EmptyFieldValue,
     ) -> None:
-        if isinstance(value, self.__class__):
-            instance.__dict__[self.original_field_name] = value
+        field: Field[FieldType]
+        if isinstance(value, EmptyFieldValue):
+            field = instance.__dict__[self.original_field_name]
+            field._field_data.field_value = value
             return
-        if not isinstance(value, self._set_available_types):
+
+        if not self.is_null and value is None:
             raise TypeError(
-                f"Can't assign not string type to {self.__class__.__name__}",
+                f"Can't assign `None` to NOT NULL {self.__class__.__name__}",
             )
+        elif self.is_null and value is None:
+            field = instance.__dict__[self.original_field_name]
+            field._field_data.field_value = value
+            return
+        else:
+            if isinstance(value, self.__class__):
+                instance.__dict__[self.original_field_name] = value
+                return
+            if not isinstance(value, self._set_available_types):
+                raise TypeError(
+                    f"Can't assign not string type to {self.__class__.__name__}",
+                )
+
         self._validate_field_value(
             field_value=value,
         )
-        field: Field[FieldType] = instance.__dict__[self.original_field_name]
+        field = instance.__dict__[self.original_field_name]
         field._field_data.field_value = value
 
     def contains(

@@ -206,9 +206,7 @@ class Char(Field[str]):
 
         :raises FieldValueValidationError: if value length not equal 1.
         """
-        if not field_value:
-            return
-        if len(field_value) == 1:
+        if not field_value or len(field_value) == 1:
             return
 
         raise FieldValueValidationError(

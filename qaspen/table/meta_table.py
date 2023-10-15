@@ -3,7 +3,7 @@ import dataclasses
 import typing
 
 from qaspen.engine.base import BaseEngine
-from qaspen.fields.base_field import BaseField
+from qaspen.fields.base_field import BaseField, EmptyFieldValue
 
 
 @dataclasses.dataclass
@@ -53,13 +53,13 @@ class MetaTable:
             )
             new_field_value: typing.Any | None = fields_values.get(
                 table_field.original_field_name,
+                EmptyFieldValue(),
             )
-            if new_field_value:
-                setattr(
-                    self,
-                    table_field.original_field_name,
-                    new_field_value,
-                )
+            setattr(
+                self,
+                table_field.original_field_name,
+                new_field_value,
+            )
 
     def __getattr__(
         self: typing.Self,
