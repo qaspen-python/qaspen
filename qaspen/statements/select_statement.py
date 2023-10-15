@@ -512,7 +512,6 @@ class SelectStatement(
                 ],
                 based_on=Buns.name == Cookies.bun_name,
             )
-
         )
         ```
 

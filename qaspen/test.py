@@ -39,7 +39,7 @@ async def main() -> None:
     AliasedVideo = Video.aliased(alias="NotVideo")
 
     statement = (
-        AliasedUser.select()
+        AliasedUser.select(AliasedUser.name)
         .left_join(
             fields=[
                 AliasedProfile.nickname,
@@ -53,13 +53,15 @@ async def main() -> None:
             based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
         )
     )
-    statement = statement.where(
-        AliasedVideo.views_count >= "10",
-    )
-    print(statement.querystring())
+    # statement = statement.where(
+    #     AliasedVideo.views_count >= "10",
+    # )
+    # print(statement.querystring())
     r = await statement.execute(engine=engine)
-    print(r.as_list())
+    for i in r.as_list():
+        print(i)
     user_r = r.as_objects()[0]
+    print(user_r.profiles.description.value)
 
     await engine.startup()
 

@@ -2,20 +2,28 @@ import typing
 
 from qaspen.fields.aliases import FieldAliases
 from qaspen.qaspen_types import FromTable
-from qaspen.statements.statement_result.base_result import (
+from qaspen.statements.statement_result.result_variants import (
     ListableStatementResult,
     ObjecttableStatementResult,
-    RawableStatementResult,
+    StatementResult,
 )
 from qaspen.table.base_table import BaseTable
 
 
 class SelectStatementResult(
-    RawableStatementResult,
+    StatementResult,
     ListableStatementResult[list[dict[str, typing.Any]]],
     ObjecttableStatementResult[FromTable],
     typing.Generic[FromTable],
 ):
+    """Result for SelectStatement.
+
+    It has different variants of result display.
+    - `as_list()` - return list of dicts.
+    - `as_objects()` - return list of objects.
+    - `raw_result()` - return result from engine.
+    """
+
     def __init__(
         self: typing.Self,
         from_table: type[FromTable],
@@ -27,6 +35,56 @@ class SelectStatementResult(
         self.aliases: typing.Final = aliases
 
     def as_list(self: typing.Self) -> list[dict[str, typing.Any]]:
+        """Return list of dicts.
+
+        Example:
+        ------
+        ```python
+        # Assume that each table has only one row.
+        import asyncio
+        from qaspen import BaseTable
+
+
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        class Cookies(BaseTable, table_name="cookies"):
+            bun_name: VarCharField = VarCharField()
+            filling: VarCharField = VarCharField()
+            topping: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select(Buns.name)
+            .inner_join(
+                fields=[
+                    Cookies.filling,
+                    Cookies.topping,
+                ],
+                based_on=Buns.name == Cookies.bun_name,
+            )
+        )
+
+
+        async def main() -> None:
+            result = await statement
+            print(result.as_list())
+
+        # This will produce this structure list:
+        [
+            {
+                "name": <Name of the Buns>,
+                "_cookies": {
+                    "filling": <cookie filling>,
+                    "topping": <cookie topping>,
+                },
+            },
+            ...
+        ]
+        ```
+        """
         result_list: list[dict[str, typing.Any]] = []
 
         for single_query_result in self.query_result:
@@ -61,6 +119,55 @@ class SelectStatementResult(
         return result_list
 
     def as_objects(self: typing.Self) -> list[FromTable]:
+        """Return list of objects.
+
+        Example:
+        ------
+        ```python
+        # Assume that each table has only one row.
+        import asyncio
+        from qaspen import BaseTable
+
+
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        class Cookies(BaseTable, table_name="cookies"):
+            bun_name: VarCharField = VarCharField()
+            filling: VarCharField = VarCharField()
+            topping: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select(Buns.name)
+            .inner_join(
+                fields=[
+                    Cookies.filling,
+                    Cookies.topping,
+                ],
+                based_on=Buns.name == Cookies.bun_name,
+            )
+        )
+
+
+        async def main() -> None:
+            result = await statement
+            print(result.as_objects())
+            # This will produce this structure list:
+            [
+                <Buns object>,
+                ...
+            ]
+
+            bun = result.as_objects()[0]
+            # You can get access to the cookies within `bun` object.
+            print(bun.cookies.filling)
+            # `cookies` - name of the table in join.
+            # `filling` - name of the field
+        ```
+        """
         result_objects: list[FromTable] = []
 
         for single_query_result in self.query_result:
@@ -95,3 +202,10 @@ class SelectStatementResult(
             result_objects.append(main_table)
 
         return result_objects
+
+    def raw_result(self: typing.Self) -> list[tuple[typing.Any, ...]]:
+        """Return result of the query as in engine.
+
+        :returns: list of tuples.
+        """
+        return self.query_result
