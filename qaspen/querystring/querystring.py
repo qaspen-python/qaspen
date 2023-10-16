@@ -2,6 +2,14 @@ import typing
 
 
 class QueryString:
+    """QueryString for all statements.
+
+    This class is used for building SQL queries.
+    All queries must be build with it.
+
+    `add_delimiter` is for `__add__` method.
+    """
+
     add_delimiter: str = " "
 
     def __init__(
@@ -14,9 +22,29 @@ class QueryString:
 
     @classmethod
     def empty(cls: type["QueryString"]) -> "EmptyQueryString":
+        """Create `EmptyQueryString`.
+
+        :returns: EmptyQueryString.
+        """
         return EmptyQueryString(sql_template="")
 
     def querystring(self: typing.Self) -> str:
+        """Format QueryString template with arguments.
+
+        ### Returns
+        :returns: QueryString as a string.
+
+        Example:
+        ------
+        ```python
+        qs1 = QueryString(
+            "good_field",
+            "good_table",
+            sql_template="SELECT {} FROM {}",
+        )
+        print(qs1)  # SELECT good_field FROM good_table
+        ```
+        """
         return self.sql_template.format(
             *self.template_arguments,
         )
@@ -25,6 +53,31 @@ class QueryString:
         self: typing.Self,
         additional_querystring: "QueryString",
     ) -> typing.Self:
+        """Combine two QueryStrings.
+
+        ### Parameters
+        :param `additional_querystring`: second QueryString.
+
+        ### Returns
+        :returns: self.
+
+        Example:
+        ------
+        ```python
+        qs1 = QueryString(
+            "good_field",
+            "good_table",
+            sql_template="SELECT {} FROM {}",
+        )
+        qs2 = QueryString(
+            "good_field",
+            sql_template="ORDER BY {}",
+        )
+        result_qs = qs1 + qs2
+        print(result_qs)
+        # SELECT good_field FROM good_table ORDER BY good_field
+        ```
+        """
         if isinstance(additional_querystring, EmptyQueryString):
             return self
 
@@ -37,20 +90,33 @@ class QueryString:
         return self
 
     def __str__(self: typing.Self) -> str:
+        """Return `QueryString` as a string.
+
+        ### Returns
+        :returns: string
+        """
         return self.querystring()
 
 
 class EmptyQueryString(QueryString):
+    """QueryString without data inside."""
+
     add_delimiter: str = ""
 
 
 class OrderByQueryString(QueryString):
+    """QueryString for OrderBy clauses."""
+
     add_delimiter: str = ", "
 
 
 class FilterQueryString(QueryString):
+    """QueryString for FilterStatements like `WHERE`."""
+
     add_delimiter: str = " AND "
 
 
 class FullStatementQueryString(QueryString):
+    """QueryString for full statements."""
+
     add_delimiter: str = "; "
