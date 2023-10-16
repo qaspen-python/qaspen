@@ -6,7 +6,7 @@ import typing
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.fields.base_field import BaseField
 from qaspen.fields.operators import BaseOperator
-from qaspen.querystring.querystring import QueryString, WhereQueryString
+from qaspen.querystring.querystring import FilterQueryString, QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
@@ -40,7 +40,7 @@ class Filter(CombinableExpression):
             typing.Any,
         ] = comparison_values
 
-    def querystring(self: typing.Self) -> WhereQueryString:
+    def querystring(self: typing.Self) -> FilterQueryString:
         compare_value: str = ""
         if self.comparison_value is not EMPTY_VALUE:
             if isinstance(self.comparison_value, SQLSelectable):
@@ -55,7 +55,7 @@ class Filter(CombinableExpression):
                 ],
             )
 
-        return WhereQueryString(
+        return FilterQueryString(
             self.field.field_name,
             compare_value,
             sql_template=self.operator.operation_template,
@@ -76,7 +76,7 @@ class FilterBetween(CombinableExpression):
         self.left_comparison_value: typing.Any = left_comparison_value
         self.right_comparison_value: typing.Any = right_comparison_value
 
-    def querystring(self: typing.Self) -> WhereQueryString:
+    def querystring(self: typing.Self) -> FilterQueryString:
         left_value: str = (
             self.left_comparison_value.field_name
             if isinstance(self.left_comparison_value, BaseField)
@@ -89,7 +89,7 @@ class FilterBetween(CombinableExpression):
             else transform_value_to_sql(self.right_comparison_value)
         )
 
-        return WhereQueryString(
+        return FilterQueryString(
             self.field.field_name,
             left_value,
             right_value,
@@ -104,8 +104,8 @@ class FilterExclusive(CombinableExpression):
     ) -> None:
         self.comparison: CombinableExpression = comparison
 
-    def querystring(self: typing.Self) -> WhereQueryString:
-        return WhereQueryString(
+    def querystring(self: typing.Self) -> FilterQueryString:
+        return FilterQueryString(
             *self.comparison.querystring().template_arguments,
             sql_template=(
                 "(" + self.comparison.querystring().sql_template + ")"
@@ -134,7 +134,7 @@ class FilterStatement(BaseStatement):
         final_where: QueryString = functools.reduce(
             operator.add,
             [
-                WhereQueryString(  # TODO: find another way to concatenate.
+                FilterQueryString(  # TODO: find another way to concatenate.
                     *filter_expression.querystring().template_arguments,
                     sql_template=filter_expression.querystring().sql_template,
                 )

@@ -53,16 +53,11 @@ async def main() -> None:
             based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
         )
     )
-    # statement = statement.where(
-    #     AliasedVideo.views_count >= "10",
-    # )
-    # print(statement.querystring())
+    statement = statement.where(
+        AliasedVideo.views_count >= "1001",
+    )
+    print(statement.querystring())
     r = await statement.execute(engine=engine)
-    for i in r.as_list():
-        print(i)
-    user_r = r.as_objects()[0]
-    print(r.as_objects()[1].videos.views_count.value)
-    print(user_r.profiles.description.value)
 
     await engine.startup()
 

@@ -11,13 +11,16 @@ if typing.TYPE_CHECKING:
     pass
 
 
+AvailableComparisonTypes = (
+    str,
+    Field,
+    AnyOperator,
+    AllOperator,
+)
+
+
 class BaseStringField(Field[str]):
-    _available_comparison_types: tuple[type, ...] = (
-        str,
-        Field,
-        AnyOperator,
-        AllOperator,
-    )
+    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: tuple[type, ...] = (str,)
 
     @typing.overload
@@ -166,6 +169,7 @@ class Text(Field[str]):
     Behave like normal PostgreSQL TEXT field.
     """
 
+    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: tuple[type, ...] = (str,)
 
 
@@ -178,6 +182,7 @@ class Char(Field[str]):
     If you want more characters, use `VarChar` field.
     """
 
+    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: tuple[type, ...] = (str,)
 
     def __init__(

@@ -1,7 +1,7 @@
 import copy
 import typing
 
-from qaspen.fields.base_field import BaseField
+from qaspen.fields.base_field import BaseField, FieldType
 from qaspen.fields.fields import Field
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
@@ -19,7 +19,7 @@ class BaseTable(
     @classmethod
     def select(
         cls: type[T_],
-        *select_fields: BaseField[typing.Any],
+        *select_fields: BaseField[FieldType],
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
@@ -34,7 +34,7 @@ class BaseTable(
         return select_statement
 
     @classmethod
-    def all_fields(cls: type["BaseTable"]) -> list[BaseField[typing.Any]]:
+    def all_fields(cls: type[T_]) -> list[BaseField[FieldType]]:
         """Return all fields in the table.
 
         :returns: list of fields.
@@ -56,7 +56,7 @@ class BaseTable(
         return copied_table
 
     @classmethod
-    def is_aliased(cls: type["BaseTable"]) -> bool:
+    def is_aliased(cls: type[T_]) -> bool:
         """Return flag that says does the table have an alias.
 
         :returns: boolean flag.
@@ -64,11 +64,11 @@ class BaseTable(
         return bool(cls._table_meta.alias)
 
     @classmethod
-    def original_table_name(cls: type["BaseTable"]) -> str:
+    def original_table_name(cls: type[T_]) -> str:
         return cls._table_meta.table_name
 
     @classmethod
-    def table_name(cls: type["BaseTable"]) -> str:
+    def table_name(cls: type[T_]) -> str:
         """Return the original table name or alias to it.
 
         :returns: original table name or alias.
@@ -77,7 +77,7 @@ class BaseTable(
 
     @classmethod
     def _retrieve_field(
-        cls: type["BaseTable"],
+        cls: type[T_],
         field_name: str,
     ) -> Field[typing.Any]:
         try:

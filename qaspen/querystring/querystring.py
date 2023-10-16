@@ -48,7 +48,7 @@ class OrderByQueryString(QueryString):
     add_delimiter: str = ", "
 
 
-class WhereQueryString(QueryString):
+class FilterQueryString(QueryString):
     add_delimiter: str = " AND "
 
 
