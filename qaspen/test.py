@@ -58,6 +58,9 @@ async def main() -> None:
     )
     print(statement.querystring())
     r = await statement.execute(engine=engine)
+    ro = r.as_objects()
+    a = ro[0]
+    print(a.profiles.nickname)
 
     await engine.startup()
 

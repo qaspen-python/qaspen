@@ -39,7 +39,7 @@ class BaseTable(
 
         :returns: list of fields.
         """
-        return cls._table_meta.table_fields
+        return [*cls._table_meta.table_fields.values()]
 
     @classmethod
     def aliased(cls: type[T_], alias: str) -> type[T_]:
