@@ -251,11 +251,8 @@ class Join(CombinableExpression):
         field_from_join: Field[typing.Any] = self._join_table._retrieve_field(
             field_name=field_name,
         )
-        field_from_join_with_alias: Field[
-            typing.Any,
-        ] = self._prefixed_field(  # type: ignore
+        field_from_join_with_alias: Field[typing.Any,] = self._prefixed_field(
             field=field_from_join,
-            prefix=self._alias,
         )
         field_from_join_with_alias._field_data.in_join = True
         return field_from_join_with_alias

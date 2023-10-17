@@ -83,6 +83,7 @@ class MetaTable:
         table_meta = object.__getattribute__(self, "_table_meta")
         table_fields = object.__getattribute__(table_meta, "table_fields")
         if attribute in table_fields:
+            return object.__getattribute__(self, attribute).value
             return table_fields[attribute].value
         return super().__getattribute__(attribute)
 
