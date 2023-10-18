@@ -54,21 +54,30 @@ async def main() -> None:
     #     based_on=Video.profile_id == j_profile.profile_id,
     # )
 
-    statement = (
-        AliasedUser.select(AliasedUser.name)
-        .join(
-            fields=[
-                AliasedProfile.nickname,
-            ],
-            based_on=AliasedProfile.user_id == AliasedUser.user_id,
-        )
-        .join(
-            fields=[
-                AliasedVideo.views_count,
-            ],
-            based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
-        )
+    # statement_ = User.select()
+    # statement = statement_.union(
+    #     User.select()
+    # )
+
+    statement = User.select().where(
+        ~((User.user_id == "1") & (User.name == "Sasha")),
     )
+
+    # statement = (
+    #     AliasedUser.select(AliasedUser.name)
+    #     .join(
+    #         fields=[
+    #             AliasedProfile.nickname,
+    #         ],
+    #         based_on=AliasedProfile.user_id == AliasedUser.user_id,
+    #     )
+    #     .join(
+    #         fields=[
+    #             AliasedVideo.views_count,
+    #         ],
+    #         based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
+    #     )
+    # )
     # statement = statement.where(
     #     AliasedVideo.views_count >= "1001",
     # )
@@ -76,10 +85,8 @@ async def main() -> None:
     r = await statement.execute(engine=engine)
     ro = r.as_objects()
     print(ro)
-    for a in ro:
-        print(a.profiles.nickname)
-
-    await engine.startup()
+    # for a in ro:
+    #     print(a.profiles.nickname)
 
 
 asyncio.run(main())

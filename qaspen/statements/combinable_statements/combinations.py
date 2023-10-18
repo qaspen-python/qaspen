@@ -29,6 +29,12 @@ class CombinableExpression(abc.ABC):
             right_expression=expression,
         )
 
+    def __invert__(self: typing.Self) -> "NotExpression":
+        return NotExpression(
+            left_expression=self,
+            right_expression=None,  # type: ignore[arg-type]
+        )
+
 
 @dataclasses.dataclass
 class ExpressionsCombination(CombinableExpression):
@@ -52,3 +58,12 @@ class ANDExpression(ExpressionsCombination):
 @dataclasses.dataclass
 class ORExpression(ExpressionsCombination):
     operator: type[OROperator] = OROperator
+
+
+@dataclasses.dataclass
+class NotExpression(ExpressionsCombination):
+    def querystring(self: typing.Self) -> QueryString:
+        return QueryString(
+            self.left_expression.querystring(),
+            sql_template="NOT (" + "{}" + ")",
+        )
