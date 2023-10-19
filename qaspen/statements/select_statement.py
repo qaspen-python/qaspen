@@ -318,11 +318,27 @@ class SelectStatement(
             )
         return self
 
+    @typing.overload
     def union(
         self: typing.Self,
         union_with: "SelectStatement[FromTable]",
         union_all: bool = False,
-    ) -> "UnionStatement":
+    ) -> "UnionStatement[FromTable]":
+        ...
+
+    @typing.overload
+    def union(
+        self: typing.Self,
+        union_with: "SelectStatement[typing.Any]",
+        union_all: bool = False,
+    ) -> "UnionStatement[FromTable]":
+        ...
+
+    def union(
+        self: typing.Self,
+        union_with: "SelectStatement[FromTable]",
+        union_all: bool = False,
+    ) -> "UnionStatement[FromTable]":
         """Creates union statement.
 
         Combines two `SelectStatement`'s and creates
@@ -353,7 +369,7 @@ class SelectStatement(
         """
         from qaspen.statements.union_statement import UnionStatement
 
-        return UnionStatement(
+        return UnionStatement[FromTable](
             left_expression=self,
             right_expression=union_with,
             union_all=union_all,

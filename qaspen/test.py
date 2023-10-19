@@ -54,14 +54,14 @@ async def main() -> None:
     #     based_on=Video.profile_id == j_profile.profile_id,
     # )
 
-    # statement_ = User.select()
-    # statement = statement_.union(
-    #     User.select()
-    # )
-
-    statement = User.select().where(
-        ~((User.user_id == "1") & (User.name == "Sasha")),
+    statement_ = AliasedUser.select(AliasedUser.name)
+    statement = statement_.union(
+        Profile.select(Profile.nickname),
     )
+
+    # statement = User.select().where(
+    #     ~((User.user_id == "1") & (User.name == "Sasha")) & (User.surname == "Kiselev"),
+    # )
 
     # statement = (
     #     AliasedUser.select(AliasedUser.name)
@@ -83,7 +83,9 @@ async def main() -> None:
     # )
     print(statement.querystring())
     r = await statement.execute(engine=engine)
-    ro = r.as_objects()
+    ro = r.as_list()
+    for obj in ro:
+        print(obj)
     print(ro)
     # for a in ro:
     #     print(a.profiles.nickname)

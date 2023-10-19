@@ -1,13 +1,18 @@
 import typing
 
 from qaspen.base.sql_base import SQLSelectable
+from qaspen.engine.base import BaseEngine
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
+from qaspen.statements.base import Executable
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.statements.statement import BaseStatement
+from qaspen.statements.statement_result.select_result import (
+    SelectStatementResult,
+)
 
 
 class Union(CombinableExpression):
@@ -32,7 +37,12 @@ class Union(CombinableExpression):
         )
 
 
-class UnionStatement(BaseStatement, SQLSelectable):
+class UnionStatement(
+    BaseStatement,
+    SQLSelectable,
+    Executable[SelectStatementResult[FromTable]],
+    typing.Generic[FromTable],
+):
     union_statement: Union
 
     def __init__(
@@ -46,6 +56,24 @@ class UnionStatement(BaseStatement, SQLSelectable):
             right_expression=right_expression,
             union_all=union_all,
         )
+
+    def __await__(
+        self: typing.Self,
+    ) -> typing.Generator[None, None, "SelectStatementResult[FromTable]"]:
+        """SelectStatement can be awaited.
+
+        Example:
+        ---------------------------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+
+        async def main() -> None:
+            list_of_buns = await Buns.select()
+            print(list_of_buns)
+        ```
+        """
+        return self._run_query().__await__()
 
     def union(
         self: typing.Self,
@@ -64,3 +92,59 @@ class UnionStatement(BaseStatement, SQLSelectable):
 
     def build_query(self: typing.Self) -> str:
         return str(self.querystring())
+
+    def _start_select_statement(
+        self: typing.Self,
+        statement: SelectStatement[FromTable] | Union,
+    ) -> SelectStatement[FromTable]:
+        """Retrieve first SelectStatement in the UnionStatement.
+
+        ### Parameters
+        :param statement: Union or SelectStatement.
+
+        ### Returns
+        :returns: SelectStatement.
+        """
+        if isinstance(statement, Union):
+            return self._start_select_statement(
+                statement=statement.left_expression,  # type: ignore[arg-type]
+            )
+        return statement
+
+    async def execute(
+        self: typing.Self,
+        engine: BaseEngine[typing.Any, typing.Any],
+    ) -> SelectStatementResult[FromTable]:
+        """Execute SQL query and return result."""
+        raw_query_result: list[
+            tuple[typing.Any, ...],
+        ] = await engine.run_query(
+            querystring=self.querystring(),
+        )
+
+        first_select_statement: typing.Final = self._start_select_statement(
+            statement=self.union_statement.left_expression,  # type: ignore[arg-type]
+        )
+
+        query_result: SelectStatementResult[FromTable] = SelectStatementResult(
+            from_table=first_select_statement._from_table,
+            query_result=raw_query_result,
+            aliases=first_select_statement._field_aliases,
+        )
+
+        return query_result
+
+    async def _run_query(
+        self: typing.Self,
+    ) -> "SelectStatementResult[FromTable]":
+        first_select_statement: typing.Final = self._start_select_statement(
+            statement=self.union_statement.left_expression,  # type: ignore[arg-type]
+        )
+
+        if not first_select_statement._from_table._table_meta.database_engine:
+            raise AttributeError(
+                "There is no database engine.",
+            )
+        return await self.execute(
+            engine=first_select_statement._from_table._table_meta.database_engine,
+        )
