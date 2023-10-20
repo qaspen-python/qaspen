@@ -53,39 +53,39 @@ async def main() -> None:
     #         ],
     #     based_on=Video.profile_id == j_profile.profile_id,
     # )
-
-    statement_ = AliasedUser.select(AliasedUser.name)
-    statement = statement_.union(
-        Profile.select(Profile.nickname),
-    )
+    # print(AliasedUser.name._field_data.from_table._table_meta.alias)
+    # statement_ = AliasedUser.select(AliasedUser.name)
+    # statement = statement_.union(
+    #     Profile.select(Profile.nickname),
+    # )
 
     # statement = User.select().where(
     #     ~((User.user_id == "1") & (User.name == "Sasha")) & (User.surname == "Kiselev"),
     # )
 
-    # statement = (
-    #     AliasedUser.select(AliasedUser.name)
-    #     .join(
-    #         fields=[
-    #             AliasedProfile.nickname,
-    #         ],
-    #         based_on=AliasedProfile.user_id == AliasedUser.user_id,
-    #     )
-    #     .join(
-    #         fields=[
-    #             AliasedVideo.views_count,
-    #         ],
-    #         based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
-    #     )
-    # )
-    # statement = statement.where(
-    #     AliasedVideo.views_count >= "1001",
-    # )
+    statement = (
+        AliasedUser.select(AliasedUser.name)
+        .join(
+            fields=[
+                AliasedProfile.nickname,
+            ],
+            based_on=AliasedProfile.user_id == AliasedUser.user_id,
+        )
+        .join(
+            fields=[
+                AliasedVideo.views_count,
+            ],
+            based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
+        )
+    )
+    statement = statement.where(
+        AliasedVideo.views_count >= "1001",
+    )
     print(statement.querystring())
     r = await statement.execute(engine=engine)
-    ro = r.as_list()
+    ro = r.as_objects()
     for obj in ro:
-        print(obj)
+        print(obj.profiles.profile_id)
     print(ro)
     # for a in ro:
     #     print(a.profiles.nickname)

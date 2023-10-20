@@ -1,4 +1,5 @@
 import copy
+import inspect
 import typing
 
 from qaspen.fields.base_field import BaseField, FieldType
@@ -43,7 +44,35 @@ class BaseTable(
 
     @classmethod
     def aliased(cls: type[T_], alias: str) -> type[T_]:
+        """Create aliased version of the Table.
+
+        ### Parameters
+        :param alias: alias to the field.
+
+        ### Returns
+        :returns: Same Table, but aliased.
+
+        Example:
+        ------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        # It has the same type with all autosuggestions.
+        AliasedBuns = Buns.aliased(alias="PrimaryBuns")
+        ```
+        """
+        return cls._aliased(alias=alias)
+
+    @classmethod
+    def _aliased(cls: type[T_], alias: str) -> type[T_]:
         """Add alias to the table.
+
+        We must create new `class Table` because in other
+        way `alias` change will affect all other queries where
+        aliased table is used.
 
         It'll be used in queries instead of real table name.
 
@@ -51,9 +80,34 @@ class BaseTable(
 
         :returns: the same table but with the alias.
         """
-        copied_table: typing.Final = copy.deepcopy(cls)
-        copied_table._table_meta.alias = alias
-        return copied_table
+
+        class Table(cls):  # type: ignore[valid-type, misc]
+            pass
+
+        attributes = inspect.getmembers(
+            cls,
+            lambda member: not (inspect.isroutine(member)),
+        )
+        only_field_attributes: dict[str, BaseField[typing.Any]] = {
+            attribute[0]: copy.deepcopy(attribute[1])
+            for attribute in attributes
+            if issubclass(type(attribute[1]), BaseField)
+        }
+
+        for table_param_name, table_param in cls.__dict__.items():
+            setattr(Table, table_param_name, table_param)
+
+        for field_name, field in only_field_attributes.items():
+            field._field_data.from_table = Table
+            setattr(Table, field_name, field)
+
+        Table._table_meta = copy.deepcopy(cls._table_meta)
+        Table._table_meta.alias = alias
+
+        for field in Table._table_meta.table_fields.values():
+            field._field_data.from_table = Table
+
+        return Table
 
     @classmethod
     def is_aliased(cls: type[T_]) -> bool:

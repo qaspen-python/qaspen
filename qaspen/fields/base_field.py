@@ -126,7 +126,9 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
     def field_name(self: typing.Self) -> str:
         """Return field name with prefix and alias."""
         prefix: str = (
-            self._field_data.prefix or self._field_data.from_table.table_name()
+            self._field_data.from_table._table_meta.alias
+            or self._field_data.prefix
+            or self._field_data.from_table.table_name()
         )
         field_name: str = f"{prefix}.{self._field_data.field_name}"
         if prefix := self._field_data.alias:
