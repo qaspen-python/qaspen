@@ -26,7 +26,7 @@ class BaseStringField(Field[str]):
     @typing.overload
     def __init__(
         self: typing.Self,
-        max_length: int | None = 255,
+        max_length: int = 255,
         is_null: bool = False,
         default: str | None = None,
         db_field_name: str | None = None,
@@ -45,7 +45,7 @@ class BaseStringField(Field[str]):
     def __init__(
         self: typing.Self,
         *args: typing.Any,
-        max_length: int | None = 255,
+        max_length: int = 255,
         is_null: bool = False,
         default: str | None = None,
         db_field_name: str | None = None,
@@ -53,7 +53,7 @@ class BaseStringField(Field[str]):
         if max_length:
             validate_max_length(max_length=max_length)
 
-        self._max_length: int = max_length if max_length else 100
+        self._max_length: int = max_length
 
         super().__init__(
             *args,

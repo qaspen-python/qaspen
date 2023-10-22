@@ -14,6 +14,7 @@ from qaspen.fields.base_field import (
     BaseField,
     EmptyFieldValue,
     FieldData,
+    FieldDefaultType,
     FieldType,
 )
 from qaspen.migrations.inheritance import ClassAsString
@@ -37,7 +38,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         self: typing.Self,
         *args: typing.Any,
         is_null: bool = False,
-        default: FieldType | None = None,
+        default: FieldDefaultType[FieldType] = None,
         db_field_name: str | None = None,
     ) -> None:
         if args:
@@ -49,7 +50,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
                 "Specify either is_null or default",
             )
 
-        self._default: FieldType | None = self._validate_default_value(
+        self._validate_default_value(
             default_value=default,
         )
 
@@ -396,9 +397,9 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
 
     def _validate_default_value(
         self: typing.Self,
-        default_value: FieldType | None,
+        default_value: FieldDefaultType[FieldType],
     ) -> None:
-        if default_value is None:
+        if default_value is None or callable(default_value):
             return
         try:
             self._validate_field_value(

@@ -11,6 +11,15 @@ FieldType = typing.TypeVar(
     "FieldType",
 )
 
+FieldDefaultType = typing.Union[
+    FieldType,
+    typing.Callable[
+        [],
+        typing.Union[FieldType, typing.Any],
+    ],
+    None,
+]
+
 
 class EmptyFieldValue:
     """Indicates that field wasn't queried from the database."""
@@ -21,13 +30,34 @@ class EmptyFieldValue:
 
 @dataclasses.dataclass
 class FieldData(typing.Generic[FieldType]):
-    """All field data."""
+    """All field data.
+
+    ### Fields
+    `field_name` - Name of the field
+
+    `from_table` - From what table field is.
+
+    `is_null` - is field can be NULL.
+
+    `field_value` - value of the field in the database or
+    if you create table instance with fields manually.
+
+    `default` - default value for the field.
+    If it is callable, do not use it in the database,
+    use it in python and than save in the database.
+
+    `prefix` - prefix for the field in the query.
+
+    `alias` - alias of the field.
+
+    `in_join` - mark that field is used in join.
+    """
 
     field_name: str
     from_table: type["BaseTable"] = None  # type: ignore[assignment]
     is_null: bool = False
     field_value: FieldType | EmptyFieldValue | None = EmptyFieldValue()
-    default: FieldType | None = None
+    default: FieldDefaultType[FieldType] = None
     prefix: str = ""
     alias: str = ""
     in_join: bool = False
@@ -137,7 +167,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         return field_name
 
     @property
-    def default(self: typing.Self) -> FieldType | None:
+    def default(self: typing.Self) -> FieldDefaultType[FieldType]:
         """Return default value of the field."""
         return self._field_data.default
 
@@ -152,7 +182,9 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
 
     @property
     def _field_default(self: typing.Self) -> str:
-        return f"DEFAULT {self.default}" if self.default else ""
+        if self.default and not callable(self.default):
+            return f"DEFAULT {self.default}" if self.default else ""
+        return ""
 
     @property
     def _default_field_type(self: typing.Self) -> str:
