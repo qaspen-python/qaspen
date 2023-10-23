@@ -86,12 +86,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
             field = instance.__dict__[self.original_field_name]
             field._field_data.field_value = value
             return
-
-        if not self.is_null and value is None:
-            raise TypeError(
-                f"Can't assign `None` to NOT NULL {self.__class__.__name__}",
-            )
-        elif self.is_null and value is None:
+        elif value is None:
             field = instance.__dict__[self.original_field_name]
             field._field_data.field_value = value
             return
