@@ -1,6 +1,8 @@
 import asyncio
 
 from qaspen.engine.psycopgpool_engine import PsycopgPoolEngine
+from qaspen.fields.datetime_fields import DateField
+from qaspen.fields.integer_fields import BigInt
 from qaspen.fields.string_fields import Text, VarChar
 from qaspen.table.base_table import BaseTable
 
@@ -11,6 +13,7 @@ class User(BaseTable, table_name="users"):
     surname: VarChar = VarChar(default="Kiselev")
     description: Text = Text(default="Zopa")
     sm: VarChar = VarChar()
+    created_at: DateField = DateField()
 
 
 class Profile(BaseTable, table_name="profiles"):
@@ -18,6 +21,7 @@ class Profile(BaseTable, table_name="profiles"):
     user_id: VarChar = VarChar(default="1")
     nickname: VarChar = VarChar(default="memeLord")
     description: Text = Text(default="MemeDesc")
+    number: BigInt = BigInt()
 
 
 class Video(BaseTable, table_name="videos"):
@@ -37,6 +41,8 @@ async def main() -> None:
     AliasedUser = User.aliased(alias="NotMe")
     AliasedProfile = Profile.aliased(alias="NotProfile")
     AliasedVideo = Video.aliased(alias="NotVideo")
+
+    statement = AliasedUser.select(AliasedUser.created_at)
 
     # statement = AliasedUser.select(AliasedUser.name)
 
@@ -63,29 +69,30 @@ async def main() -> None:
     #     ~((User.user_id == "1") & (User.name == "Sasha")) & (User.surname == "Kiselev"),
     # )
 
-    statement = (
-        AliasedUser.select(AliasedUser.name)
-        .join(
-            fields=[
-                AliasedProfile.nickname,
-            ],
-            based_on=AliasedProfile.user_id == AliasedUser.user_id,
-        )
-        .join(
-            fields=[
-                AliasedVideo.views_count,
-            ],
-            based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
-        )
-    )
-    statement = statement.where(
-        AliasedVideo.views_count >= "1001",
-    )
+    # statement = (
+    #     AliasedUser.select(AliasedUser.name)
+    #     .join(
+    #         fields=[
+    #             AliasedProfile.nickname,
+    #             AliasedProfile.number,
+    #         ],
+    #         based_on=AliasedProfile.user_id == AliasedUser.user_id,
+    #     )
+    #     .join(
+    #         fields=[
+    #             AliasedVideo.views_count,
+    #         ],
+    #         based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
+    #     )
+    # )
+    # statement = statement.where(
+    #     AliasedVideo.views_count >= "1001",
+    # )
     print(statement.querystring())
     r = await statement.execute(engine=engine)
     ro = r.as_objects()
     for obj in ro:
-        print(obj.profiles.profile_id)
+        print(obj.created_at)
     print(ro)
     # for a in ro:
     #     print(a.profiles.nickname)

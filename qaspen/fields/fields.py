@@ -1,4 +1,5 @@
 import copy
+import types
 import typing
 
 from qaspen.base.operators import AllOperator, AnyOperator
@@ -105,7 +106,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         field = instance.__dict__[self.original_field_name]
         field._field_data.field_value = value
 
-    def contains(
+    def in_(
         self: typing.Self,
         *comparison_values: FieldType,
         subquery: SQLSelectable | None = None,
@@ -113,7 +114,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         if subquery and comparison_values:
             raise FilterComparisonError(
                 "It's not possible to specify subquery "
-                "with positional arguments in `contains` method. "
+                "with positional arguments in `in_` method. "
                 "Please choose either subquery or positional arguments.",
             )
 
@@ -141,7 +142,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
 
         return Filter(**where_parameters)
 
-    def not_contains(
+    def not_in(
         self: typing.Self,
         *comparison_values: FieldType,
         subquery: SQLSelectable | None = None,
@@ -149,7 +150,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         if subquery and comparison_values:
             raise FilterComparisonError(
                 "It's not possible to specify subquery "
-                "with positional arguments in `not_contains` method. "
+                "with positional arguments in `not_in` method. "
                 "Please choose either subquery or positional arguments.",
             )
 
@@ -384,21 +385,16 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         """
         if field_value is None and self.is_null:
             return
-        if field_value is None and not self.is_null:
-            raise FieldValueValidationError(
-                f"You can't assign `None` to the field "
-                f"that declared as `NOT NULL`",
-            )
 
     def _validate_default_value(
         self: typing.Self,
         default_value: FieldDefaultType[FieldType],
     ) -> None:
-        if default_value is None or callable(default_value):
+        if default_value is None or types.FunctionType == type(default_value):
             return
         try:
             self._validate_field_value(
-                field_value=default_value,
+                field_value=default_value,  # type: ignore[arg-type]
             )
         except FieldValueValidationError as exc:
             raise FieldValueValidationError(

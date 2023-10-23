@@ -1,6 +1,7 @@
 import abc
 import copy
 import dataclasses
+import types
 import typing
 
 if typing.TYPE_CHECKING:
@@ -182,7 +183,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
 
     @property
     def _field_default(self: typing.Self) -> str:
-        if self.default and not callable(self.default):
+        if self.default and not types.FunctionType == type(self.default):
             return f"DEFAULT {self.default}" if self.default else ""
         return ""
 
