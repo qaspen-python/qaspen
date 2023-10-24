@@ -1,7 +1,7 @@
 import asyncio
 
 from qaspen.engine.psycopgpool_engine import PsycopgPoolEngine
-from qaspen.fields.datetime_fields import DateField
+from qaspen.fields.datetime_fields import Date, Time, Timestamp
 from qaspen.fields.integer_fields import BigInt
 from qaspen.fields.string_fields import Text, VarChar
 from qaspen.table.base_table import BaseTable
@@ -13,7 +13,7 @@ class User(BaseTable, table_name="users"):
     surname: VarChar = VarChar(default="Kiselev")
     description: Text = Text(default="Zopa")
     sm: VarChar = VarChar()
-    created_at: DateField = DateField()
+    created_at: Date = Date()
 
 
 class Profile(BaseTable, table_name="profiles"):
@@ -31,6 +31,12 @@ class Video(BaseTable, table_name="videos"):
     status: VarChar = VarChar()
 
 
+class ForDate(BaseTable, table_name="for_date"):
+    at_date: Date = Date()
+    at_time: Time = Time()
+    at_timestamp: Timestamp = Timestamp()
+
+
 engine = PsycopgPoolEngine(
     connection_string="postgres://postgres:12345@localhost:5432/qaspendb",
 )
@@ -42,7 +48,7 @@ async def main() -> None:
     AliasedProfile = Profile.aliased(alias="NotProfile")
     AliasedVideo = Video.aliased(alias="NotVideo")
 
-    statement = AliasedUser.select(AliasedUser.created_at)
+    # statement = AliasedUser.select(AliasedUser.created_at)
 
     # statement = AliasedUser.select(AliasedUser.name)
 
@@ -88,11 +94,19 @@ async def main() -> None:
     # statement = statement.where(
     #     AliasedVideo.views_count >= "1001",
     # )
+
+    statement = ForDate.select()
+
     print(statement.querystring())
     r = await statement.execute(engine=engine)
     ro = r.as_objects()
     for obj in ro:
-        print(obj.created_at)
+        print(obj.at_date)
+        print(type(obj.at_date))
+        print(obj.at_time)
+        print(type(obj.at_time))
+        print(obj.at_timestamp)
+        print(type(obj.at_timestamp))
     print(ro)
     # for a in ro:
     #     print(a.profiles.nickname)
