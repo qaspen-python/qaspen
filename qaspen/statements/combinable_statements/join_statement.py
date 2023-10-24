@@ -2,7 +2,19 @@ import dataclasses
 import enum
 import functools
 import operator
-import typing
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Final,
+    Iterable,
+    List,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
+
+from typing_extensions import Self
 
 from qaspen.exceptions import OnJoinComparisonError
 from qaspen.fields.base_field import BaseField, FieldType
@@ -19,7 +31,7 @@ from qaspen.statements.combinable_statements.filter_statement import (
 )
 from qaspen.statements.statement import BaseStatement
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
 
@@ -27,28 +39,28 @@ class Join(CombinableExpression):
     join_type: str = "JOIN"
 
     def __init__(
-        self: typing.Self,
-        fields: typing.Iterable[Field[typing.Any]],
-        from_table: type["BaseTable"],
-        join_table: type["BaseTable"],
+        self: Self,
+        fields: Iterable[Field[Any]],
+        from_table: Type["BaseTable"],
+        join_table: Type["BaseTable"],
         on: CombinableExpression,
         join_alias: str,
     ) -> None:
-        self._from_table: typing.Final[type["BaseTable"]] = from_table
-        self._join_table: typing.Final[type["BaseTable"]] = join_table
+        self._from_table: Final[Type["BaseTable"]] = from_table
+        self._join_table: Final[Type["BaseTable"]] = join_table
         self._based_on: CombinableExpression = on
         self._alias: str = join_alias
-        self._fields: list[Field[typing.Any]] = self._process_select_fields(
+        self._fields: List[Field[Any]] = self._process_select_fields(
             fields=fields,
         )
 
     def __getattr__(
-        self: typing.Self,
+        self: Self,
         attribute: str,
-    ) -> Field[typing.Any]:
+    ) -> Field[Any]:
         return self._field_from_join(field_name=attribute)
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         self._based_on = self._change_combinable_expression(self._based_on)
         return QueryString(
             self.join_type,
@@ -59,10 +71,10 @@ class Join(CombinableExpression):
         )
 
     def _prefixed_field(
-        self: typing.Self,
-        field: Field[FieldType] | BaseField[FieldType],
+        self: Self,
+        field: Union[Field[FieldType], BaseField[FieldType]],
     ) -> Field[FieldType]:
-        return typing.cast(
+        return cast(
             Field[FieldType],
             field._with_prefix(
                 prefix=(
@@ -73,7 +85,7 @@ class Join(CombinableExpression):
         )
 
     def _change_combinable_expression(
-        self: typing.Self,
+        self: Self,
         expression: CombinableExpression,
     ) -> CombinableExpression:
         if not isinstance(expression, ExpressionsCombination):
@@ -102,7 +114,7 @@ class Join(CombinableExpression):
         return expression
 
     def _change_where_combination(
-        self: typing.Self,
+        self: Self,
         expression: Filter,
     ) -> Filter:
         self._check_fields_in_join(
@@ -112,7 +124,7 @@ class Join(CombinableExpression):
             ),
         )
 
-        if_left_to_change: typing.Final[bool] = all(
+        if_left_to_change: Final[bool] = all(
             (
                 isinstance(expression.field, Field),
                 expression.field._field_data.from_table.original_table_name()
@@ -121,7 +133,7 @@ class Join(CombinableExpression):
             ),
         )
 
-        is_right_to_change: typing.Final[bool] = (
+        is_right_to_change: Final[bool] = (
             isinstance(expression.comparison_value, Field)
             and (expression.comparison_value.table_name)
             == self._join_table.original_table_name()
@@ -129,16 +141,10 @@ class Join(CombinableExpression):
         )
 
         if if_left_to_change:
-            # expression.field = expression.field._with_prefix(self._alias)
             expression.field = self._prefixed_field(
                 field=expression.field,
             )
         if is_right_to_change:
-            # expression.comparison_value = (
-            #     expression.comparison_value._with_prefix(  # type: ignore
-            #         self._alias,
-            #     )
-            # )
             expression.comparison_value = self._prefixed_field(
                 field=expression.comparison_value,  # type: ignore
             )
@@ -146,7 +152,7 @@ class Join(CombinableExpression):
         return expression
 
     def _change_where_between_combination(
-        self: typing.Self,
+        self: Self,
         expression: FilterBetween,
     ) -> FilterBetween:
         self._check_fields_in_join(
@@ -169,7 +175,7 @@ class Join(CombinableExpression):
             )
             return expression
 
-        is_left_comparison_to_change: typing.Final[bool] = (
+        is_left_comparison_to_change: Final[bool] = (
             isinstance(expression.left_comparison_value, Field)
             and expression.left_comparison_value.table_name
             == self._join_table.original_table_name()
@@ -177,27 +183,17 @@ class Join(CombinableExpression):
         )
 
         if is_left_comparison_to_change:
-            # expression.left_comparison_value = (
-            #     expression.left_comparison_value._with_prefix(
-            #         self._alias,
-            #     )
-            # )
             expression.left_comparison_value = self._prefixed_field(
                 field=expression.left_comparison_value,
             )
 
-        is_right_comparison_to_change: typing.Final[bool] = (
+        is_right_comparison_to_change: Final[bool] = (
             isinstance(expression.right_comparison_value, Field)
             and expression.right_comparison_value.table_name
             == self._join_table.original_table_name()
             and not expression.right_comparison_value._field_data.in_join
         )
         if is_right_comparison_to_change:
-            # expression.right_comparison_value = (
-            #     expression.right_comparison_value._with_prefix(
-            #         self._alias,
-            #     )
-            # )
             expression.right_comparison_value = self._prefixed_field(
                 field=expression.right_comparison_value,
             )
@@ -205,8 +201,8 @@ class Join(CombinableExpression):
         return expression
 
     def _check_fields_in_join(
-        self: typing.Self,
-        for_checks_join_fields: tuple[typing.Any, ...],
+        self: Self,
+        for_checks_join_fields: Tuple[Any, ...],
     ) -> None:
         for for_checks_join_field in for_checks_join_fields:
             if isinstance(for_checks_join_field, Field):
@@ -215,8 +211,8 @@ class Join(CombinableExpression):
                 self._is_field_in_join(for_checks_join_field)
 
     def _is_field_in_join(
-        self: typing.Self,
-        field: Field[typing.Any],
+        self: Self,
+        field: Field[Any],
     ) -> None:
         if field._field_data.from_table.is_aliased():
             return
@@ -245,23 +241,23 @@ class Join(CombinableExpression):
             )
 
     def _field_from_join(
-        self: typing.Self,
+        self: Self,
         field_name: str,
-    ) -> Field[typing.Any]:
-        field_from_join: Field[typing.Any] = self._join_table._retrieve_field(
+    ) -> Field[Any]:
+        field_from_join: Field[Any] = self._join_table._retrieve_field(
             field_name=field_name,
         )
-        field_from_join_with_alias: Field[typing.Any,] = self._prefixed_field(
+        field_from_join_with_alias: Field[Any,] = self._prefixed_field(
             field=field_from_join,
         )
         field_from_join_with_alias._field_data.in_join = True
         return field_from_join_with_alias
 
     def _process_select_fields(
-        self: typing.Self,
-        fields: typing.Iterable[Field[typing.Any]],
-    ) -> list[Field[typing.Any]]:
-        fields_with_prefix: list[Field[typing.Any]] = []
+        self: Self,
+        fields: Iterable[Field[Any]],
+    ) -> List[Field[Any]]:
+        fields_with_prefix: List[Field[Any]] = []
         for field in fields:
             fields_with_prefix.append(
                 self._prefixed_field(
@@ -270,7 +266,7 @@ class Join(CombinableExpression):
             )
         return fields_with_prefix
 
-    def _join_fields(self: typing.Self) -> list[Field[typing.Any]]:
+    def _join_fields(self: Self) -> List[Field[Any]]:
         return self._fields
 
 
@@ -291,27 +287,27 @@ class FullOuterJoin(Join):
 
 
 class JoinType(enum.Enum):
-    JOIN: type[Join] = Join
-    INNERJOIN: type[InnerJoin] = InnerJoin
-    LEFTJOIN: type[LeftOuterJoin] = LeftOuterJoin
-    RIGHTJOIN: type[RightOuterJoin] = RightOuterJoin
-    FULLOUTERJOIN: type[FullOuterJoin] = FullOuterJoin
+    JOIN: Type[Join] = Join
+    INNERJOIN: Type[InnerJoin] = InnerJoin
+    LEFTJOIN: Type[LeftOuterJoin] = LeftOuterJoin
+    RIGHTJOIN: Type[RightOuterJoin] = RightOuterJoin
+    FULLOUTERJOIN: Type[FullOuterJoin] = FullOuterJoin
 
 
 @dataclasses.dataclass
 class JoinStatement(BaseStatement):
-    join_expressions: list[Join] = dataclasses.field(
+    join_expressions: List[Join] = dataclasses.field(
         default_factory=list,
     )
-    used_aliases: list[int] = dataclasses.field(
+    used_aliases: List[int] = dataclasses.field(
         default_factory=list,
     )
 
     def join(
-        self: typing.Self,
-        fields: typing.Iterable[Field[typing.Any]],
-        join_table: type["BaseTable"],
-        from_table: type["BaseTable"],
+        self: Self,
+        fields: Iterable[Field[Any]],
+        join_table: Type["BaseTable"],
+        from_table: Type["BaseTable"],
         on: CombinableExpression,
         join_type: JoinType,
     ) -> None:
@@ -326,7 +322,7 @@ class JoinStatement(BaseStatement):
         )
 
     def add_join(
-        self: typing.Self,
+        self: Self,
         *join_expressions: Join,
     ) -> None:
         for join_expression in join_expressions:
@@ -335,7 +331,7 @@ class JoinStatement(BaseStatement):
             self.join_expressions.append(join_expression)
         return None
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         if not self.join_expressions:
             return QueryString.empty()
 
@@ -349,18 +345,18 @@ class JoinStatement(BaseStatement):
         return final_join
 
     def _retrieve_all_join_fields(
-        self: typing.Self,
-    ) -> list[Field[typing.Any]]:
-        all_joins_fields: list[Field[typing.Any]] = []
+        self: Self,
+    ) -> List[Field[Any]]:
+        all_joins_fields: List[Field[Any]] = []
         for join_expression in self.join_expressions:
             all_joins_fields.extend(join_expression._join_fields())
         return all_joins_fields
 
     def __create_new_alias(
-        self: typing.Self,
+        self: Self,
     ) -> str:
         if not self.used_aliases:
             self.used_aliases.append(1)
             return "J1"
-        alias_number: typing.Final[int] = self.used_aliases[-1] + 1
+        alias_number: Final[int] = self.used_aliases[-1] + 1
         return f"J{alias_number}"

@@ -1,4 +1,6 @@
-import typing
+from typing import Any, List, Type
+
+from typing_extensions import Self
 
 
 class QueryString:
@@ -13,22 +15,22 @@ class QueryString:
     add_delimiter: str = " "
 
     def __init__(
-        self: typing.Self,
-        *template_arguments: typing.Any,
+        self: Self,
+        *template_arguments: Any,
         sql_template: str,
     ) -> None:
         self.sql_template: str = sql_template
-        self.template_arguments: list[typing.Any] = list(template_arguments)
+        self.template_arguments: List[Any] = list(template_arguments)
 
     @classmethod
-    def empty(cls: type["QueryString"]) -> "EmptyQueryString":
+    def empty(cls: Type["QueryString"]) -> "EmptyQueryString":
         """Create `EmptyQueryString`.
 
         :returns: EmptyQueryString.
         """
         return EmptyQueryString(sql_template="")
 
-    def querystring(self: typing.Self) -> str:
+    def querystring(self: Self) -> str:
         """Format QueryString template with arguments.
 
         ### Returns
@@ -50,9 +52,9 @@ class QueryString:
         )
 
     def __add__(
-        self: typing.Self,
+        self: Self,
         additional_querystring: "QueryString",
-    ) -> typing.Self:
+    ) -> Self:
         """Combine two QueryStrings.
 
         ### Parameters
@@ -89,7 +91,7 @@ class QueryString:
         )
         return self
 
-    def __str__(self: typing.Self) -> str:
+    def __str__(self: Self) -> str:
         """Return `QueryString` as a string.
 
         ### Returns

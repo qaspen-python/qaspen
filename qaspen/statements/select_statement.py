@@ -1,4 +1,19 @@
-import typing
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Final,
+    Generator,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    cast,
+    overload,
+)
+
+from typing_extensions import Self
 
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
@@ -32,7 +47,7 @@ from qaspen.statements.statement import BaseStatement
 from qaspen.statements.sub_statements.limit_statement import LimitStatement
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from qaspen.statements.exists_statement import ExistsStatement
     from qaspen.statements.intersect_statement import IntersectStatement
     from qaspen.statements.statement_result.select_result import (
@@ -46,7 +61,7 @@ class SelectStatement(
     BaseStatement,
     SQLSelectable,
     ObjectExecutable["SelectStatementResult[FromTable]"],
-    typing.Generic[FromTable],
+    Generic[FromTable],
 ):
     """Main entry point for all SELECT queries.
 
@@ -65,16 +80,14 @@ class SelectStatement(
     """
 
     def __init__(
-        self: typing.Self,
-        from_table: type[FromTable],
-        select_fields: typing.Iterable[BaseField[typing.Any]],
+        self: Self,
+        from_table: Type[FromTable],
+        select_fields: Iterable[BaseField[Any]],
     ) -> None:
-        self._from_table: typing.Final[type[FromTable]] = from_table
-        self._select_fields: typing.Iterable[
-            BaseField[typing.Any],
-        ] = select_fields
-        self.final_select_fields: list[BaseField[typing.Any]] = []
-        self.exist_prefixes: typing.Final[list[str]] = []
+        self._from_table: Final[Type[FromTable]] = from_table
+        self._select_fields: Iterable[BaseField[Any],] = select_fields
+        self.final_select_fields: List[BaseField[Any]] = []
+        self.exist_prefixes: Final[List[str]] = []
 
         self._filter_statement: FilterStatement = FilterStatement()
         self._limit_statement: LimitStatement = LimitStatement()
@@ -86,8 +99,8 @@ class SelectStatement(
         self._as_objects: bool = False
 
     def __await__(
-        self: typing.Self,
-    ) -> typing.Generator[None, None, "SelectStatementResult[FromTable]"]:
+        self: Self,
+    ) -> Generator[None, None, "SelectStatementResult[FromTable]"]:
         """SelectStatement can be awaited.
 
         Example:
@@ -104,8 +117,8 @@ class SelectStatement(
         return self._run_query().__await__()
 
     async def execute(
-        self: typing.Self,
-        engine: BaseEngine[typing.Any, typing.Any],
+        self: Self,
+        engine: BaseEngine[Any, Any],
     ) -> "SelectStatementResult[FromTable]":
         """Execute select statement.
 
@@ -123,9 +136,7 @@ class SelectStatement(
             SelectStatementResult,
         )
 
-        raw_query_result: list[
-            tuple[typing.Any, ...],
-        ] = await engine.run_query(
+        raw_query_result: List[Tuple[Any, ...],] = await engine.run_query(
             querystring=self.querystring(),
         )
 
@@ -138,9 +149,9 @@ class SelectStatement(
         return query_result
 
     def where(
-        self: typing.Self,
+        self: Self,
         *where_arguments: CombinableExpression,
-    ) -> typing.Self:
+    ) -> Self:
         """Add where clause to the statement.
 
         It's possible to use this method as many times as you want.
@@ -183,9 +194,9 @@ class SelectStatement(
         return self
 
     def limit(
-        self: typing.Self,
+        self: Self,
         limit: int,
-    ) -> typing.Self:
+    ) -> Self:
         """Set limit to the query.
 
         If you use this method more than 1 time, previous result
@@ -213,9 +224,9 @@ class SelectStatement(
         return self
 
     def offset(
-        self: typing.Self,
+        self: Self,
         offset: int,
-    ) -> typing.Self:
+    ) -> Self:
         """Set offset to the query.
 
         If you use this method more than 1 time, previous result
@@ -243,10 +254,10 @@ class SelectStatement(
         return self
 
     def limit_offset(
-        self: typing.Self,
+        self: Self,
         limit: int,
         offset: int,
-    ) -> typing.Self:
+    ) -> Self:
         """Set offset and limit at the same time.
 
         See `limit()` and `offset()` methods description.
@@ -256,12 +267,12 @@ class SelectStatement(
         return self
 
     def order_by(
-        self: typing.Self,
-        field: BaseField[typing.Any] | None = None,
+        self: Self,
+        field: Optional[BaseField[Any]] = None,
         ascending: bool = True,
         nulls_first: bool = True,
-        order_bys: typing.Iterable[OrderBy] | None = None,
-    ) -> typing.Self:
+        order_bys: Optional[Iterable[OrderBy]] = None,
+    ) -> Self:
         """Set ORDER BY.
 
         You can specify `field`, `ascending` and `nulls_first`
@@ -318,24 +329,24 @@ class SelectStatement(
             )
         return self
 
-    @typing.overload
+    @overload
     def union(
-        self: typing.Self,
+        self: Self,
         union_with: "SelectStatement[FromTable]",
         union_all: bool = False,
     ) -> "UnionStatement[FromTable]":
         ...
 
-    @typing.overload
+    @overload
     def union(
-        self: typing.Self,
-        union_with: "SelectStatement[typing.Any]",
+        self: Self,
+        union_with: "SelectStatement[Any]",
         union_all: bool = False,
     ) -> "UnionStatement[FromTable]":
         ...
 
     def union(
-        self: typing.Self,
+        self: Self,
         union_with: "SelectStatement[FromTable]",
         union_all: bool = False,
     ) -> "UnionStatement[FromTable]":
@@ -376,7 +387,7 @@ class SelectStatement(
         )
 
     def intersect(
-        self: typing.Self,
+        self: Self,
         intersect_with: "SelectStatement[FromTable]",
     ) -> "IntersectStatement":
         """Create intersect statement.
@@ -412,7 +423,7 @@ class SelectStatement(
             right_expression=intersect_with,
         )
 
-    def exists(self: typing.Self) -> "ExistsStatement":
+    def exists(self: Self) -> "ExistsStatement":
         """Create exists statement.
 
         Create exists statement that return True or False.
@@ -443,10 +454,10 @@ class SelectStatement(
         )
 
     def join(
-        self: typing.Self,
-        fields: list[Field[typing.Any]],
+        self: Self,
+        fields: List[Field[Any]],
         based_on: CombinableExpression,
-    ) -> typing.Self:
+    ) -> Self:
         """Add `JOIN` to the SelectStatement.
 
         You can specify what fields you want to get from
@@ -492,10 +503,10 @@ class SelectStatement(
         )
 
     def inner_join(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
-    ) -> typing.Self:
+        fields: List[Field[Any]],
+    ) -> Self:
         """Add `INNER JOIN` to the SelectStatement.
 
         You can specify what fields you want to get from
@@ -540,10 +551,10 @@ class SelectStatement(
         )
 
     def left_join(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
-    ) -> typing.Self:
+        fields: List[Field[Any]],
+    ) -> Self:
         """Add `LEFT JOIN` to the SelectStatement.
 
         You can specify what fields you want to get from
@@ -589,10 +600,10 @@ class SelectStatement(
         )
 
     def right_join(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
-    ) -> typing.Self:
+        fields: List[Field[Any]],
+    ) -> Self:
         """Add `RIGHT JOIN` to the SelectStatement.
 
         You can specify what fields you want to get from
@@ -638,10 +649,10 @@ class SelectStatement(
         )
 
     def full_outer_join(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
-    ) -> typing.Self:
+        fields: List[Field[Any]],
+    ) -> Self:
         """Add `FULL OUTER JOIN` to the SelectStatement.
 
         You can specify what fields you want to get from
@@ -688,8 +699,8 @@ class SelectStatement(
         )
 
     def join_and_return(
-        self: typing.Self,
-        fields: list[Field[typing.Any]],
+        self: Self,
+        fields: List[Field[Any]],
         based_on: CombinableExpression,
     ) -> Join:
         """Add `JOIN` to the SelectStatement and return instance of the `Join`.
@@ -739,9 +750,9 @@ class SelectStatement(
         return self._join_statement.join_expressions[-1]
 
     def inner_join_and_return(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
+        fields: List[Field[Any]],
     ) -> InnerJoin:
         """Add `INNER JOIN` to the Statement and return instance of the `Join`.
 
@@ -787,15 +798,15 @@ class SelectStatement(
             based_on=based_on,
             fields=fields,
         )
-        return typing.cast(
+        return cast(
             InnerJoin,
             self._join_statement.join_expressions[-1],
         )
 
     def left_join_and_return(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
+        fields: List[Field[Any]],
     ) -> LeftOuterJoin:
         """Add `LEFT JOIN` to the Statement and return instance of the `Join`.
 
@@ -841,15 +852,15 @@ class SelectStatement(
             based_on=based_on,
             fields=fields,
         )
-        return typing.cast(
+        return cast(
             LeftOuterJoin,
             self._join_statement.join_expressions[-1],
         )
 
     def right_join_and_return(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
+        fields: List[Field[Any]],
     ) -> RightOuterJoin:
         """Add `RIGHT JOIN` to the Statement and return instance of the `Join`.
 
@@ -895,15 +906,15 @@ class SelectStatement(
             based_on=based_on,
             fields=fields,
         )
-        return typing.cast(
+        return cast(
             RightOuterJoin,
             self._join_statement.join_expressions[-1],
         )
 
     def full_outer_join_and_return(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
+        fields: List[Field[Any]],
     ) -> FullOuterJoin:
         """Add `FULL OUTER JOIN` to the Statement and return `Join` instance.
 
@@ -949,15 +960,15 @@ class SelectStatement(
             based_on=based_on,
             fields=fields,
         )
-        return typing.cast(
+        return cast(
             FullOuterJoin,
             self._join_statement.join_expressions[-1],
         )
 
     def add_join(
-        self: typing.Self,
+        self: Self,
         *join: Join,
-    ) -> typing.Self:
+    ) -> Self:
         """Add one ore more joins to the SelectStatement.
 
         You can create JOINs instances by yourself and pass here.
@@ -1008,7 +1019,7 @@ class SelectStatement(
         )
         return self
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         """Build querystring.
 
         Can be transformed into the SQL query with `str` method.
@@ -1025,17 +1036,17 @@ class SelectStatement(
         return sql_querystring
 
     def _join_on(
-        self: typing.Self,
+        self: Self,
         based_on: CombinableExpression,
-        fields: list[Field[typing.Any]],
+        fields: List[Field[Any]],
         join_type: JoinType,
-    ) -> typing.Self:
+    ) -> Self:
         if not fields:
             raise OnJoinFieldsError(
                 "You must specify fields to get from JOIN",
             )
 
-        join_table: type["BaseTable"] = fields[0]._field_data.from_table
+        join_table: Type["BaseTable"] = fields[0]._field_data.from_table
 
         self._join_statement.join(
             fields=fields,
@@ -1047,7 +1058,7 @@ class SelectStatement(
         return self
 
     async def _run_query(
-        self: typing.Self,
+        self: Self,
     ) -> "SelectStatementResult[FromTable]":
         if not self._from_table._table_meta.database_engine:
             raise AttributeError(
@@ -1058,13 +1069,13 @@ class SelectStatement(
         )
 
     def _prepare_select_fields(
-        self: typing.Self,
-    ) -> list[BaseField[typing.Any]]:
+        self: Self,
+    ) -> List[BaseField[Any]]:
         if self.final_select_fields:
             return self.final_select_fields
-        final_select_fields: typing.Final[list[BaseField[typing.Any]]] = []
+        final_select_fields: Final[List[BaseField[Any]]] = []
 
-        fields_to_select: list[BaseField[typing.Any]] = []
+        fields_to_select: List[BaseField[Any]] = []
         fields_to_select.extend(self._select_fields)
         fields_to_select.extend(
             self._join_statement._retrieve_all_join_fields(),
@@ -1079,7 +1090,7 @@ class SelectStatement(
         self.final_select_fields = final_select_fields
         return final_select_fields
 
-    def _select_from(self: typing.Self) -> QueryString:
+    def _select_from(self: Self) -> QueryString:
         to_select_fields: str = ", ".join(
             [field.field_name for field in self._prepare_select_fields()],
         )

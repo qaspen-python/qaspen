@@ -1,5 +1,7 @@
 import dataclasses
-import typing
+from typing import Optional
+
+from typing_extensions import Self
 
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.statement import BaseStatement
@@ -7,15 +9,15 @@ from qaspen.statements.statement import BaseStatement
 
 @dataclasses.dataclass
 class LimitStatement(BaseStatement):
-    limit_number: int | None = None
+    limit_number: Optional[int] = None
 
     def limit(
-        self: typing.Self,
+        self: Self,
         limit_number: int,
     ) -> None:
         self.limit_number = limit_number
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         if not self.limit_number:
             return QueryString.empty()
         return QueryString(

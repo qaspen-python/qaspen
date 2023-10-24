@@ -2,21 +2,32 @@ import abc
 import copy
 import dataclasses
 import types
-import typing
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Generic,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
-if typing.TYPE_CHECKING:
+from typing_extensions import Self
+
+if TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
 
-FieldType = typing.TypeVar(
+FieldType = TypeVar(
     "FieldType",
 )
 
-FieldDefaultType = typing.Union[
+FieldDefaultType = Union[
     FieldType,
-    typing.Callable[
+    Callable[
         [],
-        typing.Union[FieldType, typing.Any],
+        Union[FieldType, Any],
     ],
     None,
 ]
@@ -25,12 +36,15 @@ FieldDefaultType = typing.Union[
 class EmptyFieldValue:
     """Indicates that field wasn't queried from the database."""
 
-    def __str__(self: typing.Self) -> str:
+    def __str__(self: Self) -> str:
         return self.__class__.__name__
 
 
+EMPTY_FIELD_VALUE = EmptyFieldValue()
+
+
 @dataclasses.dataclass
-class FieldData(typing.Generic[FieldType]):
+class FieldData(Generic[FieldType]):
     """All field data.
 
     ### Fields
@@ -55,23 +69,23 @@ class FieldData(typing.Generic[FieldType]):
     """
 
     field_name: str
-    from_table: type["BaseTable"] = None  # type: ignore[assignment]
+    from_table: Type["BaseTable"] = None  # type: ignore[assignment]
     is_null: bool = False
-    field_value: FieldType | EmptyFieldValue | None = EmptyFieldValue()
+    field_value: Union[FieldType, EmptyFieldValue, None] = EMPTY_FIELD_VALUE
     default: FieldDefaultType[FieldType] = None
     prefix: str = ""
     alias: str = ""
     in_join: bool = False
 
 
-class BaseField(abc.ABC, typing.Generic[FieldType]):
+class BaseField(Generic[FieldType], abc.ABC):
     """Base field class for all Fields."""
 
     _field_data: FieldData[FieldType]
 
     def __set_name__(
-        self: typing.Self,
-        owner: typing.Any,
+        self: Self,
+        owner: Any,
         field_name: str,
     ) -> None:
         """Set name for the field.
@@ -90,7 +104,7 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         self._field_data.field_name = field_name
 
     def _is_the_same_field(
-        self: typing.Self,
+        self: Self,
         second_field: "BaseField[FieldType]",
     ) -> bool:
         """Compare two fields.
@@ -102,14 +116,14 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
 
     @abc.abstractmethod
     def _make_field_create_statement(
-        self: typing.Self,
+        self: Self,
     ) -> str:
         ...
 
     @abc.abstractmethod
     def _validate_field_value(
-        self: typing.Self,
-        field_value: FieldType | None,
+        self: Self,
+        field_value: Optional[FieldType],
     ) -> None:
         """Validate field value.
 
@@ -120,8 +134,8 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
 
     @abc.abstractmethod
     def _validate_default_value(
-        self: typing.Self,
-        default_value: FieldType | None,
+        self: Self,
+        default_value: Optional[FieldType],
     ) -> None:
         """Validate field default value.
 
@@ -130,31 +144,31 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         ...
 
     @property
-    def value(self: typing.Self) -> FieldType | EmptyFieldValue | None:
+    def value(self: Self) -> Union[FieldType, EmptyFieldValue, None]:
         return self._field_data.field_value
 
     @property
-    def table_name(self: typing.Self) -> str:
+    def table_name(self: Self) -> str:
         """Return the table name of this field."""
         return self._field_data.from_table.original_table_name()
 
-    def _with_prefix(self: typing.Self, prefix: str) -> "BaseField[FieldType]":
+    def _with_prefix(self: Self, prefix: str) -> "BaseField[FieldType]":
         field: BaseField[FieldType] = copy.deepcopy(self)
         field._field_data.prefix = prefix
         return field
 
-    def _with_alias(self: typing.Self, alias: str) -> "BaseField[FieldType]":
+    def _with_alias(self: Self, alias: str) -> "BaseField[FieldType]":
         field: BaseField[FieldType] = copy.deepcopy(self)
         field._field_data.alias = alias
         return field
 
     @property
-    def original_field_name(self: typing.Self) -> str:
+    def original_field_name(self: Self) -> str:
         """Return name of the field without prefix and alias."""
         return self._field_data.field_name
 
     @property
-    def field_name(self: typing.Self) -> str:
+    def field_name(self: Self) -> str:
         """Return field name with prefix and alias."""
         prefix: str = (
             self._field_data.from_table._table_meta.alias
@@ -168,29 +182,29 @@ class BaseField(abc.ABC, typing.Generic[FieldType]):
         return field_name
 
     @property
-    def default(self: typing.Self) -> FieldDefaultType[FieldType]:
+    def default(self: Self) -> FieldDefaultType[FieldType]:
         """Return default value of the field."""
         return self._field_data.default
 
     @property
-    def is_null(self: typing.Self) -> bool:
+    def is_null(self: Self) -> bool:
         """Return flag that field can be `NULL`."""
         return self._field_data.is_null
 
     @property
-    def _field_null(self: typing.Self) -> str:
+    def _field_null(self: Self) -> str:
         return "NOT NULL" if not self.is_null else ""
 
     @property
-    def _field_default(self: typing.Self) -> str:
+    def _field_default(self: Self) -> str:
         if self.default and not types.FunctionType == type(self.default):
             return f"DEFAULT {self.default}" if self.default else ""
         return ""
 
     @property
-    def _default_field_type(self: typing.Self) -> str:
+    def _field_type(self: Self) -> str:
         return self.__class__.__name__.upper()
 
     @property
-    def _sql_type(self: typing.Self) -> str:
-        return self._default_field_type
+    def _sql_type(self: Self) -> str:
+        return self._field_type

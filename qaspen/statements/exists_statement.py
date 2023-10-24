@@ -1,4 +1,6 @@
-import typing
+from typing import Any, Final, List, Tuple
+
+from typing_extensions import Self
 
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
@@ -20,18 +22,18 @@ class ExistsStatement(
     Executable[bool],
 ):
     def __init__(
-        self: typing.Self,
+        self: Self,
         select_statement: SelectStatement[FromTable],
     ) -> None:
-        self._select_statement: typing.Final[
+        self._select_statement: Final[
             SelectStatement[FromTable],
         ] = select_statement
 
-    def __await__(self: typing.Self) -> typing.Any:
+    def __await__(self: Self) -> Any:
         """Make ExistsStatement awaitable."""
         return self._run_query().__await__()
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         """Return querystring for comparisons.
 
         Used in methods like `Field.contains(querystring=...)`.
@@ -41,7 +43,7 @@ class ExistsStatement(
             sql_template="EXISTS ({})",
         )
 
-    def querystring_for_select(self: typing.Self) -> QueryString:
+    def querystring_for_select(self: Self) -> QueryString:
         """Create querystring for SELECT."""
         return QueryString(
             self._select_statement.querystring(),
@@ -49,8 +51,8 @@ class ExistsStatement(
         )
 
     async def execute(
-        self: typing.Self,
-        engine: BaseEngine[typing.Any, typing.Any],
+        self: Self,
+        engine: BaseEngine[Any, Any],
     ) -> bool:
         """Execute Exists statement.
 
@@ -58,7 +60,7 @@ class ExistsStatement(
 
         :param engine: subclass of BaseEngine.
         """
-        raw_query_result: list[tuple[bool, ...],] = await engine.run_query(
+        raw_query_result: List[Tuple[bool, ...],] = await engine.run_query(
             querystring=self.querystring_for_select(),
         )
 
@@ -71,7 +73,7 @@ class ExistsStatement(
             ) from exc
 
     async def _run_query(
-        self: typing.Self,
+        self: Self,
     ) -> bool:
         if not self._select_statement._from_table._table_meta.database_engine:
             raise AttributeError(

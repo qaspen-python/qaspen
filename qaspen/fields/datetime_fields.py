@@ -1,7 +1,7 @@
 import datetime
-from typing import Any, Optional, Tuple
+from typing import Any, Final, Optional, Tuple
 
-from typing_extensions import Final, Self
+from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import FieldDeclarationError
@@ -79,8 +79,8 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
     @property
     def _sql_type(self: Self) -> str:
         if self.with_timezone:
-            return f"{self._default_field_type} WITH TIME ZONE"
-        return self._default_field_type
+            return f"{self._field_type} WITH TIME ZONE"
+        return self._field_type
 
 
 class Date(BaseDatetimeField[datetime.date]):

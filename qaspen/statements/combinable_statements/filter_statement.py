@@ -1,7 +1,9 @@
 import dataclasses
 import functools
 import operator
-import typing
+from typing import Any, Final, Iterable, List, Type, Union
+
+from typing_extensions import Self
 
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.fields.base_field import BaseField
@@ -23,24 +25,23 @@ EMPTY_VALUE = EmptyValue()
 
 class Filter(CombinableExpression):
     def __init__(
-        self: typing.Self,
-        field: BaseField[typing.Any],
-        operator: type[BaseOperator],
-        comparison_value: (
-            EmptyValue | BaseField[typing.Any] | typing.Any
-        ) = EMPTY_VALUE,
-        comparison_values: EmptyValue
-        | typing.Iterable[typing.Any,] = EMPTY_VALUE,
+        self: Self,
+        field: BaseField[Any],
+        operator: Type[BaseOperator],
+        comparison_value: Union[
+            EmptyValue,
+            BaseField[Any],
+            Any,
+        ] = EMPTY_VALUE,
+        comparison_values: Union[EmptyValue, Iterable[Any]] = EMPTY_VALUE,
     ) -> None:
-        self.field: BaseField[typing.Any] = field
-        self.operator: type[BaseOperator] = operator
+        self.field: BaseField[Any] = field
+        self.operator: Type[BaseOperator] = operator
 
-        self.comparison_value: EmptyValue | typing.Any = comparison_value
-        self.comparison_values: EmptyValue | typing.Iterable[
-            typing.Any,
-        ] = comparison_values
+        self.comparison_value: Union[EmptyValue, Any] = comparison_value
+        self.comparison_values: Final = comparison_values
 
-    def querystring(self: typing.Self) -> FilterQueryString:
+    def querystring(self: Self) -> FilterQueryString:
         compare_value: str = ""
         if self.comparison_value is not EMPTY_VALUE:
             if isinstance(self.comparison_value, SQLSelectable):
@@ -64,19 +65,19 @@ class Filter(CombinableExpression):
 
 class FilterBetween(CombinableExpression):
     def __init__(
-        self: typing.Self,
-        field: BaseField[typing.Any],
-        operator: type[BaseOperator],
-        left_comparison_value: typing.Any,
-        right_comparison_value: typing.Any,
+        self: Self,
+        field: BaseField[Any],
+        operator: Type[BaseOperator],
+        left_comparison_value: Any,
+        right_comparison_value: Any,
     ) -> None:
-        self.field: BaseField[typing.Any] = field
-        self.operator: type[BaseOperator] = operator
+        self.field: BaseField[Any] = field
+        self.operator: Type[BaseOperator] = operator
 
-        self.left_comparison_value: typing.Any = left_comparison_value
-        self.right_comparison_value: typing.Any = right_comparison_value
+        self.left_comparison_value: Any = left_comparison_value
+        self.right_comparison_value: Any = right_comparison_value
 
-    def querystring(self: typing.Self) -> FilterQueryString:
+    def querystring(self: Self) -> FilterQueryString:
         left_value: str = (
             self.left_comparison_value.field_name
             if isinstance(self.left_comparison_value, BaseField)
@@ -99,12 +100,12 @@ class FilterBetween(CombinableExpression):
 
 class FilterExclusive(CombinableExpression):
     def __init__(
-        self: typing.Self,
+        self: Self,
         comparison: CombinableExpression,
     ) -> None:
         self.comparison: CombinableExpression = comparison
 
-    def querystring(self: typing.Self) -> FilterQueryString:
+    def querystring(self: Self) -> FilterQueryString:
         return FilterQueryString(
             *self.comparison.querystring().template_arguments,
             sql_template=(
@@ -115,20 +116,20 @@ class FilterExclusive(CombinableExpression):
 
 @dataclasses.dataclass
 class FilterStatement(BaseStatement):
-    filter_expressions: list[CombinableExpression] = dataclasses.field(
+    filter_expressions: List[CombinableExpression] = dataclasses.field(
         default_factory=list,
     )
 
     def where(
-        self: typing.Self,
+        self: Self,
         *where_arguments: CombinableExpression,
-    ) -> typing.Self:
+    ) -> Self:
         self.filter_expressions.extend(
             where_arguments,
         )
         return self
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         if not self.filter_expressions:
             return QueryString.empty()
         final_where: QueryString = functools.reduce(

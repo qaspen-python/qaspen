@@ -1,4 +1,6 @@
-import typing
+from typing import TYPE_CHECKING, Any, Optional, Tuple, overload
+
+from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import FieldComparisonError, FieldValueValidationError
@@ -7,7 +9,7 @@ from qaspen.fields.fields import Field
 from qaspen.fields.utils import validate_max_length
 from qaspen.statements.combinable_statements.filter_statement import Filter
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     pass
 
 
@@ -20,35 +22,35 @@ AvailableComparisonTypes = (
 
 
 class BaseStringField(Field[str]):
-    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
-    _set_available_types: tuple[type, ...] = (str,)
+    _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
+    _set_available_types: Tuple[type, ...] = (str,)
 
-    @typing.overload
+    @overload
     def __init__(
-        self: typing.Self,
+        self: Self,
         max_length: int = 255,
         is_null: bool = False,
-        default: str | None = None,
-        db_field_name: str | None = None,
+        default: Optional[str] = None,
+        db_field_name: Optional[str] = None,
     ) -> None:
         ...
 
-    @typing.overload
+    @overload
     def __init__(
-        self: typing.Self,
+        self: Self,
         is_null: bool = False,
-        default: str | None = None,
-        db_field_name: str | None = None,
+        default: Optional[str] = None,
+        db_field_name: Optional[str] = None,
     ) -> None:
         ...
 
     def __init__(
-        self: typing.Self,
-        *args: typing.Any,
+        self: Self,
+        *args: Any,
         max_length: int = 255,
         is_null: bool = False,
-        default: str | None = None,
-        db_field_name: str | None = None,
+        default: Optional[str] = None,
+        db_field_name: Optional[str] = None,
     ) -> None:
         if max_length:
             validate_max_length(max_length=max_length)
@@ -63,7 +65,7 @@ class BaseStringField(Field[str]):
         )
 
     def like(
-        self: typing.Self,
+        self: Self,
         comparison_value: str,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
@@ -79,7 +81,7 @@ class BaseStringField(Field[str]):
         )
 
     def not_like(
-        self: typing.Self,
+        self: Self,
         comparison_value: str,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
@@ -95,7 +97,7 @@ class BaseStringField(Field[str]):
         )
 
     def ilike(
-        self: typing.Self,
+        self: Self,
         comparison_value: str,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
@@ -111,7 +113,7 @@ class BaseStringField(Field[str]):
         )
 
     def not_ilike(
-        self: typing.Self,
+        self: Self,
         comparison_value: str,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
@@ -127,8 +129,8 @@ class BaseStringField(Field[str]):
         )
 
     def _validate_field_value(
-        self: typing.Self,
-        field_value: str | None,
+        self: Self,
+        field_value: Optional[str],
     ) -> None:
         """Validate field value.
 
@@ -152,8 +154,8 @@ class BaseStringField(Field[str]):
             )
 
     @property
-    def _sql_type(self: typing.Self) -> str:
-        return f"{self._default_field_type}({self._max_length})"
+    def _sql_type(self: Self) -> str:
+        return f"{self._field_type}({self._max_length})"
 
 
 class VarChar(BaseStringField):
@@ -169,8 +171,8 @@ class Text(Field[str]):
     Behave like normal PostgreSQL TEXT field.
     """
 
-    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
-    _set_available_types: tuple[type, ...] = (str,)
+    _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
+    _set_available_types: Tuple[type, ...] = (str,)
 
 
 class Char(Field[str]):
@@ -182,15 +184,15 @@ class Char(Field[str]):
     If you want more characters, use `VarChar` field.
     """
 
-    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
-    _set_available_types: tuple[type, ...] = (str,)
+    _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
+    _set_available_types: Tuple[type, ...] = (str,)
 
     def __init__(
-        self: typing.Self,
-        *pos_arguments: typing.Any,
+        self: Self,
+        *pos_arguments: Any,
         is_null: bool = False,
-        default: str | None = None,
-        db_field_name: str | None = None,
+        default: Optional[str] = None,
+        db_field_name: Optional[str] = None,
     ) -> None:
         super().__init__(
             *pos_arguments,
@@ -200,8 +202,8 @@ class Char(Field[str]):
         )
 
     def _validate_field_value(
-        self: typing.Self,
-        field_value: str | None,
+        self: Self,
+        field_value: Optional[str],
     ) -> None:
         """Validate field value.
 

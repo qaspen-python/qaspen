@@ -1,4 +1,6 @@
-import typing
+from typing import Any, Final, Optional, Tuple, Union
+
+from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
@@ -8,28 +10,28 @@ from qaspen.fields.fields import Field
 class BaseIntegerField(Field[int]):
     """Base field for all integer fields."""
 
-    _available_comparison_types: tuple[type, ...] = (
+    _available_comparison_types: Tuple[type, ...] = (
         int,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: tuple[type, ...] = (int,)
-    _available_max_value: int | None
-    _available_min_value: int | None
+    _set_available_types: Tuple[type, ...] = (int,)
+    _available_max_value: Optional[int]
+    _available_min_value: Optional[int]
 
     def __init__(
-        self: typing.Self,
-        *pos_arguments: typing.Any,
+        self: Self,
+        *pos_arguments: Any,
         is_null: bool = False,
-        default: int | None = None,
-        db_field_name: str | None = None,
-        maximum: int | None = None,
-        minimum: int | None = None,
+        default: Optional[int] = None,
+        db_field_name: Optional[str] = None,
+        maximum: Optional[int] = None,
+        minimum: Optional[int] = None,
     ) -> None:
         # TODO: Added CHECK constraint to these params
-        self._maximum: int | None = maximum
-        self._minimum: int | None = minimum
+        self._maximum: Optional[int] = maximum
+        self._minimum: Optional[int] = minimum
 
         super().__init__(
             *pos_arguments,
@@ -39,8 +41,8 @@ class BaseIntegerField(Field[int]):
         )
 
     def _validate_field_value(
-        self: typing.Self,
-        field_value: int | None,
+        self: Self,
+        field_value: Optional[int],
     ) -> None:
         """Validate field value.
 
@@ -55,7 +57,7 @@ class BaseIntegerField(Field[int]):
             field_value=field_value,
         )
 
-        is_max_value_reached: typing.Final = bool(
+        is_max_value_reached: Final = bool(
             field_value
             and self._available_max_value
             and field_value > self._available_max_value,
@@ -67,7 +69,7 @@ class BaseIntegerField(Field[int]):
                 f"can accommodate - `{self._available_max_value}`",
             )
 
-        is_min_value_reached: typing.Final = bool(
+        is_min_value_reached: Final = bool(
             field_value
             and self._available_min_value
             and field_value < self._available_min_value,
@@ -115,15 +117,15 @@ class Numeric(BaseIntegerField):
     """NUMERIC field."""
 
     def __init__(
-        self: typing.Self,
-        *pos_arguments: typing.Any,
-        precision: int | None = None,
-        scale: int | None = None,
+        self: Self,
+        *pos_arguments: Any,
+        precision: Optional[int] = None,
+        scale: Optional[int] = None,
         is_null: bool = False,
-        default: int | None = None,
-        db_field_name: str | None = None,
-        maximum: int | None = None,
-        minimum: int | None = None,
+        default: Optional[int] = None,
+        db_field_name: Optional[str] = None,
+        maximum: Optional[int] = None,
+        minimum: Optional[int] = None,
     ) -> None:
         if not precision and scale:
             raise FieldDeclarationError(
@@ -139,12 +141,12 @@ class Numeric(BaseIntegerField):
             minimum=minimum,
         )
 
-        self.precision: int | None = precision
-        self.scale: int | None = scale
+        self.precision: Optional[int] = precision
+        self.scale: Optional[int] = scale
 
     @property
-    def _sql_type(self: typing.Self) -> str:
-        field_type: str = self._default_field_type
+    def _sql_type(self: Self) -> str:
+        field_type: str = self._field_type
         if self.precision and self.scale:
             field_type += f"({self.precision}, {self.scale})"
         elif self.precision:
@@ -160,15 +162,15 @@ class Decimal(Numeric):
     """
 
 
-class Real(Field[int | str]):
+class Real(Field[Union[int, str]]):
     """REAL field."""
 
     def __init__(
-        self: typing.Self,
-        *pos_arguments: typing.Any,
+        self: Self,
+        *pos_arguments: Any,
         is_null: bool = False,
-        default: int | str | None = None,
-        db_field_name: str | None = None,
+        default: Union[int, str, None] = None,
+        db_field_name: Optional[str] = None,
     ) -> None:
         super().__init__(
             *pos_arguments,
@@ -178,15 +180,15 @@ class Real(Field[int | str]):
         )
 
 
-class DoublePrecision(Field[int | str]):
+class DoublePrecision(Field[Union[int, str]]):
     """DOUBLE PRECISION field."""
 
     def __init__(
-        self: typing.Self,
-        *pos_arguments: typing.Any,
+        self: Self,
+        *pos_arguments: Any,
         is_null: bool = False,
-        default: int | str | None = None,
-        db_field_name: str | None = None,
+        default: Union[int, str, None] = None,
+        db_field_name: Optional[str] = None,
     ) -> None:
         super().__init__(
             *pos_arguments,
@@ -202,12 +204,12 @@ class SerialBaseField(BaseIntegerField):
     _sub_field: str
 
     def __init__(
-        self: typing.Self,
-        *pos_arguments: typing.Any,
-        db_field_name: str | None = None,
-        maximum: int | None = None,
-        minimum: int | None = None,
-        next_val_seq_name: str | None = None,
+        self: Self,
+        *pos_arguments: Any,
+        db_field_name: Optional[str] = None,
+        maximum: Optional[int] = None,
+        minimum: Optional[int] = None,
+        next_val_seq_name: Optional[str] = None,
     ) -> None:
         """Create field with Serial signature.
 
@@ -229,9 +231,9 @@ class SerialBaseField(BaseIntegerField):
             minimum=minimum,
         )
 
-        self.next_val_seq_name: str | None = next_val_seq_name
+        self.next_val_seq_name: Optional[str] = next_val_seq_name
 
-    def _make_field_create_statement(self: typing.Self) -> str:
+    def _make_field_create_statement(self: Self) -> str:
         if self.next_val_seq_name:
             return (
                 f"{self.original_field_name} {self._sub_field} "

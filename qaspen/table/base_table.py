@@ -1,13 +1,13 @@
 import copy
 import inspect
-import typing
+from typing import Any, Dict, Final, List, Type, TypeVar, cast
 
 from qaspen.fields.base_field import BaseField, FieldType
 from qaspen.fields.fields import Field
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
 
-T_ = typing.TypeVar(
+T_ = TypeVar(
     "T_",
     bound="BaseTable",
 )
@@ -19,7 +19,7 @@ class BaseTable(
 ):
     @classmethod
     def select(
-        cls: type[T_],
+        cls: Type[T_],
         *select_fields: BaseField[FieldType],
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
@@ -28,14 +28,14 @@ class BaseTable(
 
         :returns: SelectStatement.
         """
-        select_statement: typing.Final[SelectStatement[T_]] = SelectStatement(
+        select_statement: Final[SelectStatement[T_]] = SelectStatement(
             select_fields=select_fields or cls.all_fields(),
             from_table=cls,
         )
         return select_statement
 
     @classmethod
-    def all_fields(cls: type[T_]) -> list[BaseField[FieldType]]:
+    def all_fields(cls: Type[T_]) -> List[BaseField[FieldType]]:
         """Return all fields in the table.
 
         :returns: list of fields.
@@ -43,7 +43,7 @@ class BaseTable(
         return [*cls._table_meta.table_fields.values()]
 
     @classmethod
-    def aliased(cls: type[T_], alias: str) -> type[T_]:
+    def aliased(cls: Type[T_], alias: str) -> Type[T_]:
         """Create aliased version of the Table.
 
         ### Parameters
@@ -67,7 +67,7 @@ class BaseTable(
         return cls._aliased(alias=alias)
 
     @classmethod
-    def _aliased(cls: type[T_], alias: str) -> type[T_]:
+    def _aliased(cls: Type[T_], alias: str) -> Type[T_]:
         """Add alias to the table.
 
         We must create new `class Table` because in other
@@ -88,7 +88,7 @@ class BaseTable(
             cls,
             lambda member: not (inspect.isroutine(member)),
         )
-        only_field_attributes: dict[str, BaseField[typing.Any]] = {
+        only_field_attributes: Dict[str, BaseField[Any]] = {
             attribute[0]: copy.deepcopy(attribute[1])
             for attribute in attributes
             if issubclass(type(attribute[1]), BaseField)
@@ -110,7 +110,7 @@ class BaseTable(
         return Table
 
     @classmethod
-    def is_aliased(cls: type[T_]) -> bool:
+    def is_aliased(cls: Type[T_]) -> bool:
         """Return flag that says does the table have an alias.
 
         :returns: boolean flag.
@@ -118,11 +118,11 @@ class BaseTable(
         return bool(cls._table_meta.alias)
 
     @classmethod
-    def original_table_name(cls: type[T_]) -> str:
+    def original_table_name(cls: Type[T_]) -> str:
         return cls._table_meta.table_name
 
     @classmethod
-    def table_name(cls: type[T_]) -> str:
+    def table_name(cls: Type[T_]) -> str:
         """Return the original table name or alias to it.
 
         :returns: original table name or alias.
@@ -131,12 +131,12 @@ class BaseTable(
 
     @classmethod
     def _retrieve_field(
-        cls: type[T_],
+        cls: Type[T_],
         field_name: str,
-    ) -> Field[typing.Any]:
+    ) -> Field[Any]:
         try:
-            return typing.cast(
-                Field[typing.Any],
+            return cast(
+                Field[Any],
                 cls.__dict__[field_name],
             )
         except LookupError:

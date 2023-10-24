@@ -6,21 +6,20 @@ authors = ["chandr-andr (Kiselev Aleksandr) <askiselev00@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
-pydantic = "^2.1.1"
-psycopg = "^3.1.10"
-psycopg-pool = "^3.1.7"
+python = ">=3.8.1,<4.0"
+pydantic = "^2.4.2"
+psycopg = "^3.1.12"
+psycopg-pool = "^3.1.8"
 typer = "^0.9.0"
 jinja2 = "^3.1.2"
 
-
 [tool.poetry.group.dev.dependencies]
-mypy = "^1.4.1"
-ruff = "^0.0.282"
+mypy = "^1.6.1"
+ruff = "^0.1.2"
 isort = "^5.12.0"
-black = "^23.7.0"
-pytest = "^7.4.0"
-pre-commit = "^3.4.0"
+black = "^23.10.1"
+pytest = "^7.4.3"
+pre-commit = "^3.5.0"
 autoflake = "^2.2.1"
 yesqa = "^1.5.0"
 typing-extensions = "^4.8.0"

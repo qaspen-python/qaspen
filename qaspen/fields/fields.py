@@ -1,6 +1,18 @@
 import copy
 import types
-import typing
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Final,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
+
+from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.base.sql_base import SQLSelectable
@@ -18,29 +30,28 @@ from qaspen.fields.base_field import (
     FieldDefaultType,
     FieldType,
 )
-from qaspen.migrations.inheritance import ClassAsString
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
     FilterBetween,
 )
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
-OperatorTypes = AnyOperator | AllOperator
+OperatorTypes = Union[AnyOperator, AllOperator]
 
 
-class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
-    _available_comparison_types: tuple[type, ...]
-    _set_available_types: tuple[type, ...]
+class Field(BaseField[FieldType], SQLSelectable):
+    _available_comparison_types: Tuple[type, ...]
+    _set_available_types: Tuple[type, ...]
 
     def __init__(
-        self: typing.Self,
-        *args: typing.Any,
+        self: Self,
+        *args: Any,
         is_null: bool = False,
         default: FieldDefaultType[FieldType] = None,
-        db_field_name: str | None = None,
+        db_field_name: Optional[str] = None,
     ) -> None:
         if args:
             raise FieldDeclarationError("Use only keyword arguments.")
@@ -62,25 +73,25 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def __get__(
-        self: typing.Self,
+        self: Self,
         instance: "BaseTable | None",
-        owner: type["BaseTable"],
+        owner: Type["BaseTable"],
     ) -> "Field[FieldType]":
         try:
-            return typing.cast(
+            return cast(
                 Field[FieldType],
                 instance.__dict__[self.original_field_name],
             )
         except (AttributeError, KeyError):
-            return typing.cast(
+            return cast(
                 Field[FieldType],
                 owner.__dict__[self.original_field_name],
             )
 
     def __set__(
-        self: typing.Self,
+        self: Self,
         instance: object,
-        value: FieldType | EmptyFieldValue,
+        value: Union[FieldType, EmptyFieldValue],
     ) -> None:
         field: Field[FieldType]
         if isinstance(value, EmptyFieldValue):
@@ -101,15 +112,15 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
                 )
 
         self._validate_field_value(
-            field_value=value,
+            field_value=value,  # type: ignore[arg-type]
         )
         field = instance.__dict__[self.original_field_name]
-        field._field_data.field_value = value
+        field._field_data.field_value = value  # type: ignore[assignment]
 
     def in_(
-        self: typing.Self,
+        self: Self,
         *comparison_values: FieldType,
-        subquery: SQLSelectable | None = None,
+        subquery: Optional[SQLSelectable] = None,
     ) -> Filter:
         if subquery and comparison_values:
             raise FilterComparisonError(
@@ -130,7 +141,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
                     f"and {type(comparison_value)}",
                 )
 
-        where_parameters: dict[str, typing.Any] = {
+        where_parameters: Dict[str, Any] = {
             "field": self,
             "operator": operators.InOperator,
         }
@@ -143,9 +154,9 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         return Filter(**where_parameters)
 
     def not_in(
-        self: typing.Self,
+        self: Self,
         *comparison_values: FieldType,
-        subquery: SQLSelectable | None = None,
+        subquery: Optional[SQLSelectable] = None,
     ) -> Filter:
         if subquery and comparison_values:
             raise FilterComparisonError(
@@ -166,7 +177,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
                     f"and {type(comparison_value)}",
                 )
 
-        where_parameters: dict[str, typing.Any] = {
+        where_parameters: Dict[str, Any] = {
             "field": self,
             "operator": operators.NotInOperator,
         }
@@ -179,11 +190,11 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         return Filter(**where_parameters)
 
     def between(
-        self: typing.Self,
-        left_value: FieldType | "Field[typing.Any]",
-        right_value: FieldType | "Field[typing.Any]",
+        self: Self,
+        left_value: Union[FieldType, "Field[Any]"],
+        right_value: Union[FieldType, "Field[Any]"],
     ) -> FilterBetween:
-        is_valid_type: typing.Final[bool] = all(
+        is_valid_type: Final[bool] = all(
             (
                 isinstance(
                     left_value,
@@ -210,27 +221,27 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def _make_field_create_statement(
-        self: typing.Self,
+        self: Self,
     ) -> str:
         return (
             f"{self.original_field_name} {self._sql_type} "
             f"{self._field_null} {self._field_default}"
         )
 
-    def _with_prefix(self: typing.Self, prefix: str) -> "Field[FieldType]":
+    def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
         field: Field[FieldType] = copy.deepcopy(self)
         field._field_data.prefix = prefix
         return field
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         return QueryString(
             self.field_name,
             sql_template="{}",
         )
 
     def __eq__(  # type: ignore[override]
-        self: typing.Self,
-        comparison_value: FieldType | "Field[typing.Any]" | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, "Field[Any]", OperatorTypes],
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -250,14 +261,14 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def eq(
-        self: typing.Self,
-        comparison_value: FieldType | "Field[typing.Any]" | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, "Field[Any]", OperatorTypes],
     ) -> Filter:
         return self.__eq__(comparison_value)
 
     def __ne__(  # type: ignore[override]
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -277,14 +288,14 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def neq(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         return self.__ne__(comparison_value)
 
     def __gt__(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -299,14 +310,14 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def gt(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         return self.__gt__(comparison_value)
 
     def __ge__(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -321,14 +332,14 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def gte(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         return self.__ge__(comparison_value)
 
     def __lt__(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -343,14 +354,14 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def lt(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         return self.__lt__(comparison_value)
 
     def __le__(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -365,14 +376,14 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
         )
 
     def lte(
-        self: typing.Self,
-        comparison_value: FieldType | OperatorTypes,
+        self: Self,
+        comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         return self.__le__(comparison_value)
 
     def _validate_field_value(
-        self: typing.Self,
-        field_value: FieldType | None,
+        self: Self,
+        field_value: Optional[FieldType],
     ) -> None:
         """Validate field value.
 
@@ -387,7 +398,7 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
             return
 
     def _validate_default_value(
-        self: typing.Self,
+        self: Self,
         default_value: FieldDefaultType[FieldType],
     ) -> None:
         if default_value is None or types.FunctionType == type(default_value):
@@ -400,7 +411,3 @@ class Field(BaseField[FieldType], SQLSelectable, ClassAsString):
             raise FieldValueValidationError(
                 f"Wrong default value in the field {self.original_field_name}",
             ) from exc
-
-    @property
-    def migration_class_name(self: typing.Self) -> str:
-        return f"fields.{super().migration_class_name}"

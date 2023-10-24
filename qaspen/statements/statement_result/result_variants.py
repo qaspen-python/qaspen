@@ -1,10 +1,12 @@
 import abc
-import typing
+from typing import Any, Generic, List, Tuple, TypeVar
 
-ListResultType = typing.TypeVar(
+from typing_extensions import Self
+
+ListResultType = TypeVar(
     "ListResultType",
 )
-ObjectResultType = typing.TypeVar(
+ObjectResultType = TypeVar(
     "ObjectResultType",
 )
 
@@ -18,14 +20,14 @@ class StatementResult(abc.ABC):
 
     @abc.abstractmethod
     def raw_result(
-        self: typing.Self,
-    ) -> list[tuple[typing.Any, ...]]:
+        self: Self,
+    ) -> List[Tuple[Any, ...]]:
         ...
 
 
 class ListableStatementResult(
     abc.ABC,
-    typing.Generic[ListResultType],
+    Generic[ListResultType],
 ):
     """List result.
 
@@ -33,13 +35,13 @@ class ListableStatementResult(
     """
 
     @abc.abstractmethod
-    def as_list(self: typing.Self) -> ListResultType:
+    def as_list(self: Self) -> ListResultType:
         """Return results as a list with data."""
 
 
 class ObjecttableStatementResult(
     abc.ABC,
-    typing.Generic[ObjectResultType],
+    Generic[ObjectResultType],
 ):
     """Object result.
 
@@ -47,5 +49,5 @@ class ObjecttableStatementResult(
     """
 
     @abc.abstractmethod
-    def as_objects(self: typing.Self) -> list[ObjectResultType]:
+    def as_objects(self: Self) -> List[ObjectResultType]:
         """Return list of objects."""

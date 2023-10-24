@@ -1,35 +1,64 @@
-import typing
+import sys
 from collections import UserDict
+from typing import Any, Dict, Final
+
+from typing_extensions import Self
 
 from qaspen.fields.base_field import BaseField
 
 
 class FieldAlias:
     def __init__(
-        self: typing.Self,
-        aliased_field: BaseField[typing.Any],
+        self: Self,
+        aliased_field: BaseField[Any],
     ) -> None:
-        self.aliased_field: typing.Final = aliased_field
+        self.aliased_field: Final = aliased_field
 
 
-class FieldAliases(UserDict[str, FieldAlias]):
-    def __init__(self: typing.Self):
-        self.data: dict[str, FieldAlias] = {}
-        self.last_alias_number: int = 0
+if sys.version_info >= (3, 9):
 
-    def add_alias(
-        self: typing.Self,
-        field: BaseField[typing.Any],
-    ) -> BaseField[typing.Any]:
-        self.last_alias_number += 1
+    class FieldAliases(UserDict[str, FieldAlias]):
+        def __init__(self: Self):
+            self.data: Dict[str, FieldAlias] = {}
+            self.last_alias_number: int = 0
 
-        alias: typing.Final = f"A{self.last_alias_number}"
-        new_aliased_field: typing.Final = field._with_alias(alias=alias)
+        def add_alias(
+            self: Self,
+            field: BaseField[Any],
+        ) -> BaseField[Any]:
+            self.last_alias_number += 1
 
-        self.data[f"A{self.last_alias_number}"] = FieldAlias(
-            aliased_field=new_aliased_field,
-        )
-        return new_aliased_field
+            alias: Final = f"A{self.last_alias_number}"
+            new_aliased_field: Final = field._with_alias(alias=alias)
 
-    def __str__(self: typing.Self) -> str:
-        return str(self.data)
+            self.data[f"A{self.last_alias_number}"] = FieldAlias(
+                aliased_field=new_aliased_field,
+            )
+            return new_aliased_field
+
+        def __str__(self: Self) -> str:
+            return str(self.data)
+
+else:
+
+    class FieldAliases(UserDict):  # type: ignore[type-arg]
+        def __init__(self: Self):
+            self.data: Dict[str, FieldAlias] = {}
+            self.last_alias_number: int = 0
+
+        def add_alias(
+            self: Self,
+            field: BaseField[Any],
+        ) -> BaseField[Any]:
+            self.last_alias_number += 1
+
+            alias: Final = f"A{self.last_alias_number}"
+            new_aliased_field: Final = field._with_alias(alias=alias)
+
+            self.data[f"A{self.last_alias_number}"] = FieldAlias(
+                aliased_field=new_aliased_field,
+            )
+            return new_aliased_field
+
+        def __str__(self: Self) -> str:
+            return str(self.data)

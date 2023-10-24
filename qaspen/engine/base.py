@@ -1,92 +1,94 @@
 import abc
-import typing
+from typing import Any, Final, Generic, List, Optional, Tuple, TypeVar
+
+from typing_extensions import Self
 
 from qaspen.engine.enums import DataBaseType
 from qaspen.querystring.querystring import QueryString
 
-SingleConnection = typing.TypeVar(
+SingleConnection = TypeVar(
     "SingleConnection",
 )
 
 
-class BaseTransaction(abc.ABC, typing.Generic[SingleConnection]):
+class BaseTransaction(abc.ABC, Generic[SingleConnection]):
     def __init__(
-        self: typing.Self,
+        self: Self,
         transaction_connection: SingleConnection,
     ) -> None:
-        self.transaction_connection: typing.Final = transaction_connection
+        self.transaction_connection: Final = transaction_connection
 
     @abc.abstractmethod
-    async def rollback(self: typing.Self) -> None:
+    async def rollback(self: Self) -> None:
         """Rollback the transaction."""
         ...
 
     @abc.abstractmethod
-    async def commit(self: typing.Self) -> None:
+    async def commit(self: Self) -> None:
         """Commit the transaction."""
         ...
 
     @abc.abstractmethod
     async def run_query(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
-    ) -> list[tuple[typing.Any, ...]]:
+    ) -> List[Tuple[Any, ...]]:
         ...
 
     @abc.abstractmethod
     async def run_query_without_result(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
     ) -> None:
         ...
 
 
-ConnectionClass = typing.TypeVar(
+ConnectionClass = TypeVar(
     "ConnectionClass",
 )
-TransactionClass = typing.TypeVar(
+TransactionClass = TypeVar(
     "TransactionClass",
-    bound=BaseTransaction[typing.Any],
+    bound=BaseTransaction[Any],
 )
 
 
-class BaseEngine(abc.ABC, typing.Generic[ConnectionClass, TransactionClass]):
+class BaseEngine(abc.ABC, Generic[ConnectionClass, TransactionClass]):
     database_type: DataBaseType
-    connection_pool: ConnectionClass | None = None
+    connection_pool: Optional[ConnectionClass] = None
 
     def __init__(
-        self: typing.Self,
+        self: Self,
         connection_string: str,
-        **connection_parameters: typing.Any,
+        **connection_parameters: Any,
     ) -> None:
         self.connection_string: str = connection_string
-        self.connection_parameters: typing.Any = connection_parameters
+        self.connection_parameters: Any = connection_parameters
 
     @abc.abstractmethod
-    async def startup(self: typing.Self) -> None:
+    async def startup(self: Self) -> None:
         ...
 
     @abc.abstractmethod
-    async def shutdown(self: typing.Self) -> None:
+    async def shutdown(self: Self) -> None:
         ...
 
     @abc.abstractmethod
     async def transaction(
-        self: typing.Self,
+        self: Self,
     ) -> TransactionClass:
         pass
 
     @abc.abstractmethod
     async def run_query(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
         in_transaction: bool = True,
-    ) -> list[tuple[typing.Any, ...]]:
+    ) -> List[Tuple[Any, ...]]:
         ...
 
     @abc.abstractmethod
     async def run_query_without_result(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
         in_transaction: bool = True,
     ) -> None:

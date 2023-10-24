@@ -1,4 +1,6 @@
-import typing
+from typing import Any, Dict, Final, Generic, List, Tuple, Type
+
+from typing_extensions import Self
 
 from qaspen.fields.aliases import FieldAliases
 from qaspen.qaspen_types import FromTable
@@ -12,9 +14,9 @@ from qaspen.table.base_table import BaseTable
 
 class SelectStatementResult(
     StatementResult,
-    ListableStatementResult[list[dict[str, typing.Any]]],
+    ListableStatementResult[List[Dict[str, Any]]],
     ObjecttableStatementResult[FromTable],
-    typing.Generic[FromTable],
+    Generic[FromTable],
 ):
     """Result for SelectStatement.
 
@@ -25,16 +27,16 @@ class SelectStatementResult(
     """
 
     def __init__(
-        self: typing.Self,
-        from_table: type[FromTable],
-        query_result: list[tuple[typing.Any, ...]],
+        self: Self,
+        from_table: Type[FromTable],
+        query_result: List[Tuple[Any, ...]],
         aliases: FieldAliases,
     ) -> None:
-        self.from_table: typing.Final = from_table
-        self.query_result: typing.Final = query_result
-        self.aliases: typing.Final = aliases
+        self.from_table: Final = from_table
+        self.query_result: Final = query_result
+        self.aliases: Final = aliases
 
-    def as_list(self: typing.Self) -> list[dict[str, typing.Any]]:
+    def as_list(self: Self) -> List[Dict[str, Any]]:
         """Return list of dicts.
 
         Example:
@@ -85,7 +87,7 @@ class SelectStatementResult(
         ]
         ```
         """
-        result_list: list[dict[str, typing.Any]] = []
+        result_list: List[Dict[str, Any]] = []
 
         for single_query_result in self.query_result:
             zip_expression = zip(
@@ -118,7 +120,7 @@ class SelectStatementResult(
 
         return result_list
 
-    def as_objects(self: typing.Self) -> list[FromTable]:
+    def as_objects(self: Self) -> List[FromTable]:
         """Return list of objects.
 
         Example:
@@ -168,7 +170,7 @@ class SelectStatementResult(
             # `filling` - name of the field
         ```
         """
-        result_objects: list[FromTable] = []
+        result_objects: List[FromTable] = []
 
         for single_query_result in self.query_result:
             zip_expression = zip(
@@ -176,9 +178,9 @@ class SelectStatementResult(
                 self.aliases.values(),
             )
 
-            temporary_dict: dict[
-                type[BaseTable],
-                dict[str, typing.Any],
+            temporary_dict: Dict[
+                Type[BaseTable],
+                Dict[str, Any],
             ] = {}
 
             for single_query_result, field in zip_expression:
@@ -203,7 +205,7 @@ class SelectStatementResult(
 
         return result_objects
 
-    def raw_result(self: typing.Self) -> list[tuple[typing.Any, ...]]:
+    def raw_result(self: Self) -> List[Tuple[Any, ...]]:
         """Return result of the query as in engine.
 
         :returns: list of tuples.

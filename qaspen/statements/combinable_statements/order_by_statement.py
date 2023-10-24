@@ -1,7 +1,9 @@
 import dataclasses
 import functools
 import operator
-import typing
+from typing import Any, Final, Iterable, List, Optional
+
+from typing_extensions import Self
 
 from qaspen.fields.base_field import BaseField
 from qaspen.querystring.querystring import OrderByQueryString, QueryString
@@ -10,18 +12,18 @@ from qaspen.statements.statement import BaseStatement
 
 class OrderBy:
     def __init__(
-        self: typing.Self,
-        field: BaseField[typing.Any],
+        self: Self,
+        field: BaseField[Any],
         ascending: bool = True,
         nulls_first: bool = True,
     ) -> None:
-        self.field: typing.Final[BaseField[typing.Any]] = field
-        self.ascending: typing.Final[bool] = ascending
-        self.nulls_first: typing.Final[bool] = nulls_first
+        self.field: Final[BaseField[Any]] = field
+        self.ascending: Final[bool] = ascending
+        self.nulls_first: Final[bool] = nulls_first
 
-    def querystring(self: typing.Self) -> OrderByQueryString:
-        querystring_template: typing.Final[str] = "{} {} {}"
-        querystring_arguments: list[str] = [self.field.field_name]
+    def querystring(self: Self) -> OrderByQueryString:
+        querystring_template: Final[str] = "{} {} {}"
+        querystring_arguments: List[str] = [self.field.field_name]
 
         if self.ascending is True:
             querystring_arguments.append("ASC")
@@ -41,16 +43,16 @@ class OrderBy:
 
 @dataclasses.dataclass
 class OrderByStatement(BaseStatement):
-    order_by_expressions: list[OrderBy] = dataclasses.field(
+    order_by_expressions: List[OrderBy] = dataclasses.field(
         default_factory=list,
     )
 
     def order_by(
-        self: typing.Self,
-        field: BaseField[typing.Any] | None = None,
+        self: Self,
+        field: Optional[BaseField[Any]] = None,
         ascending: bool = True,
         nulls_first: bool = True,
-        order_by_statements: typing.Iterable[OrderBy] | None = None,
+        order_by_statements: Optional[Iterable[OrderBy]] = None,
     ) -> None:
         if field:
             self.order_by_expressions.append(
@@ -66,7 +68,7 @@ class OrderByStatement(BaseStatement):
                 order_by_statements,
             )
 
-    def querystring(self: typing.Self) -> QueryString:
+    def querystring(self: Self) -> QueryString:
         if not self.order_by_expressions:
             return QueryString.empty()
         final_order_by: OrderByQueryString = functools.reduce(

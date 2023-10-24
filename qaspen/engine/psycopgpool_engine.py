@@ -1,7 +1,8 @@
-import typing
+from typing import Any, Final, List, Tuple
 
 from psycopg import AsyncConnection, AsyncCursor
 from psycopg_pool import AsyncConnectionPool
+from typing_extensions import Self
 
 from qaspen.engine.base import BaseEngine, BaseTransaction
 from qaspen.engine.enums import DataBaseType
@@ -12,30 +13,30 @@ class PsycopgPoolTransaction(
     BaseTransaction[AsyncConnection],  # type: ignore[type-arg]
 ):
     @property
-    def cursor(self: typing.Self) -> AsyncCursor[typing.Any]:
+    def cursor(self: Self) -> AsyncCursor[Any]:
         return self.transaction_connection.cursor()
 
     async def run_query(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
-    ) -> list[tuple[typing.Any, ...]]:
+    ) -> List[Tuple[Any, ...]]:
         result_cursor = await self.cursor.execute(
             query=str(querystring),
         )
         return await result_cursor.fetchall()
 
     async def run_query_without_result(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
     ) -> None:
         await self.cursor.execute(
             query=str(querystring),
         )
 
-    async def rollback(self: typing.Self) -> None:
+    async def rollback(self: Self) -> None:
         await self.transaction_connection.rollback()
 
-    async def commit(self: typing.Self) -> None:
+    async def commit(self: Self) -> None:
         await self.transaction_connection.commit()
 
 
@@ -44,7 +45,7 @@ class PsycopgPoolEngine(
 ):
     database_type: DataBaseType = DataBaseType.POSTGRESQL
 
-    async def startup(self: typing.Self) -> None:
+    async def startup(self: Self) -> None:
         connection_pool: AsyncConnectionPool = AsyncConnectionPool(
             conninfo=self.connection_string,
             **self.connection_parameters,
@@ -54,28 +55,28 @@ class PsycopgPoolEngine(
 
         self.connection_pool = connection_pool
 
-    async def shutdown(self: typing.Self) -> None:
+    async def shutdown(self: Self) -> None:
         if self.connection_pool:
             await self.connection_pool.close()
             self.connection_pool = None
 
-    async def transaction(self: typing.Self) -> PsycopgPoolTransaction:
+    async def transaction(self: Self) -> PsycopgPoolTransaction:
         if not self.connection_pool:
             await self.startup()
         if not self.connection_pool:
             raise ValueError()
 
-        single_connection: typing.Final = await self.connection_pool.getconn()
+        single_connection: Final = await self.connection_pool.getconn()
         async_cursor = single_connection.cursor()
         return PsycopgPoolTransaction(
             transaction_connection=await self.connection_pool.getconn(),
         )
 
     async def run_query(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
         in_transaction: bool = True,
-    ) -> list[tuple[typing.Any, ...]]:
+    ) -> List[Tuple[Any, ...]]:
         if not self.connection_pool:
             await self.startup()
         if not self.connection_pool:
@@ -87,7 +88,7 @@ class PsycopgPoolEngine(
             return result
 
     async def run_query_without_result(
-        self: typing.Self,
+        self: Self,
         querystring: QueryString,
         in_transaction: bool = True,
     ) -> None:
