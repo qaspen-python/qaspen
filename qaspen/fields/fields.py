@@ -58,7 +58,8 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         if is_null and default:
             raise FieldDeclarationError(
-                "It's not possible to specify is_null and default. Specify either is_null or default",
+                "It's not possible to specify is_null and default. "
+                "Specify either is_null or default",
             )
 
         self._validate_default_value(
@@ -93,6 +94,8 @@ class Field(BaseField[FieldType], SQLSelectable):
         value: Union[FieldType, EmptyFieldValue, None],
     ) -> None:
         field: Field[FieldType]
+        print(value)
+        print("kek")
         if isinstance(value, EmptyFieldValue) or value is None:
             field = instance.__dict__[self.original_field_name]
             field._field_data.field_value = value
