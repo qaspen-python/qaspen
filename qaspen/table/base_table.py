@@ -70,7 +70,7 @@ class BaseTable(
     def _aliased(cls: Type[T_], alias: str) -> Type[T_]:
         """Add alias to the table.
 
-        We must create new `class Table` because in other
+        We must create new `aliased_table` because in other
         way `alias` change will affect all other queries where
         aliased table is used.
 
@@ -80,9 +80,11 @@ class BaseTable(
 
         :returns: the same table but with the alias.
         """
-
-        class Table(cls):  # type: ignore[valid-type, misc]
-            pass
+        aliased_table = type(
+            cls.__name__,
+            (cls,),
+            {},
+        )
 
         attributes = inspect.getmembers(
             cls,
@@ -95,19 +97,26 @@ class BaseTable(
         }
 
         for table_param_name, table_param in cls.__dict__.items():
-            setattr(Table, table_param_name, table_param)
+            setattr(aliased_table, table_param_name, table_param)
 
         for field_name, field in only_field_attributes.items():
-            field._field_data.from_table = Table
-            setattr(Table, field_name, field)
+            field._field_data.from_table = aliased_table
+            setattr(aliased_table, field_name, field)
 
-        Table._table_meta = copy.deepcopy(cls._table_meta)
-        Table._table_meta.alias = alias
+        aliased_table._table_meta = (  # type: ignore[attr-defined]
+            copy.deepcopy(
+                cls._table_meta,
+            )
+        )
+        aliased_table._table_meta.alias = alias  # type: ignore[attr-defined]
 
-        for field in Table._table_meta.table_fields.values():
-            field._field_data.from_table = Table
+        table_meta_fields = (
+            aliased_table._table_meta.table_fields.values()  # type: ignore[attr-defined]
+        )
+        for field in table_meta_fields:
+            field._field_data.from_table = aliased_table
 
-        return Table
+        return aliased_table
 
     @classmethod
     def is_aliased(cls: Type[T_]) -> bool:

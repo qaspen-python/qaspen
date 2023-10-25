@@ -2,12 +2,14 @@ import dataclasses
 import enum
 import functools
 import operator
+import warnings
 from typing import (
     TYPE_CHECKING,
     Any,
     Final,
     Iterable,
     List,
+    Optional,
     Tuple,
     Type,
     Union,
@@ -40,7 +42,7 @@ class Join(CombinableExpression):
 
     def __init__(
         self: Self,
-        fields: Iterable[Field[Any]],
+        fields: Optional[Iterable[Field[Any]]],
         from_table: Type["BaseTable"],
         join_table: Type["BaseTable"],
         on: CombinableExpression,
@@ -50,9 +52,12 @@ class Join(CombinableExpression):
         self._join_table: Final[Type["BaseTable"]] = join_table
         self._based_on: CombinableExpression = on
         self._alias: str = join_alias
-        self._fields: List[Field[Any]] = self._process_select_fields(
-            fields=fields,
-        )
+
+        self._fields: Optional[List[Field[Any]]] = None
+        if fields:
+            self._fields = self._process_select_fields(
+                fields=fields,
+            )
 
     def __getattr__(
         self: Self,
@@ -61,6 +66,12 @@ class Join(CombinableExpression):
         return self._field_from_join(field_name=attribute)
 
     def querystring(self: Self) -> QueryString:
+        if not self._fields:
+            warnings.warn(
+                f"You have JOIN with table {self._join_table.__name__} "
+                f"but don't select any fields from this table. "
+                f"It's possible mistake.",
+            )
         self._based_on = self._change_combinable_expression(self._based_on)
         return QueryString(
             self.join_type,
@@ -69,6 +80,19 @@ class Join(CombinableExpression):
             self._based_on.querystring(),
             sql_template="{} {} AS {} ON {}",
         )
+
+    def add_fields(
+        self: Self,
+        fields: List[Field[Any]],
+    ) -> None:
+        processed_fields = self._process_select_fields(
+            fields=fields,
+        )
+        if self._fields:
+            self._fields.extend(processed_fields)
+            return
+
+        self._fields = processed_fields
 
     def _prefixed_field(
         self: Self,
@@ -266,7 +290,7 @@ class Join(CombinableExpression):
             )
         return fields_with_prefix
 
-    def _join_fields(self: Self) -> List[Field[Any]]:
+    def _join_fields(self: Self) -> Optional[List[Field[Any]]]:
         return self._fields
 
 
@@ -305,11 +329,11 @@ class JoinStatement(BaseStatement):
 
     def join(
         self: Self,
-        fields: Iterable[Field[Any]],
         join_table: Type["BaseTable"],
         from_table: Type["BaseTable"],
         on: CombinableExpression,
         join_type: JoinType,
+        fields: Optional[Iterable[Field[Any]]] = None,
     ) -> None:
         self.join_expressions.append(
             join_type.value(
@@ -349,7 +373,8 @@ class JoinStatement(BaseStatement):
     ) -> List[Field[Any]]:
         all_joins_fields: List[Field[Any]] = []
         for join_expression in self.join_expressions:
-            all_joins_fields.extend(join_expression._join_fields())
+            if join_fields := join_expression._join_fields():
+                all_joins_fields.extend(join_fields)
         return all_joins_fields
 
     def __create_new_alias(
