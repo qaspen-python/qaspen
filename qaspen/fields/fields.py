@@ -58,8 +58,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         if is_null and default:
             raise FieldDeclarationError(
-                "It's not possible to specify is_null and default. "
-                "Specify either is_null or default",
+                "It's not possible to specify is_null and default. Specify either is_null or default",
             )
 
         self._validate_default_value(
@@ -67,7 +66,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         )
 
         self._field_data: FieldData[FieldType] = FieldData(
-            field_name=db_field_name if db_field_name else "",
+            field_name=db_field_name or "",
             is_null=is_null,
             default=default,
         )
@@ -91,25 +90,22 @@ class Field(BaseField[FieldType], SQLSelectable):
     def __set__(
         self: Self,
         instance: object,
-        value: Union[FieldType, EmptyFieldValue],
+        value: Union[FieldType, EmptyFieldValue, None],
     ) -> None:
         field: Field[FieldType]
-        if isinstance(value, EmptyFieldValue):
+        if isinstance(value, EmptyFieldValue) or value is None:
             field = instance.__dict__[self.original_field_name]
             field._field_data.field_value = value
             return
-        elif value is None:
-            field = instance.__dict__[self.original_field_name]
-            field._field_data.field_value = value
+
+        if isinstance(value, self.__class__):
+            instance.__dict__[self.original_field_name] = value
             return
-        else:
-            if isinstance(value, self.__class__):
-                instance.__dict__[self.original_field_name] = value
-                return
-            if not isinstance(value, self._set_available_types):
-                raise TypeError(
-                    f"Can't assign not string type to {self.__class__.__name__}",
-                )
+
+        if not isinstance(value, self._set_available_types):
+            raise TypeError(
+                f"Can't assign not {self._field_type} type to {self.__class__.__name__}",
+            )
 
         self._validate_field_value(
             field_value=value,  # type: ignore[arg-type]
@@ -223,10 +219,7 @@ class Field(BaseField[FieldType], SQLSelectable):
     def _make_field_create_statement(
         self: Self,
     ) -> str:
-        return (
-            f"{self.original_field_name} {self._sql_type} "
-            f"{self._field_null} {self._field_default}"
-        )
+        return f"{self.original_field_name} {self._sql_type} {self._field_null} {self._field_default}"
 
     def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
         field: Field[FieldType] = copy.deepcopy(self)
