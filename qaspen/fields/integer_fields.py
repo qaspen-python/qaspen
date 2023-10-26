@@ -82,13 +82,11 @@ class BaseIntegerField(Field[int]):
             )
         if field_value and self._maximum and field_value > self._maximum:
             raise FieldValueValidationError(
-                f"Field value - `{field_value}` "
-                f"is bigger than maximum you set `{self._maximum}`",
+                f"Field value - `{field_value}` is bigger than maximum you set `{self._maximum}`",
             )
         if field_value and self._minimum and field_value < self._minimum:
             raise FieldValueValidationError(
-                f"Field value - `{field_value}` "
-                f"is less than minimum you set `{self._minimum}`",
+                f"Field value - `{field_value}` is less than minimum you set `{self._minimum}`",
             )
 
 
@@ -104,6 +102,35 @@ class Integer(BaseIntegerField):
 
     _available_max_value: int = 2147483647
     _available_min_value: int = -2147483648
+
+
+class Boolean(Field[bool]):
+    """BOOLEAN field."""
+
+    _set_available_types: Tuple[type, ...] = (bool,)
+
+    def _validate_field_value(
+        self: Self,
+        field_value: Optional[bool],
+    ) -> None:
+        """Validate field value.
+
+        Check all possible BOOLEAN field values.
+
+        ### Parameters
+        - field_value: field to validate
+
+        ### Returns
+        - `None`
+        """
+        super()._validate_field_value(
+            field_value=field_value,
+        )
+
+        if field_value not in (True, False, None):
+            raise FieldValueValidationError(
+                f"Field value - `{field_value}` must be one of the following: True, False, or None",
+            )
 
 
 class BigInt(BaseIntegerField):
@@ -235,10 +262,7 @@ class SerialBaseField(BaseIntegerField):
 
     def _make_field_create_statement(self: Self) -> str:
         if self.next_val_seq_name:
-            return (
-                f"{self.original_field_name} {self._sub_field} "
-                f"NOT NULL DEFAULT nextval('{self.next_val_seq_name}')"
-            )
+            return f"{self.original_field_name} {self._sub_field} NOT NULL DEFAULT nextval('{self.next_val_seq_name}')"
         return f"{self.original_field_name} {self._sql_type}"
 
 
