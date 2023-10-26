@@ -91,11 +91,9 @@ class Field(BaseField[FieldType], SQLSelectable):
     def __set__(
         self: Self,
         instance: object,
-        value: Union[FieldType, EmptyFieldValue, None],
+        value: Optional[Union[FieldType, EmptyFieldValue]],
     ) -> None:
         field: Field[FieldType]
-        print(value)
-        print("kek")
         if isinstance(value, EmptyFieldValue) or value is None:
             field = instance.__dict__[self.original_field_name]
             field._field_data.field_value = value
@@ -107,7 +105,8 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         if not isinstance(value, self._set_available_types):
             raise TypeError(
-                f"Can't assign not {self._field_type} type to {self.__class__.__name__}",
+                f"Can't assign not {self._field_type} "
+                f"type to {self.__class__.__name__}",
             )
 
         self._validate_field_value(
@@ -222,7 +221,10 @@ class Field(BaseField[FieldType], SQLSelectable):
     def _make_field_create_statement(
         self: Self,
     ) -> str:
-        return f"{self.original_field_name} {self._sql_type} {self._field_null} {self._field_default}"
+        return (
+            f"{self.original_field_name} {self._sql_type} "
+            f"{self._field_null} {self._field_default}"
+        )
 
     def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
         field: Field[FieldType] = copy.deepcopy(self)

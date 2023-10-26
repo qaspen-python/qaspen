@@ -116,6 +116,12 @@ class Boolean(Field[bool]):
         """Validate field value.
 
         Check all possible BOOLEAN field values.
+
+        ### Parameters
+        - field_value: field to validate
+
+        ### Returns
+        - `None`
         """
         super()._validate_field_value(
             field_value=field_value,
