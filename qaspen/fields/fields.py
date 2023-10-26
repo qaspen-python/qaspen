@@ -268,7 +268,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def __ne__(  # type: ignore[override]
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: Union[FieldType, "Field[Any]", OperatorTypes],
     ) -> Filter:
         if comparison_value is None:
             return Filter(

@@ -50,18 +50,18 @@ async def main() -> None:
     AliasedVideo = Video.aliased("CoolVideo")
 
     statement = (
-        AliasedUser.select(
-            AliasedUser.name,
-            AliasedProfile.nickname,
+        User.select(
+            User.name,
+            Profile.nickname,
             AliasedVideo.views_count,
         )
         .join(
-            join_table=AliasedProfile,
-            based_on=AliasedProfile.user_id == AliasedUser.user_id,
+            join_table=Profile,
+            based_on=Profile.user_id == User.user_id,
         )
         .join(
             join_table=AliasedVideo,
-            based_on=AliasedProfile.profile_id == AliasedVideo.profile_id,
+            based_on=(Profile.profile_id == AliasedVideo.profile_id),
         )
     )
 
