@@ -44,72 +44,55 @@ engine = PsycopgPoolEngine(
 
 async def main() -> None:
     await engine.startup()
-    AliasedUser = User.aliased(alias="NotMe")
-    AliasedProfile = Profile.aliased(alias="NotProfile")
-    AliasedVideo = Video.aliased(alias="NotVideo")
 
-    # statement = AliasedUser.select(AliasedUser.created_at)
+    AliasedUser = User.aliased("CoolUser")
+    AliasedProfile = Profile.aliased("CoolProfile")
+    AliasedVideo = Video.aliased("CoolVideo")
 
-    # statement = AliasedUser.select(AliasedUser.name)
+    statement = (
+        User.select(
+            User.name,
+            Profile.nickname,
+            AliasedVideo.views_count,
+        )
+        .join(
+            join_table=Profile,
+            based_on=Profile.user_id == User.user_id,
+        )
+        .join(
+            join_table=AliasedVideo,
+            based_on=(Profile.profile_id == AliasedVideo.profile_id),
+        )
+    )
 
-    # j_profile = statement.join_and_return(
-    #     fields=[
-    #             Profile.nickname,
-    #         ],
-    #     based_on=Profile.user_id == Profile.user_id,
+    print(statement.querystring())
+
+    # statement = User.select(
+    #     User.name,
+    #     Profile.nickname,
+    #     Video.views_count,
+    # )
+    # p_join = statement.join_and_return(
+    #     join_table=Profile,
+    #     based_on=Profile.user_id == User.user_id,
+    # )
+    # statement = statement.join(
+    #     join_table=Video,
+    #     based_on=Video.profile_id == p_join.profile_id,
+    # )
+
+    # statement = User.select(
+    #     User.name,
+    #     Profile.nickname,
+    #     Video.views_count,
     # )
 
     # statement = statement.join(
-    #     fields=[
-    #             Video.views_count,
-    #         ],
-    #     based_on=Video.profile_id == j_profile.profile_id,
+    #     based_on=User.user_id == Profile.user_id,
     # )
-    # print(AliasedUser.name._field_data.from_table._table_meta.alias)
-    # statement_ = AliasedUser.select(AliasedUser.name)
-    # statement = statement_.union(
-    #     Profile.select(Profile.nickname),
+    # statement = statement.join(
+    #     based_on=Profile.profile_id == Video.profile_id,
     # )
-
-    # statement = User.select().where(
-    #     ~((User.user_id == "1") & (User.name == "Sasha")) & (User.surname == "Kiselev"),
-    # )
-
-    # statement = (
-    #     AliasedUser.select(AliasedUser.name)
-    #     .join(
-    #         fields=[
-    #             AliasedProfile.nickname,
-    #             AliasedProfile.number,
-    #         ],
-    #         based_on=AliasedProfile.user_id == AliasedUser.user_id,
-    #     )
-    #     .join(
-    #         fields=[
-    #             AliasedVideo.views_count,
-    #         ],
-    #         based_on=AliasedVideo.profile_id == AliasedProfile.profile_id,
-    #     )
-    # )
-    # statement = statement.where(
-    #     AliasedVideo.views_count >= "1001",
-    # )
-
-    statement = ForDate.select()
-
-    print(statement.querystring())
-    r = await statement.execute(engine=engine)
-    ro = r.as_objects()
-    for obj in ro:
-        print(obj.at_date)
-        print(type(obj.at_date))
-        print(obj.at_time)
-        print(type(obj.at_time))
-        print(obj.at_timestamp)
-        print(type(obj.at_timestamp))
-    print(ro)
-    # for a in ro:
-    #     print(a.profiles.nickname)
 
 
 asyncio.run(main())

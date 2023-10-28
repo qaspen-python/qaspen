@@ -1,6 +1,7 @@
 from typing import (
     TYPE_CHECKING,
     Any,
+    Dict,
     Final,
     Generator,
     Generic,
@@ -9,7 +10,6 @@ from typing import (
     Optional,
     Tuple,
     Type,
-    cast,
     overload,
 )
 
@@ -17,10 +17,8 @@ from typing_extensions import Self
 
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
-from qaspen.exceptions import OnJoinFieldsError
 from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base_field import BaseField
-from qaspen.fields.fields import Field
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import ObjectExecutable
@@ -31,13 +29,9 @@ from qaspen.statements.combinable_statements.filter_statement import (
     FilterStatement,
 )
 from qaspen.statements.combinable_statements.join_statement import (
-    FullOuterJoin,
-    InnerJoin,
     Join,
     JoinStatement,
     JoinType,
-    LeftOuterJoin,
-    RightOuterJoin,
 )
 from qaspen.statements.combinable_statements.order_by_statement import (
     OrderBy,
@@ -455,17 +449,19 @@ class SelectStatement(
 
     def join(
         self: Self,
-        fields: List[Field[Any]],
+        join_table: Type["BaseTable"],
         based_on: CombinableExpression,
     ) -> Self:
         """Add `JOIN` to the SelectStatement.
 
-        You can specify what fields you want to get from
-        the joined table.
-        And set `ON` condition, it can be a combination.
+        Set `ON` condition, it can be a combination.
 
-        :param based_on: Field's comparisons.
-        :param fields: fields to retrieve.
+        ### Parameters
+            - `join_table`: table in JOIN.
+            - `based_on`: Field's comparisons.
+
+        ### Returns
+        `self`
 
         Example:
         ------
@@ -482,39 +478,40 @@ class SelectStatement(
 
         statement = (
             Buns
-            .select()
+            .select(
+                Cookies.filling,
+                Cookies.topping,
+            )
             .join(
-                fields=[
-                    Cookies.filling,
-                    Cookies.topping,
-                ],
+                join_table=Cookies,
                 based_on=Buns.name == Cookies.bun_name,
             )
-
         )
         ```
 
         :returns: `SelectStatement`
         """
         return self._join_on(
+            join_table=join_table,
             based_on=based_on,
-            fields=fields,
             join_type=JoinType.JOIN,
         )
 
     def inner_join(
         self: Self,
+        join_table: Type["BaseTable"],
         based_on: CombinableExpression,
-        fields: List[Field[Any]],
     ) -> Self:
         """Add `INNER JOIN` to the SelectStatement.
 
-        You can specify what fields you want to get from
-        the joined table.
-        And set `ON` condition, it can be a combination.
+        Set `ON` condition, it can be a combination.
 
-        :param based_on: Field's comparisons.
-        :param fields: fields to retrieve.
+        ### Parameters
+        - `join_table`: table in JOIN.
+        - `based_on`: Field's comparisons.
+
+        ### Returns
+        `self`
 
         Example:
         ------
@@ -531,12 +528,12 @@ class SelectStatement(
 
         statement = (
             Buns
-            .select()
+            .select(
+                Cookies.filling,
+                Cookies.topping,
+            )
             .inner_join(
-                fields=[
-                    Cookies.filling,
-                    Cookies.topping,
-                ],
+                join_table=Cookies,
                 based_on=Buns.name == Cookies.bun_name,
             )
         )
@@ -545,24 +542,26 @@ class SelectStatement(
         :returns: `SelectStatement`
         """
         return self._join_on(
+            join_table=join_table,
             based_on=based_on,
-            fields=fields,
             join_type=JoinType.INNERJOIN,
         )
 
     def left_join(
         self: Self,
+        join_table: Type["BaseTable"],
         based_on: CombinableExpression,
-        fields: List[Field[Any]],
     ) -> Self:
         """Add `LEFT JOIN` to the SelectStatement.
 
-        You can specify what fields you want to get from
-        the joined table.
-        And set `ON` condition, it can be a combination.
+        Set `ON` condition, it can be a combination.
 
-        :param based_on: Field's comparisons.
-        :param fields: fields to retrieve.
+        ### Parameters
+        - `join_table`: table in JOIN.
+        - `based_on`: Field's comparisons.
+
+        ### Returns
+        `self`
 
         Example:
         ------
@@ -579,12 +578,12 @@ class SelectStatement(
 
         statement = (
             Buns
-            .select()
+            .select(
+                Cookies.filling,
+                Cookies.topping
+            )
             .left_join(
-                fields=[
-                    Cookies.filling,
-                    Cookies.topping,
-                ],
+                join_table=Cookies,
                 based_on=Buns.name == Cookies.bun_name,
             )
 
@@ -594,24 +593,26 @@ class SelectStatement(
         :returns: `SelectStatement`
         """
         return self._join_on(
+            join_table=join_table,
             based_on=based_on,
-            fields=fields,
             join_type=JoinType.LEFTJOIN,
         )
 
     def right_join(
         self: Self,
+        join_table: Type["BaseTable"],
         based_on: CombinableExpression,
-        fields: List[Field[Any]],
     ) -> Self:
         """Add `RIGHT JOIN` to the SelectStatement.
 
-        You can specify what fields you want to get from
-        the joined table.
-        And set `ON` condition, it can be a combination.
+        Set `ON` condition, it can be a combination.
 
-        :param based_on: Field's comparisons.
-        :param fields: fields to retrieve.
+        ### Parameters
+        - `join_table`: table in JOIN.
+        - `based_on`: Field's comparisons.
+
+        ### Returns
+        `self`
 
         Example:
         ------
@@ -628,30 +629,29 @@ class SelectStatement(
 
         statement = (
             Buns
-            .select()
+            .select(
+                Cookies.filling,
+                Cookies.topping,
+            )
             .right_join(
-                fields=[
-                    Cookies.filling,
-                    Cookies.topping,
-                ],
+                join_table=Cookies,
                 based_on=Buns.name == Cookies.bun_name,
             )
-
         )
         ```
 
         :returns: `SelectStatement`
         """
         return self._join_on(
+            join_table=join_table,
             based_on=based_on,
-            fields=fields,
             join_type=JoinType.RIGHTJOIN,
         )
 
     def full_outer_join(
         self: Self,
+        join_table: Type["BaseTable"],
         based_on: CombinableExpression,
-        fields: List[Field[Any]],
     ) -> Self:
         """Add `FULL OUTER JOIN` to the SelectStatement.
 
@@ -659,8 +659,12 @@ class SelectStatement(
         the joined table.
         And set `ON` condition, it can be a combination.
 
-        :param based_on: Field's comparisons.
-        :param fields: fields to retrieve.
+        ### Parameters
+        - `join_table`: table in JOIN.
+        - `based_on`: Field's comparisons.
+
+        ### Returns
+        `self`
 
         Example:
         ------
@@ -678,291 +682,23 @@ class SelectStatement(
 
         statement = (
             Buns
-            .select()
+            .select(
+                Cookies.filling,
+                Cookies.topping,
+            )
             .full_outer_join(
-                fields=[
-                    Cookies.filling,
-                    Cookies.topping,
-                ],
+                join_table=Cookies,
                 based_on=Buns.name == Cookies.bun_name,
             )
-
         )
         ```
 
         :returns: `SelectStatement`
         """
         return self._join_on(
+            join_table=join_table,
             based_on=based_on,
-            fields=fields,
             join_type=JoinType.FULLOUTERJOIN,
-        )
-
-    def join_and_return(
-        self: Self,
-        fields: List[Field[Any]],
-        based_on: CombinableExpression,
-    ) -> Join:
-        """Add `JOIN` to the SelectStatement and return instance of the `Join`.
-
-        You can use it if you need to add more JOIN's based on
-        previous joins.
-
-        Example:
-        ------
-        ```
-        class Computer(BaseTable, table_name="computer"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
-
-
-        class Processor(BaseTable, table_name="processor"):
-            computer_name: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        class Architecture(BaseTable, table_name="Architecture")
-            title: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        statement = Computer.select()
-
-        processor_join = statement.join_and_return(
-            fields=[Processor.processor_name],
-            based_on=Computer.name == Processor.computer_name,
-        )
-
-        statement.join(
-            fields=[Architecture.title],
-            # VERY IMPORTANT! There is used `processor_join`.
-            based_on=(
-                processor_join.processor_name
-                == Architecture.processor_name
-            ),
-        )
-        ```
-        """
-        self.join(
-            based_on=based_on,
-            fields=fields,
-        )
-        return self._join_statement.join_expressions[-1]
-
-    def inner_join_and_return(
-        self: Self,
-        based_on: CombinableExpression,
-        fields: List[Field[Any]],
-    ) -> InnerJoin:
-        """Add `INNER JOIN` to the Statement and return instance of the `Join`.
-
-        You can use it if you need to add more JOIN's based on
-        previous join/joins.
-
-        Example:
-        ------
-        ```
-        class Computer(BaseTable, table_name="computer"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
-
-
-        class Processor(BaseTable, table_name="processor"):
-            computer_name: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        class Architecture(BaseTable, table_name="Architecture")
-            title: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        statement = Computer.select()
-
-        processor_join = statement.inner_join_and_return(
-            fields=[Processor.processor_name],
-            based_on=Computer.name == Processor.computer_name,
-        )
-
-        statement.join(
-            fields=[Architecture.title],
-            # VERY IMPORTANT! There is used `processor_join`.
-            based_on=(
-                processor_join.processor_name
-                == Architecture.processor_name
-            ),
-        )
-        ```
-        """
-        self.inner_join(
-            based_on=based_on,
-            fields=fields,
-        )
-        return cast(
-            InnerJoin,
-            self._join_statement.join_expressions[-1],
-        )
-
-    def left_join_and_return(
-        self: Self,
-        based_on: CombinableExpression,
-        fields: List[Field[Any]],
-    ) -> LeftOuterJoin:
-        """Add `LEFT JOIN` to the Statement and return instance of the `Join`.
-
-        You can use it if you need to add more JOIN's based on
-        previous join/joins.
-
-        Example:
-        ------
-        ```
-        class Computer(BaseTable, table_name="computer"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
-
-
-        class Processor(BaseTable, table_name="processor"):
-            computer_name: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        class Architecture(BaseTable, table_name="Architecture")
-            title: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        statement = Computer.select()
-
-        processor_join = statement.left_join_and_return(
-            fields=[Processor.processor_name],
-            based_on=Computer.name == Processor.computer_name,
-        )
-
-        statement.join(
-            fields=[Architecture.title],
-            # VERY IMPORTANT! There is used `processor_join`.
-            based_on=(
-                processor_join.processor_name
-                == Architecture.processor_name
-            ),
-        )
-        ```
-        """
-        self.left_join(
-            based_on=based_on,
-            fields=fields,
-        )
-        return cast(
-            LeftOuterJoin,
-            self._join_statement.join_expressions[-1],
-        )
-
-    def right_join_and_return(
-        self: Self,
-        based_on: CombinableExpression,
-        fields: List[Field[Any]],
-    ) -> RightOuterJoin:
-        """Add `RIGHT JOIN` to the Statement and return instance of the `Join`.
-
-        You can use it if you need to add more JOIN's based on
-        previous join/joins.
-
-        Example:
-        ------
-        ```
-        class Computer(BaseTable, table_name="computer"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
-
-
-        class Processor(BaseTable, table_name="processor"):
-            computer_name: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        class Architecture(BaseTable, table_name="Architecture")
-            title: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        statement = Computer.select()
-
-        processor_join = statement.right_join_and_return(
-            fields=[Processor.processor_name],
-            based_on=Computer.name == Processor.computer_name,
-        )
-
-        statement.join(
-            fields=[Architecture.title],
-            # VERY IMPORTANT! There is used `processor_join`.
-            based_on=(
-                processor_join.processor_name
-                == Architecture.processor_name
-            ),
-        )
-        ```
-        """
-        self.right_join(
-            based_on=based_on,
-            fields=fields,
-        )
-        return cast(
-            RightOuterJoin,
-            self._join_statement.join_expressions[-1],
-        )
-
-    def full_outer_join_and_return(
-        self: Self,
-        based_on: CombinableExpression,
-        fields: List[Field[Any]],
-    ) -> FullOuterJoin:
-        """Add `FULL OUTER JOIN` to the Statement and return `Join` instance.
-
-        You can use it if you need to add more JOIN's based on
-        previous join/joins.
-
-        Example:
-        ------
-        ```
-        class Computer(BaseTable, table_name="computer"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
-
-
-        class Processor(BaseTable, table_name="processor"):
-            computer_name: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        class Architecture(BaseTable, table_name="Architecture")
-            title: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        statement = Computer.select()
-
-        processor_join = statement.full_outer_join_and_return(
-            fields=[Processor.processor_name],
-            based_on=Computer.name == Processor.computer_name,
-        )
-
-        statement.join(
-            fields=[Architecture.title],
-            # VERY IMPORTANT! There is used `processor_join`.
-            based_on=(
-                processor_join.processor_name
-                == Architecture.processor_name
-            ),
-        )
-        ```
-        """
-        self.full_outer_join(
-            based_on=based_on,
-            fields=fields,
-        )
-        return cast(
-            FullOuterJoin,
-            self._join_statement.join_expressions[-1],
         )
 
     def add_join(
@@ -1037,19 +773,11 @@ class SelectStatement(
 
     def _join_on(
         self: Self,
+        join_table: Type["BaseTable"],
         based_on: CombinableExpression,
-        fields: List[Field[Any]],
         join_type: JoinType,
     ) -> Self:
-        if not fields:
-            raise OnJoinFieldsError(
-                "You must specify fields to get from JOIN",
-            )
-
-        join_table: Type["BaseTable"] = fields[0]._field_data.from_table
-
         self._join_statement.join(
-            fields=fields,
             join_table=join_table,
             from_table=self._from_table,
             on=based_on,
@@ -1068,7 +796,7 @@ class SelectStatement(
             engine=self._from_table._table_meta.database_engine,
         )
 
-    def _prepare_select_fields(
+    def _prepare_fields(
         self: Self,
     ) -> List[BaseField[Any]]:
         if self.final_select_fields:
@@ -1076,7 +804,7 @@ class SelectStatement(
         final_select_fields: Final[List[BaseField[Any]]] = []
 
         fields_to_select: List[BaseField[Any]] = []
-        fields_to_select.extend(self._select_fields)
+        fields_to_select.extend(self._prepare_select_fields())
         fields_to_select.extend(
             self._join_statement._retrieve_all_join_fields(),
         )
@@ -1092,7 +820,7 @@ class SelectStatement(
 
     def _select_from(self: Self) -> QueryString:
         to_select_fields: str = ", ".join(
-            [field.field_name for field in self._prepare_select_fields()],
+            [field.field_name for field in self._prepare_fields()],
         )
         if self._from_table._table_meta.alias:
             return QueryString(
@@ -1107,3 +835,35 @@ class SelectStatement(
             self._from_table._table_meta.table_name,
             sql_template="SELECT {} FROM {}",
         )
+
+    def _prepare_select_fields(
+        self: Self,
+    ) -> List[BaseField[Any]]:
+        fields_from_original_table: List[BaseField[Any]] = []
+        fields_from_joined_table: Dict[
+            str,
+            List[BaseField[Any]],
+        ] = {}
+
+        for field in self._select_fields:
+            is_original = field._field_data.from_table == self._from_table
+            if is_original:
+                fields_from_original_table.append(
+                    field,
+                )
+            else:
+                fields_from_joined_table.setdefault(
+                    field._field_data.from_table.original_table_name(),
+                    [],
+                ).append(field)
+
+        for join_expr in self._join_statement.join_expressions:
+            join_fields = fields_from_joined_table.get(
+                join_expr._join_table.original_table_name(),
+            )
+            if not join_fields:
+                continue
+            # TODO: FIX TYPING
+            join_expr.add_fields(join_fields)  # type: ignore[arg-type]
+
+        return fields_from_original_table
