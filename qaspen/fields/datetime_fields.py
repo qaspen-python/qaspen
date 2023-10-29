@@ -5,8 +5,8 @@ from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import FieldDeclarationError
-from qaspen.fields.base_field import FieldDefaultType, FieldType
 from qaspen.fields.fields import Field
+from qaspen.qaspen_types import FieldDefaultType, FieldType
 
 
 class BaseDatetimeField(Field[FieldType]):

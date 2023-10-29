@@ -2,35 +2,14 @@ import abc
 import copy
 import dataclasses
 import types
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Generic,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Generic, Optional, Type, Union
 
 from typing_extensions import Self
 
+from qaspen.qaspen_types import FieldDefaultType, FieldType
+
 if TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
-
-
-FieldType = TypeVar(
-    "FieldType",
-)
-
-FieldDefaultType = Union[
-    FieldType,
-    Callable[
-        [],
-        Union[FieldType, Any],
-    ],
-    None,
-]
 
 
 class EmptyFieldValue:

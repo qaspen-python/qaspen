@@ -23,13 +23,8 @@ from qaspen.exceptions import (
     FilterComparisonError,
 )
 from qaspen.fields import operators
-from qaspen.fields.base_field import (
-    BaseField,
-    EmptyFieldValue,
-    FieldData,
-    FieldDefaultType,
-    FieldType,
-)
+from qaspen.fields.base_field import BaseField, EmptyFieldValue, FieldData
+from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,

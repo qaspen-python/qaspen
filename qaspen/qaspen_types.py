@@ -8,3 +8,16 @@ FromTable = typing.TypeVar(
     "FromTable",
     bound="BaseTable",
 )
+
+FieldType = typing.TypeVar(
+    "FieldType",
+)
+
+FieldDefaultType = typing.Union[
+    FieldType,
+    typing.Callable[
+        [],
+        typing.Union[FieldType, typing.Any],
+    ],
+    None,
+]

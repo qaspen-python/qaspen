@@ -2,8 +2,9 @@ import copy
 import inspect
 from typing import Any, Dict, Final, List, Type, TypeVar, cast
 
-from qaspen.fields.base_field import BaseField, FieldType
+from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
+from qaspen.qaspen_types import FieldType
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
 
