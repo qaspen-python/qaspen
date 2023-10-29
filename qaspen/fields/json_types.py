@@ -1,6 +1,12 @@
-from typing import Any, Dict, Optional, Tuple, Union
+import json
+import types
+from ast import literal_eval
+from typing import Any, Dict, Final, List, Optional, Tuple, Union
+
+from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
+from qaspen.exceptions import FieldValueValidationError
 from qaspen.fields.fields import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 
@@ -23,6 +29,50 @@ class JsonBase(Field[FieldType]):
             default=default,
             db_field_name=db_field_name,
         )
+
+    def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
+        """Prepare default value for PostgreSQL DEFAULT statement.
+
+        ### Returns:
+        `Any available type for this class`.
+        """
+        if isinstance(self.default, types.FunctionType):
+            return self.default
+
+        if isinstance(self.default, str):
+            try:
+                json.loads(self.default)
+            except json.decoder.JSONDecodeError as exc:
+                raise FieldValueValidationError(
+                    f"Default value {self.default} of field "
+                    f"{self.__class__.__name__} "
+                    f"can't be serialized in PSQL {self._field_type} type.",
+                ) from exc
+            return f"'{self.default}'"  # type: ignore[return-value]
+
+        if isinstance(self.default, (dict, list)):
+            return self._dump_default(  # type: ignore[return-value]
+                default_value=self.default,
+            )
+
+        if isinstance(self.default, bytes):
+            return self._dump_default(  # type: ignore[return-value]
+                literal_eval(
+                    self.default.decode("utf-8"),
+                ),
+            )
+
+        raise ValueError()
+
+    def _dump_default(
+        self: Self,
+        default_value: Union[Dict[Any, Any], List[Any]],
+    ) -> str:
+        dump_value: Final = json.dumps(
+            default_value,
+            default=str,
+        )
+        return f"'{dump_value}'"
 
 
 class Json(JsonBase[Union[Dict[Any, Any], str]]):
