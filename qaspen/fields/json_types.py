@@ -36,7 +36,7 @@ class JsonBase(Field[FieldType]):
         ### Returns:
         `Any available type for this class`.
         """
-        if isinstance(self.default, types.FunctionType):
+        if type(self.default) == types.FunctionType:
             return self.default
 
         if isinstance(self.default, str):
