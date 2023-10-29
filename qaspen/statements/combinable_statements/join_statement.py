@@ -17,8 +17,9 @@ from typing import (
 
 from typing_extensions import Self
 
-from qaspen.fields.base_field import BaseField, FieldType
+from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
+from qaspen.qaspen_types import FieldType
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
