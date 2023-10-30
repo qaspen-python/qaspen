@@ -49,16 +49,16 @@ class MetaTable:
         for table_field in self._table_meta.table_fields.values():
             setattr(
                 self,
-                table_field.original_field_name,
+                table_field._original_field_name,
                 copy.deepcopy(table_field),
             )
             new_field_value: Any = fields_values.get(
-                table_field.original_field_name,
+                table_field._original_field_name,
                 EmptyFieldValue(),
             )
             setattr(
                 self,
-                table_field.original_field_name,
+                table_field._original_field_name,
                 new_field_value,
             )
 

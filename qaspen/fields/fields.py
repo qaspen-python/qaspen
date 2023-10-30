@@ -75,12 +75,12 @@ class Field(BaseField[FieldType], SQLSelectable):
         try:
             return cast(
                 Field[FieldType],
-                instance.__dict__[self.original_field_name],
+                instance.__dict__[self._original_field_name],
             )
         except (AttributeError, KeyError):
             return cast(
                 Field[FieldType],
-                owner.__dict__[self.original_field_name],
+                owner.__dict__[self._original_field_name],
             )
 
     def __set__(
@@ -90,12 +90,12 @@ class Field(BaseField[FieldType], SQLSelectable):
     ) -> None:
         field: Field[FieldType]
         if isinstance(value, EmptyFieldValue) or value is None:
-            field = instance.__dict__[self.original_field_name]
+            field = instance.__dict__[self._original_field_name]
             field._field_data.field_value = value
             return
 
         if isinstance(value, self.__class__):
-            instance.__dict__[self.original_field_name] = value
+            instance.__dict__[self._original_field_name] = value
             return
 
         if not isinstance(value, self._set_available_types):
@@ -107,7 +107,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         self._validate_field_value(
             field_value=value,  # type: ignore[arg-type]
         )
-        field = instance.__dict__[self.original_field_name]
+        field = instance.__dict__[self._original_field_name]
         field._field_data.field_value = value  # type: ignore[assignment]
 
     def in_(
@@ -217,7 +217,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         self: Self,
     ) -> str:
         return (
-            f"{self.original_field_name} {self._sql_type} "
+            f"{self._original_field_name} {self._sql_type} "
             f"{self._field_null} {self._field_default}"
         )
 
@@ -423,7 +423,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         :raises FieldValueValidationError: if the `max_length` is exceeded.
         """
-        if field_value is None and self.is_null:
+        if field_value is None and self._is_null:
             return
 
     def _validate_default_value(
@@ -438,5 +438,5 @@ class Field(BaseField[FieldType], SQLSelectable):
             )
         except FieldValueValidationError as exc:
             raise FieldValueValidationError(
-                f"Wrong default value in the field {self.original_field_name}",
+                f"Wrong default value in the field {self._original_field_name}",
             ) from exc

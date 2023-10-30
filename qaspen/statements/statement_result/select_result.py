@@ -107,15 +107,15 @@ class SelectStatementResult(
 
                 if is_from_table:
                     result_dict[
-                        field.aliased_field.original_field_name
+                        field.aliased_field._original_field_name
                     ] = single_query_result
                 else:
                     joined_results = result_dict.setdefault(
-                        f"_{field.aliased_field.table_name}",
+                        f"_{field.aliased_field._table_name}",
                         {},
                     )
                     joined_results[
-                        field.aliased_field.original_field_name
+                        field.aliased_field._original_field_name
                     ] = single_query_result
 
         return result_list
@@ -189,7 +189,7 @@ class SelectStatementResult(
                     {},
                 )
                 model_params_dict[
-                    field.aliased_field.original_field_name
+                    field.aliased_field._original_field_name
                 ] = single_query_result
 
             main_table_params = temporary_dict.pop(self.from_table)

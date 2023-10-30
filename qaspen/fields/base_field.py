@@ -1,7 +1,7 @@
 import abc
 import dataclasses
 import types
-from typing import TYPE_CHECKING, Any, Generic, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Generic, Optional, Type, Union, final
 
 from typing_extensions import Self
 
@@ -112,56 +112,120 @@ class BaseField(Generic[FieldType], abc.ABC):
 
     @property
     def value(self: Self) -> Union[FieldType, EmptyFieldValue, None]:
+        """Return value of the field.
+
+        It's valid only for fields after executing statement,
+        otherwise it returns `None`.
+
+        If you don't select field in the `.select()` and
+        try to get its value after `as_objects()` method,
+        you will retrieve `EmptyFieldValue` because it indicates
+        that you don't select this Field.
+
+        ### Returns:
+        `Python type of the field` or `EmptyFieldValue` or `None`.
+        """
         return self._field_data.field_value
 
     @property
-    def table_name(self: Self) -> str:
-        """Return the table name of this field."""
+    def _table_name(self: Self) -> str:
+        """Return table name of this field.
+
+        It's only the original table name, not aliased.
+
+        ### Return
+        `str` table name.
+        """
         return self._field_data.from_table.original_table_name()
 
     @property
-    def original_field_name(self: Self) -> str:
-        """Return name of the field without prefix and alias."""
+    def _original_field_name(self: Self) -> str:
+        """Return name of the field without prefix and alias.
+
+        ### Return
+        `str` Field name.
+        """
         return self._field_data.field_name
 
     @property
     def field_name(self: Self) -> str:
-        """Return field name with prefix and alias."""
+        """Return field name with prefix and alias.
+
+        ### Prefix logic:
+        If `from_table` has alias than use this alias.
+
+        If this field has a prefix than use prefix.
+
+        Else use original name of the field's Table.
+
+        ### Alias logic:
+        If this Field has an alias, use it.
+
+        ### Return
+        `Field` as a `str`.
+        """
         prefix: str = (
             self._field_data.from_table._table_meta.alias
             or self._field_data.prefix
             or self._field_data.from_table.table_name()
         )
         field_name: str = f"{prefix}.{self._field_data.field_name}"
-        if prefix := self._field_data.alias:
-            field_name += f" AS {prefix}"
+        if alias := self._field_data.alias:
+            field_name += f" AS {alias}"
 
         return field_name
 
     @property
-    def default(self: Self) -> FieldDefaultType[FieldType]:
-        """Return default value of the field."""
+    def _default(self: Self) -> FieldDefaultType[FieldType]:
+        """Return default value of the field.
+
+        ### Return
+        default value.
+        """
         return self._field_data.default
 
     @property
-    def is_null(self: Self) -> bool:
-        """Return flag that field can be `NULL`."""
+    def _is_null(self: Self) -> bool:
+        """Return flag that field can be `NULL`.
+
+        ### Return
+        `bool`
+        """
         return self._field_data.is_null
 
     @property
     def _field_null(self: Self) -> str:
-        return "NOT NULL" if not self.is_null else ""
+        """Return `NOT NULL` string if field cannot be NULL.
+
+        ### Return
+        `str`.
+        """
+        return "NOT NULL" if not self._is_null else ""
 
     @property
     def _field_default(self: Self) -> str:
-        if self.default and not types.FunctionType == type(self.default):
-            return f"DEFAULT {self.default}" if self.default else ""
+        """Return SQL string for DEFAULT value for a Field.
+
+        ### Return
+        `str`
+        """
+        if self._default and not types.FunctionType == type(self._default):
+            return f"DEFAULT {self._default}" if self._default else ""
         return ""
 
     @property
+    @final
     def _field_type(self: Self) -> str:
+        """Field type in the SQL."""
         return self.__class__.__name__.upper()
 
     @property
     def _sql_type(self: Self) -> str:
+        """Property for final SQL field Type.
+
+        It can be changed in subclasses.
+
+        ### Return
+        SQL `string`.
+        """
         return self._field_type
