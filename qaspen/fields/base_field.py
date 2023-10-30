@@ -1,7 +1,16 @@
 import abc
 import dataclasses
 import types
-from typing import TYPE_CHECKING, Any, Generic, Optional, Type, Union, final
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Final,
+    Generic,
+    Optional,
+    Type,
+    Union,
+    final,
+)
 
 from typing_extensions import Self
 
@@ -110,6 +119,15 @@ class BaseField(Generic[FieldType], abc.ABC):
         """
         ...
 
+    @abc.abstractmethod
+    def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
+        """Prepare default value to specify it in Field declaration.
+
+        It uses only in the method `_field_default`.
+
+        :returns: prepared default value.
+        """
+
     @property
     def value(self: Self) -> Union[FieldType, EmptyFieldValue, None]:
         """Return value of the field.
@@ -204,13 +222,15 @@ class BaseField(Generic[FieldType], abc.ABC):
 
     @property
     def _field_default(self: Self) -> str:
-        """Return SQL string for DEFAULT value for a Field.
-
-        ### Return
-        `str`
-        """
-        if self._default and not types.FunctionType == type(self._default):
-            return f"DEFAULT {self._default}" if self._default else ""
+        is_default: Final = self._default and not types.FunctionType == type(
+            self._default,
+        )
+        if is_default:
+            return (
+                f"DEFAULT {self._prepare_default_value()}"
+                if self._default
+                else ""
+            )
         return ""
 
     @property
