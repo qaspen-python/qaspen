@@ -122,6 +122,15 @@ class BaseField(Generic[FieldType], abc.ABC):
         """
         ...
 
+    @abc.abstractmethod
+    def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
+        """Prepare default value to specify it in Field declaration.
+
+        It uses only in the method `_field_default`.
+
+        :returns: prepared default value.
+        """
+
     @property
     def value(self: Self) -> Union[FieldType, EmptyFieldValue, None]:
         return self._field_data.field_value
@@ -177,7 +186,11 @@ class BaseField(Generic[FieldType], abc.ABC):
     @property
     def _field_default(self: Self) -> str:
         if self.default and not types.FunctionType == type(self.default):
-            return f"DEFAULT {self.default}" if self.default else ""
+            return (
+                f"DEFAULT {self._prepare_default_value()}"
+                if self.default
+                else ""
+            )
         return ""
 
     @property

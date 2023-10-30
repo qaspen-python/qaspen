@@ -110,6 +110,15 @@ class Field(BaseField[FieldType], SQLSelectable):
         field = instance.__dict__[self.original_field_name]
         field._field_data.field_value = value  # type: ignore[assignment]
 
+    def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
+        """Prepare default value to specify it in Field declaration.
+
+        It uses only in the method `_field_default`.
+
+        :returns: prepared default value.
+        """
+        return self.default
+
     def in_(
         self: Self,
         *comparison_values: FieldType,
@@ -396,11 +405,19 @@ class Field(BaseField[FieldType], SQLSelectable):
     ) -> None:
         if default_value is None or types.FunctionType == type(default_value):
             return
+
         try:
             self._validate_field_value(
                 field_value=default_value,  # type: ignore[arg-type]
             )
         except FieldValueValidationError as exc:
             raise FieldValueValidationError(
-                f"Wrong default value in the field {self.original_field_name}",
+                f"Wrong default value in the field "
+                f"{self.__class__.__name__}",
             ) from exc
+
+        if not isinstance(default_value, self._set_available_types):
+            raise FieldValueValidationError(
+                f"Wrong default value in the field "
+                f"{self.__class__.__name__}",
+            )
