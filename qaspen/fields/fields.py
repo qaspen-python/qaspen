@@ -69,8 +69,8 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def __get__(
         self: Self,
-        instance: "BaseTable | None",
-        owner: Type["BaseTable"],
+        instance: "Optional[BaseTable]",
+        owner: "Type[BaseTable]",
     ) -> "Field[FieldType]":
         try:
             return cast(
@@ -221,11 +221,6 @@ class Field(BaseField[FieldType], SQLSelectable):
             f"{self._field_null} {self._field_default}"
         )
 
-    def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
-        field: Field[FieldType] = copy.deepcopy(self)
-        field._field_data.prefix = prefix
-        return field
-
     def querystring(self: Self) -> QueryString:
         return QueryString(
             self.field_name,
@@ -373,6 +368,47 @@ class Field(BaseField[FieldType], SQLSelectable):
         comparison_value: Union[FieldType, OperatorTypes],
     ) -> Filter:
         return self.__le__(comparison_value)
+
+    def _is_the_same_field(
+        self: Self,
+        second_field: "BaseField[FieldType]",
+    ) -> bool:
+        """Compare two fields.
+
+        Return `True` if they are the same, else `False`.
+        They are equal if they `_field_data`s are the same.
+        """
+        return self._field_data == second_field._field_data
+
+    def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
+        """Give Field a prefix.
+
+        Make a Field deepcopy and set new prefix.
+
+        ### Parameters
+        - `prefix`: prefix for the field.
+
+        ### Returns
+        `Field` with new prefix.
+        """
+        field: Field[FieldType] = copy.deepcopy(self)
+        field._field_data.prefix = prefix
+        return field
+
+    def _with_alias(self: Self, alias: str) -> "Field[FieldType]":
+        """Give Field an alias.
+
+        Make a Field deepcopy and set new alias.
+
+        ### Parameters
+        - `alias`: alias for the field.
+
+        ### Returns
+        `Field` with new alias.
+        """
+        field: Field[FieldType] = copy.deepcopy(self)
+        field._field_data.alias = alias
+        return field
 
     def _validate_field_value(
         self: Self,

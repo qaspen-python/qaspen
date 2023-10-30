@@ -3,21 +3,10 @@ import enum
 import functools
 import operator
 import warnings
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Final,
-    Iterable,
-    List,
-    Optional,
-    Type,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Final, Iterable, List, Optional, Type
 
 from typing_extensions import Self
 
-from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
 from qaspen.qaspen_types import FieldType
 from qaspen.querystring.querystring import QueryString
@@ -82,15 +71,11 @@ class Join(CombinableExpression):
 
     def _prefixed_field(
         self: Self,
-        field: Union[Field[FieldType], BaseField[FieldType]],
+        field: Field[FieldType],
     ) -> Field[FieldType]:
-        return cast(
-            Field[FieldType],
-            field._with_prefix(
-                prefix=(
-                    field._field_data.from_table._table_meta.alias
-                    or self._alias
-                ),
+        return field._with_prefix(
+            prefix=(
+                field._field_data.from_table._table_meta.alias or self._alias
             ),
         )
 

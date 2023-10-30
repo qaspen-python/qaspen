@@ -1,7 +1,7 @@
 import dataclasses
 import functools
 import operator
-from typing import Any, Final, Iterable, List, Type, Union
+from typing import TYPE_CHECKING, Any, Final, Iterable, List, Type, Union
 
 from typing_extensions import Self
 
@@ -15,6 +15,9 @@ from qaspen.statements.combinable_statements.combinations import (
 from qaspen.statements.statement import BaseStatement
 from qaspen.utils.fields_utils import transform_value_to_sql
 
+if TYPE_CHECKING:
+    from qaspen.fields.fields import Field
+
 
 class EmptyValue:
     pass
@@ -26,16 +29,16 @@ EMPTY_VALUE = EmptyValue()
 class Filter(CombinableExpression):
     def __init__(
         self: Self,
-        field: BaseField[Any],
+        field: "Field[Any]",
         operator: Type[BaseOperator],
         comparison_value: Union[
             EmptyValue,
-            BaseField[Any],
+            "Field[Any]",
             Any,
         ] = EMPTY_VALUE,
         comparison_values: Union[EmptyValue, Iterable[Any]] = EMPTY_VALUE,
     ) -> None:
-        self.field: BaseField[Any] = field
+        self.field: "Field[Any]" = field  # type: ignore[arg-type]
         self.operator: Type[BaseOperator] = operator
 
         self.comparison_value: Union[EmptyValue, Any] = comparison_value
@@ -66,12 +69,12 @@ class Filter(CombinableExpression):
 class FilterBetween(CombinableExpression):
     def __init__(
         self: Self,
-        field: BaseField[Any],
+        field: "Field[Any]",
         operator: Type[BaseOperator],
         left_comparison_value: Any,
         right_comparison_value: Any,
     ) -> None:
-        self.field: BaseField[Any] = field
+        self.field: "Field[Any]" = field  # type: ignore[arg-type]
         self.operator: Type[BaseOperator] = operator
 
         self.left_comparison_value: Any = left_comparison_value

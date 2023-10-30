@@ -2,7 +2,6 @@ import copy
 import inspect
 from typing import Any, Dict, Final, List, Type, TypeVar, cast
 
-from qaspen.fields.base_field import BaseField
 from qaspen.fields.fields import Field
 from qaspen.qaspen_types import FieldType
 from qaspen.statements.select_statement import SelectStatement
@@ -21,7 +20,7 @@ class BaseTable(
     @classmethod
     def select(
         cls: Type[T_],
-        *select_fields: BaseField[FieldType],
+        *select_fields: Field[FieldType],
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
@@ -36,7 +35,7 @@ class BaseTable(
         return select_statement
 
     @classmethod
-    def all_fields(cls: Type[T_]) -> List[BaseField[FieldType]]:
+    def all_fields(cls: Type[T_]) -> List[Field[FieldType]]:
         """Return all fields in the table.
 
         :returns: list of fields.
@@ -91,10 +90,10 @@ class BaseTable(
             cls,
             lambda member: not (inspect.isroutine(member)),
         )
-        only_field_attributes: Dict[str, BaseField[Any]] = {
+        only_field_attributes: Dict[str, Field[Any]] = {
             attribute[0]: copy.deepcopy(attribute[1])
             for attribute in attributes
-            if issubclass(type(attribute[1]), BaseField)
+            if issubclass(type(attribute[1]), Field)
         }
 
         for table_param_name, table_param in cls.__dict__.items():

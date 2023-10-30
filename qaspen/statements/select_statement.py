@@ -18,7 +18,7 @@ from typing_extensions import Self
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
 from qaspen.fields.aliases import FieldAliases
-from qaspen.fields.base_field import BaseField
+from qaspen.fields.fields import Field
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import ObjectExecutable
@@ -76,11 +76,11 @@ class SelectStatement(
     def __init__(
         self: Self,
         from_table: Type[FromTable],
-        select_fields: Iterable[BaseField[Any]],
+        select_fields: Iterable[Field[Any]],
     ) -> None:
         self._from_table: Final[Type[FromTable]] = from_table
-        self._select_fields: Iterable[BaseField[Any],] = select_fields
-        self.final_select_fields: List[BaseField[Any]] = []
+        self._select_fields: Iterable[Field[Any],] = select_fields
+        self.final_select_fields: List[Field[Any]] = []
         self.exist_prefixes: Final[List[str]] = []
 
         self._filter_statement: FilterStatement = FilterStatement()
@@ -262,7 +262,7 @@ class SelectStatement(
 
     def order_by(
         self: Self,
-        field: Optional[BaseField[Any]] = None,
+        field: Optional[Field[Any]] = None,
         ascending: bool = True,
         nulls_first: bool = True,
         order_bys: Optional[Iterable[OrderBy]] = None,
@@ -798,12 +798,12 @@ class SelectStatement(
 
     def _prepare_fields(
         self: Self,
-    ) -> List[BaseField[Any]]:
+    ) -> List[Field[Any]]:
         if self.final_select_fields:
             return self.final_select_fields
-        final_select_fields: Final[List[BaseField[Any]]] = []
+        final_select_fields: Final[List[Field[Any]]] = []
 
-        fields_to_select: List[BaseField[Any]] = []
+        fields_to_select: List[Field[Any]] = []
         fields_to_select.extend(self._prepare_select_fields())
         fields_to_select.extend(
             self._join_statement._retrieve_all_join_fields(),
@@ -838,11 +838,11 @@ class SelectStatement(
 
     def _prepare_select_fields(
         self: Self,
-    ) -> List[BaseField[Any]]:
-        fields_from_original_table: List[BaseField[Any]] = []
+    ) -> List[Field[Any]]:
+        fields_from_original_table: List[Field[Any]] = []
         fields_from_joined_table: Dict[
             str,
-            List[BaseField[Any]],
+            List[Field[Any]],
         ] = {}
 
         for field in self._select_fields:
@@ -863,7 +863,6 @@ class SelectStatement(
             )
             if not join_fields:
                 continue
-            # TODO: FIX TYPING
-            join_expr.add_fields(join_fields)  # type: ignore[arg-type]
+            join_expr.add_fields(join_fields)
 
         return fields_from_original_table

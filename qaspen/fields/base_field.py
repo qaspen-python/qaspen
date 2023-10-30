@@ -1,5 +1,4 @@
 import abc
-import copy
 import dataclasses
 import types
 from typing import TYPE_CHECKING, Any, Generic, Optional, Type, Union
@@ -82,17 +81,6 @@ class BaseField(Generic[FieldType], abc.ABC):
         self._field_data.from_table = owner
         self._field_data.field_name = field_name
 
-    def _is_the_same_field(
-        self: Self,
-        second_field: "BaseField[FieldType]",
-    ) -> bool:
-        """Compare two fields.
-
-        Return `True` if they are the same, else `False`.
-        They are equal if they `_field_data`s are the same.
-        """
-        return self._field_data == second_field._field_data
-
     @abc.abstractmethod
     def _make_field_create_statement(
         self: Self,
@@ -130,16 +118,6 @@ class BaseField(Generic[FieldType], abc.ABC):
     def table_name(self: Self) -> str:
         """Return the table name of this field."""
         return self._field_data.from_table.original_table_name()
-
-    def _with_prefix(self: Self, prefix: str) -> "BaseField[FieldType]":
-        field: BaseField[FieldType] = copy.deepcopy(self)
-        field._field_data.prefix = prefix
-        return field
-
-    def _with_alias(self: Self, alias: str) -> "BaseField[FieldType]":
-        field: BaseField[FieldType] = copy.deepcopy(self)
-        field._field_data.alias = alias
-        return field
 
     @property
     def original_field_name(self: Self) -> str:
