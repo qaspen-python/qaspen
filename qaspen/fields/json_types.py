@@ -11,8 +11,6 @@ from qaspen.fields.fields import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 
 
-# TODO: Add validate and converting default value to
-# valid PostgreSQL value.
 class JsonBase(Field[FieldType]):
     """Base field for JSON and JSONB PostgreSQL fields."""
 
