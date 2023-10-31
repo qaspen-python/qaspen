@@ -26,6 +26,10 @@ class FilterComparisonError(FieldBaseError):
     pass
 
 
+class FieldDefaultValueError(FieldBaseError):
+    pass
+
+
 class OnJoinError(QaspenBaseError):
     pass
 

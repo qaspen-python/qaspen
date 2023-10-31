@@ -6,7 +6,7 @@ from typing import Any, Dict, Final, List, Optional, Tuple, Union
 from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
-from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
+from qaspen.exceptions import FieldDefaultValueError, FieldValueValidationError
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 
@@ -60,7 +60,7 @@ class JsonBase(Field[FieldType]):
                 ),
             )
 
-        raise FieldDeclarationError(
+        raise FieldDefaultValueError(
             f"Can't set default value {self._default} for "
             f"{self.__class__.__name__} field",
         )
@@ -90,6 +90,7 @@ class Json(JsonBase[Union[Dict[Any, Any], str]]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (dict, str)
+    _field_type: str = "JSON"
 
 
 class Jsonb(JsonBase[Union[Dict[Any, Any], str, bytes]]):
@@ -107,3 +108,4 @@ class Jsonb(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (dict, str, bytes)
+    _field_type: str = "JSONB"

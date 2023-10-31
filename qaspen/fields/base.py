@@ -13,7 +13,6 @@ from typing import (
     Type,
     Union,
     cast,
-    final,
 )
 
 from typing_extensions import Self
@@ -36,6 +35,9 @@ from qaspen.statements.combinable_statements.filter_statement import (
 
 if TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
+
+
+OperatorTypes = Union[AnyOperator, AllOperator]
 
 
 class EmptyFieldValue:
@@ -87,6 +89,7 @@ class BaseField(Generic[FieldType], abc.ABC):
     """Base field class for all Fields."""
 
     _field_data: FieldData[FieldType]
+    _field_type: str
 
     def __set_name__(
         self: Self,
@@ -252,12 +255,6 @@ class BaseField(Generic[FieldType], abc.ABC):
         return ""
 
     @property
-    @final
-    def _field_type(self: Self) -> str:
-        """Field type in the SQL."""
-        return self.__class__.__name__.upper()
-
-    @property
     def _sql_type(self: Self) -> str:
         """Property for final SQL field Type.
 
@@ -267,12 +264,6 @@ class BaseField(Generic[FieldType], abc.ABC):
         SQL `string`.
         """
         return self._field_type
-
-
-if TYPE_CHECKING:
-    from qaspen.table.base_table import BaseTable
-
-OperatorTypes = Union[AnyOperator, AllOperator]
 
 
 class Field(BaseField[FieldType], SQLSelectable):

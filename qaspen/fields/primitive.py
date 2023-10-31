@@ -106,6 +106,7 @@ class SmallInt(BaseIntegerField):
 
     _available_max_value: int = 32767
     _available_min_value: int = -32768
+    _field_type: str = "SMALLINT"
 
 
 class Integer(BaseIntegerField):
@@ -113,12 +114,14 @@ class Integer(BaseIntegerField):
 
     _available_max_value: int = 2147483647
     _available_min_value: int = -2147483648
+    _field_type: str = "INTEGER"
 
 
 class Boolean(Field[bool]):
     """BOOLEAN field."""
 
     _set_available_types: Tuple[type, ...] = (bool,)
+    _field_type: str = "BOOLEAN"
 
     def _validate_field_value(
         self: Self,
@@ -150,10 +153,13 @@ class BigInt(BaseIntegerField):
 
     _available_max_value: int = 9223372036854775807
     _available_min_value: int = -9223372036854775808
+    _field_type: str = "BIGINT"
 
 
 class Numeric(BaseIntegerField):
     """NUMERIC field."""
+
+    _field_type: str = "NUMERIC"
 
     def __init__(
         self: Self,
@@ -200,9 +206,13 @@ class Decimal(Numeric):
     The same as `Numeric` field.
     """
 
+    _field_type: str = "DECIMAL"
+
 
 class Real(Field[Union[int, str]]):
     """REAL field."""
+
+    _field_type: str = "REAL"
 
     def __init__(
         self: Self,
@@ -222,6 +232,8 @@ class Real(Field[Union[int, str]]):
 class DoublePrecision(Field[Union[int, str]]):
     """DOUBLE PRECISION field."""
 
+    _field_type: str = "DOUBLEPRECISION"
+
     def __init__(
         self: Self,
         *pos_arguments: Any,
@@ -239,8 +251,6 @@ class DoublePrecision(Field[Union[int, str]]):
 
 class SerialBaseField(BaseIntegerField):
     """Base Serial field for all possible SERIAL fields."""
-
-    _sub_field: str
 
     def __init__(
         self: Self,
@@ -274,7 +284,7 @@ class SerialBaseField(BaseIntegerField):
 
     def _make_field_create_statement(self: Self) -> str:
         if self.next_val_seq_name:
-            return f"{self._original_field_name} {self._sub_field} NOT NULL DEFAULT nextval('{self.next_val_seq_name}')"
+            return f"{self._original_field_name} {self._field_type} NOT NULL DEFAULT nextval('{self.next_val_seq_name}')"
         return f"{self._original_field_name} {self._sql_type}"
 
 
@@ -285,7 +295,7 @@ class SmallSerial(SerialBaseField, SmallInt):
     and autoincrement functionality.
     """
 
-    _sub_field: str = "SMALLINT"
+    _field_type: str = "SMALLINT"
 
 
 class Serial(SerialBaseField, Integer):
@@ -295,7 +305,7 @@ class Serial(SerialBaseField, Integer):
     and autoincrement functionality.
     """
 
-    _sub_field: str = "INTEGER"
+    _field_type: str = "INTEGER"
 
 
 class BigSerial(SerialBaseField, BigInt):
@@ -305,7 +315,7 @@ class BigSerial(SerialBaseField, BigInt):
     and autoincrement functionality.
     """
 
-    _sub_field: str = "BIGINT"
+    _field_type: str = "BIGINT"
 
 
 AvailableComparisonTypes = (
@@ -459,6 +469,8 @@ class VarChar(BaseStringField):
     Behave like normal PostgreSQL VARCHAR field.
     """
 
+    _field_type: str = "VARCHAR"
+
 
 class Text(Field[str]):
     """Text field.
@@ -468,6 +480,7 @@ class Text(Field[str]):
 
     _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: Tuple[type, ...] = (str,)
+    _field_type: str = "TEXT"
 
 
 class Char(Field[str]):
@@ -481,6 +494,7 @@ class Char(Field[str]):
 
     _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: Tuple[type, ...] = (str,)
+    _field_type: str = "CHAR"
 
     def __init__(
         self: Self,
@@ -605,6 +619,7 @@ class Date(BaseDatetimeField[datetime.date]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.date,)
+    _field_type: str = "DATE"
 
 
 class Time(BaseDateTimeFieldWithTZ[datetime.time]):
@@ -622,6 +637,7 @@ class Time(BaseDateTimeFieldWithTZ[datetime.time]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.time,)
+    _field_type: str = "TIME"
 
 
 class Timestamp(BaseDateTimeFieldWithTZ[datetime.datetime]):
@@ -637,6 +653,7 @@ class Timestamp(BaseDateTimeFieldWithTZ[datetime.datetime]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.datetime,)
+    _field_type: str = "TIMESTAMP"
 
 
 class Interval(Field[datetime.timedelta]):
@@ -652,3 +669,4 @@ class Interval(Field[datetime.timedelta]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.timedelta,)
+    _field_type: str = "INTERVAL"
