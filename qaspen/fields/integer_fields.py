@@ -262,8 +262,8 @@ class SerialBaseField(BaseIntegerField):
 
     def _make_field_create_statement(self: Self) -> str:
         if self.next_val_seq_name:
-            return f"{self.original_field_name} {self._sub_field} NOT NULL DEFAULT nextval('{self.next_val_seq_name}')"
-        return f"{self.original_field_name} {self._sql_type}"
+            return f"{self._original_field_name} {self._sub_field} NOT NULL DEFAULT nextval('{self.next_val_seq_name}')"
+        return f"{self._original_field_name} {self._sql_type}"
 
 
 class SmallSerial(SerialBaseField, SmallInt):

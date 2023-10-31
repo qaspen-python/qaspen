@@ -11,8 +11,6 @@ from qaspen.fields.fields import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 
 
-# TODO: Add validate and converting default value to
-# valid PostgreSQL value.
 class JsonBase(Field[FieldType]):
     """Base field for JSON and JSONB PostgreSQL fields."""
 
@@ -36,34 +34,34 @@ class JsonBase(Field[FieldType]):
         ### Returns:
         `Any available type for this class`.
         """
-        if type(self.default) == types.FunctionType:
-            return self.default
+        if type(self._default) == types.FunctionType:
+            return self._default
 
-        if isinstance(self.default, str):
+        if isinstance(self._default, str):
             try:
-                json.loads(self.default)
+                json.loads(self._default)
             except json.decoder.JSONDecodeError as exc:
                 raise FieldValueValidationError(
-                    f"Default value {self.default} of field "
+                    f"Default value {self._default} of field "
                     f"{self.__class__.__name__} "
                     f"can't be serialized in PSQL {self._field_type} type.",
                 ) from exc
-            return f"'{self.default}'"  # type: ignore[return-value]
+            return f"'{self._default}'"  # type: ignore[return-value]
 
-        if isinstance(self.default, (dict, list)):
+        if isinstance(self._default, (dict, list)):
             return self._dump_default(  # type: ignore[return-value]
-                default_value=self.default,
+                default_value=self._default,
             )
 
-        if isinstance(self.default, bytes):
+        if isinstance(self._default, bytes):
             return self._dump_default(  # type: ignore[return-value]
                 literal_eval(
-                    self.default.decode("utf-8"),
+                    self._default.decode("utf-8"),
                 ),
             )
 
         raise FieldDeclarationError(
-            f"Can't set default value {self.default} for "
+            f"Can't set default value {self._default} for "
             f"{self.__class__.__name__} field",
         )
 

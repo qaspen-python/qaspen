@@ -69,18 +69,18 @@ class Field(BaseField[FieldType], SQLSelectable):
 
     def __get__(
         self: Self,
-        instance: "BaseTable | None",
-        owner: Type["BaseTable"],
+        instance: "Optional[BaseTable]",
+        owner: "Type[BaseTable]",
     ) -> "Field[FieldType]":
         try:
             return cast(
                 Field[FieldType],
-                instance.__dict__[self.original_field_name],
+                instance.__dict__[self._original_field_name],
             )
         except (AttributeError, KeyError):
             return cast(
                 Field[FieldType],
-                owner.__dict__[self.original_field_name],
+                owner.__dict__[self._original_field_name],
             )
 
     def __set__(
@@ -90,12 +90,12 @@ class Field(BaseField[FieldType], SQLSelectable):
     ) -> None:
         field: Field[FieldType]
         if isinstance(value, EmptyFieldValue) or value is None:
-            field = instance.__dict__[self.original_field_name]
+            field = instance.__dict__[self._original_field_name]
             field._field_data.field_value = value
             return
 
         if isinstance(value, self.__class__):
-            instance.__dict__[self.original_field_name] = value
+            instance.__dict__[self._original_field_name] = value
             return
 
         if not isinstance(value, self._set_available_types):
@@ -107,7 +107,7 @@ class Field(BaseField[FieldType], SQLSelectable):
         self._validate_field_value(
             field_value=value,  # type: ignore[arg-type]
         )
-        field = instance.__dict__[self.original_field_name]
+        field = instance.__dict__[self._original_field_name]
         field._field_data.field_value = value  # type: ignore[assignment]
 
     def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
@@ -117,7 +117,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         :returns: prepared default value.
         """
-        return self.default
+        return self._default
 
     def in_(
         self: Self,
@@ -226,14 +226,9 @@ class Field(BaseField[FieldType], SQLSelectable):
         self: Self,
     ) -> str:
         return (
-            f"{self.original_field_name} {self._sql_type} "
+            f"{self._original_field_name} {self._sql_type} "
             f"{self._field_null} {self._field_default}"
         )
-
-    def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
-        field: Field[FieldType] = copy.deepcopy(self)
-        field._field_data.prefix = prefix
-        return field
 
     def querystring(self: Self) -> QueryString:
         return QueryString(
@@ -383,6 +378,47 @@ class Field(BaseField[FieldType], SQLSelectable):
     ) -> Filter:
         return self.__le__(comparison_value)
 
+    def _is_the_same_field(
+        self: Self,
+        second_field: "BaseField[FieldType]",
+    ) -> bool:
+        """Compare two fields.
+
+        Return `True` if they are the same, else `False`.
+        They are equal if they `_field_data`s are the same.
+        """
+        return self._field_data == second_field._field_data
+
+    def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
+        """Give Field a prefix.
+
+        Make a Field deepcopy and set new prefix.
+
+        ### Parameters
+        - `prefix`: prefix for the field.
+
+        ### Returns
+        `Field` with new prefix.
+        """
+        field: Field[FieldType] = copy.deepcopy(self)
+        field._field_data.prefix = prefix
+        return field
+
+    def _with_alias(self: Self, alias: str) -> "Field[FieldType]":
+        """Give Field an alias.
+
+        Make a Field deepcopy and set new alias.
+
+        ### Parameters
+        - `alias`: alias for the field.
+
+        ### Returns
+        `Field` with new alias.
+        """
+        field: Field[FieldType] = copy.deepcopy(self)
+        field._field_data.alias = alias
+        return field
+
     def _validate_field_value(
         self: Self,
         field_value: Optional[FieldType],
@@ -396,7 +432,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         :raises FieldValueValidationError: if the `max_length` is exceeded.
         """
-        if field_value is None and self.is_null:
+        if field_value is None and self._is_null:
             return
 
     def _validate_default_value(

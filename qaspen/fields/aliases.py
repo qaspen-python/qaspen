@@ -4,13 +4,13 @@ from typing import Any, Dict, Final
 
 from typing_extensions import Self
 
-from qaspen.fields.base_field import BaseField
+from qaspen.fields.fields import Field
 
 
 class FieldAlias:
     def __init__(
         self: Self,
-        aliased_field: BaseField[Any],
+        aliased_field: Field[Any],
     ) -> None:
         self.aliased_field: Final = aliased_field
 
@@ -24,8 +24,8 @@ if sys.version_info >= (3, 9):
 
         def add_alias(
             self: Self,
-            field: BaseField[Any],
-        ) -> BaseField[Any]:
+            field: Field[Any],
+        ) -> Field[Any]:
             self.last_alias_number += 1
 
             alias: Final = f"A{self.last_alias_number}"
@@ -48,8 +48,8 @@ else:
 
         def add_alias(
             self: Self,
-            field: BaseField[Any],
-        ) -> BaseField[Any]:
+            field: Field[Any],
+        ) -> Field[Any]:
             self.last_alias_number += 1
 
             alias: Final = f"A{self.last_alias_number}"

@@ -1,23 +1,25 @@
 import dataclasses
 import functools
 import operator
-from typing import Any, Final, Iterable, List, Optional
+from typing import TYPE_CHECKING, Any, Final, Iterable, List, Optional
 
 from typing_extensions import Self
 
-from qaspen.fields.base_field import BaseField
 from qaspen.querystring.querystring import OrderByQueryString, QueryString
 from qaspen.statements.statement import BaseStatement
+
+if TYPE_CHECKING:
+    from qaspen.fields.fields import Field
 
 
 class OrderBy:
     def __init__(
         self: Self,
-        field: BaseField[Any],
+        field: "Field[Any]",
         ascending: bool = True,
         nulls_first: bool = True,
     ) -> None:
-        self.field: Final[BaseField[Any]] = field
+        self.field: Final["Field[Any]"] = field  # type: ignore[arg-type]
         self.ascending: Final[bool] = ascending
         self.nulls_first: Final[bool] = nulls_first
 
@@ -49,7 +51,7 @@ class OrderByStatement(BaseStatement):
 
     def order_by(
         self: Self,
-        field: Optional[BaseField[Any]] = None,
+        field: Optional["Field[Any]"] = None,
         ascending: bool = True,
         nulls_first: bool = True,
         order_by_statements: Optional[Iterable[OrderBy]] = None,

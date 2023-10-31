@@ -5,14 +5,15 @@ from typing import Any, Dict, Final, List, Optional, Type
 from typing_extensions import Self
 
 from qaspen.engine.base import BaseEngine
-from qaspen.fields.base_field import BaseField, EmptyFieldValue
+from qaspen.fields.base_field import EmptyFieldValue
+from qaspen.fields.fields import Field
 
 
 @dataclasses.dataclass
 class MetaTableData:
     table_name: str = ""
     abstract: bool = False
-    table_fields: Dict[str, BaseField[Any]] = dataclasses.field(
+    table_fields: Dict[str, Field[Any]] = dataclasses.field(
         default_factory=dict,
     )
     database_engine: Optional[BaseEngine[Any, Any]] = None
@@ -32,9 +33,7 @@ class MetaTable:
         if not table_name:
             table_name = cls.__name__.lower()
 
-        table_fields: Final[
-            Dict[str, BaseField[Any]],
-        ] = cls._parse_table_fields()
+        table_fields: Final[Dict[str, Field[Any]],] = cls._parse_table_fields()
 
         cls._table_meta = MetaTableData(
             table_name=table_name,
@@ -50,16 +49,16 @@ class MetaTable:
         for table_field in self._table_meta.table_fields.values():
             setattr(
                 self,
-                table_field.original_field_name,
+                table_field._original_field_name,
                 copy.deepcopy(table_field),
             )
             new_field_value: Any = fields_values.get(
-                table_field.original_field_name,
+                table_field._original_field_name,
                 EmptyFieldValue(),
             )
             setattr(
                 self,
-                table_field.original_field_name,
+                table_field._original_field_name,
                 new_field_value,
             )
 
@@ -91,11 +90,11 @@ class MetaTable:
     @classmethod
     def _parse_table_fields(
         cls: Type["MetaTable"],
-    ) -> Dict[str, BaseField[Any]]:
-        table_fields: Final[Dict[str, BaseField[Any]]] = {
+    ) -> Dict[str, Field[Any]]:
+        table_fields: Final[Dict[str, Field[Any]]] = {
             field_class._field_data.field_name: field_class
             for field_class in cls.__dict__.values()
-            if isinstance(field_class, BaseField)
+            if isinstance(field_class, Field)
         }
 
         return table_fields
