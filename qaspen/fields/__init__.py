@@ -1,6 +1,6 @@
 """All Fields."""
 from qaspen.fields.complex import Json, Jsonb
-from qaspen.fields.simple import (
+from qaspen.fields.primitive import (
     BigInt,
     BigSerial,
     Boolean,
