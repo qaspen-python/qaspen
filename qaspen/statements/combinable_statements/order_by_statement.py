@@ -9,7 +9,7 @@ from qaspen.querystring.querystring import OrderByQueryString, QueryString
 from qaspen.statements.statement import BaseStatement
 
 if TYPE_CHECKING:
-    from qaspen.fields.fields import Field
+    from qaspen.fields.base import Field
 
 
 class OrderBy:

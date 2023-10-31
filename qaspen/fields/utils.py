@@ -1,5 +1,8 @@
+from typing import Final
+
 from qaspen.exceptions import StringFieldDeclarationError
-from qaspen.fields.consts import MAX_STRING_FIELD_LENGTH
+
+MAX_STRING_FIELD_LENGTH: Final[int] = 10485760
 
 
 def validate_max_length(max_length: int) -> bool:

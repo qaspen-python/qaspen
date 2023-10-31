@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING, Any, Final, Iterable, List, Type, Union
 from typing_extensions import Self
 
 from qaspen.base.sql_base import SQLSelectable
-from qaspen.fields.base_field import BaseField
 from qaspen.fields.operators import BaseOperator
 from qaspen.querystring.querystring import FilterQueryString, QueryString
 from qaspen.statements.combinable_statements.combinations import (
@@ -16,7 +15,7 @@ from qaspen.statements.statement import BaseStatement
 from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
-    from qaspen.fields.fields import Field
+    from qaspen.fields.base import Field
 
 
 class EmptyValue:
@@ -55,7 +54,7 @@ class Filter(CombinableExpression):
             compare_value = ", ".join(
                 [
                     transform_value_to_sql(comparison_value)
-                    for comparison_value in self.comparison_values  # type: ignore[union-attr]  # noqa: E501
+                    for comparison_value in self.comparison_values  # type: ignore[union-attr]
                 ],
             )
 
@@ -81,6 +80,8 @@ class FilterBetween(CombinableExpression):
         self.right_comparison_value: Any = right_comparison_value
 
     def querystring(self: Self) -> FilterQueryString:
+        from qaspen.fields.base import BaseField
+
         left_value: str = (
             self.left_comparison_value.field_name
             if isinstance(self.left_comparison_value, BaseField)
