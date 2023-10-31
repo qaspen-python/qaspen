@@ -4,7 +4,7 @@ from typing import Any, Dict, Final
 
 from typing_extensions import Self
 
-from qaspen.fields.fields import Field
+from qaspen.fields.base import Field
 
 
 class FieldAlias:
@@ -18,7 +18,7 @@ class FieldAlias:
 if sys.version_info >= (3, 9):
 
     class FieldAliases(UserDict[str, FieldAlias]):
-        def __init__(self: Self):
+        def __init__(self: Self) -> None:
             self.data: Dict[str, FieldAlias] = {}
             self.last_alias_number: int = 0
 

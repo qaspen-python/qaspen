@@ -5,8 +5,7 @@ from typing import Any, Dict, Final, List, Optional, Type
 from typing_extensions import Self
 
 from qaspen.engine.base import BaseEngine
-from qaspen.fields.base_field import EmptyFieldValue
-from qaspen.fields.fields import Field
+from qaspen.fields.base import EmptyFieldValue, Field
 
 
 @dataclasses.dataclass

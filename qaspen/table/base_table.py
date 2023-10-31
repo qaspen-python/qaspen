@@ -2,7 +2,7 @@ import copy
 import inspect
 from typing import Any, Dict, Final, List, Type, TypeVar, cast
 
-from qaspen.fields.fields import Field
+from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldType
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
@@ -53,7 +53,7 @@ class BaseTable(
         :returns: Same Table, but aliased.
 
         Example:
-        ------
+        -------
         ```python
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()

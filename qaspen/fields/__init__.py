@@ -1,8 +1,43 @@
 """All Fields."""
-from qaspen.fields.string_fields import Char, Text, VarChar
+from qaspen.fields.complex import Json, Jsonb
+from qaspen.fields.simple import (
+    BigInt,
+    BigSerial,
+    Boolean,
+    Char,
+    Date,
+    Decimal,
+    DoublePrecision,
+    Integer,
+    Interval,
+    Numeric,
+    Real,
+    Serial,
+    SmallSerial,
+    Text,
+    Time,
+    Timestamp,
+    VarChar,
+)
 
 __all__ = [
-    "VarChar",
-    "Text",
+    "BigInt",
+    "BigSerial",
+    "Boolean",
     "Char",
+    "Date",
+    "Decimal",
+    "DoublePrecision",
+    "Integer",
+    "Interval",
+    "Json",
+    "Jsonb",
+    "Numeric",
+    "Real",
+    "Serial",
+    "SmallSerial",
+    "Text",
+    "Time",
+    "Timestamp",
+    "VarChar",
 ]

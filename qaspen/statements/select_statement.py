@@ -18,7 +18,7 @@ from typing_extensions import Self
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
 from qaspen.fields.aliases import FieldAliases
-from qaspen.fields.fields import Field
+from qaspen.fields.base import Field
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import ObjectExecutable
@@ -63,7 +63,7 @@ class SelectStatement(
     instead you must use Table class.
 
     Example:
-    ---------------------------
+    -------
     ```
     class Buns(BaseTable, table_name="buns"):
         name: VarCharField = VarCharField()
@@ -98,7 +98,7 @@ class SelectStatement(
         """SelectStatement can be awaited.
 
         Example:
-        ---------------------------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -197,7 +197,7 @@ class SelectStatement(
         will be overridden.
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -227,7 +227,7 @@ class SelectStatement(
         will be overridden.
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -279,7 +279,7 @@ class SelectStatement(
         :param order_bys: list of instances of order by.
 
         Example:
-        -----
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -357,7 +357,7 @@ class SelectStatement(
         :returns: `UnionStatement`.
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -396,7 +396,7 @@ class SelectStatement(
         :returns: `IntersectStatement`.
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -426,7 +426,7 @@ class SelectStatement(
         :returns: `ExistsStatement`.
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -464,7 +464,7 @@ class SelectStatement(
         `self`
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -514,7 +514,7 @@ class SelectStatement(
         `self`
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -564,7 +564,7 @@ class SelectStatement(
         `self`
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -615,7 +615,7 @@ class SelectStatement(
         `self`
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()
@@ -667,7 +667,7 @@ class SelectStatement(
         `self`
 
         Example:
-        ------
+        -------
         ```
         class Buns(BaseTable, table_name="buns"):
             name: VarCharField = VarCharField()

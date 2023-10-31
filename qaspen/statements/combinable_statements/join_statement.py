@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Final, Iterable, List, Optional, Type
 
 from typing_extensions import Self
 
-from qaspen.fields.fields import Field
+from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldType
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
@@ -152,7 +152,6 @@ class JoinStatement(BaseStatement):
     ) -> None:
         for join_expression in join_expressions:
             self.join_expressions.append(join_expression)
-        return None
 
     def querystring(self: Self) -> QueryString:
         if not self.join_expressions:
