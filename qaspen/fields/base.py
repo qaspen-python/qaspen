@@ -5,6 +5,7 @@ import types
 from typing import (
     TYPE_CHECKING,
     Any,
+    Callable,
     Dict,
     Final,
     Generic,
@@ -27,7 +28,11 @@ from qaspen.exceptions import (
     FilterComparisonError,
 )
 from qaspen.fields import operators
-from qaspen.qaspen_types import FieldDefaultType, FieldType
+from qaspen.qaspen_types import (
+    CallableDefaultType,
+    FieldDefaultType,
+    FieldType,
+)
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
@@ -77,7 +82,8 @@ class FieldData(Generic[FieldType]):
     from_table: Type["BaseTable"] = None  # type: ignore[assignment]
     is_null: bool = False
     field_value: Union[FieldType, EmptyFieldValue, None] = EMPTY_FIELD_VALUE
-    default: FieldDefaultType[FieldType] = None
+    default: Optional[str] = None
+    callable_default: Optional[Callable[[], FieldType]] = None
     prefix: str = ""
     alias: str = ""
     in_join: bool = False
@@ -138,7 +144,10 @@ class BaseField(Generic[FieldType], abc.ABC):
         ...
 
     @abc.abstractmethod
-    def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
+    def _prepare_default_value(
+        self: Self,
+        default_value: FieldType,
+    ) -> Optional[str]:
         """Prepare default value to specify it in Field declaration.
 
         It uses only in the method `_field_default`.
@@ -212,13 +221,28 @@ class BaseField(Generic[FieldType], abc.ABC):
         return field_name
 
     @property
-    def _default(self: Self) -> FieldDefaultType[FieldType]:
+    def _default(self: Self) -> Optional[str]:
         """Return default value of the field.
+
+        This default is already converted into SQL string.
+        Or None.
 
         ### Return
         default value.
         """
         return self._field_data.default
+
+    @property
+    def _callable_default(
+        self: Self,
+    ) -> Optional[CallableDefaultType[FieldType]]:
+        """Return callable object for default value for the field.
+
+        This default value will be called in the statements
+        that can be create new raws in the database.
+
+        """
+        return self._field_data.callable_default
 
     @property
     def _is_null(self: Self) -> bool:
@@ -240,15 +264,9 @@ class BaseField(Generic[FieldType], abc.ABC):
 
     @property
     def _field_default(self: Self) -> str:
-        is_default: Final = self._default and types.FunctionType != type(
-            self._default,
-        )
+        is_default: Final = self._default and callable(self._default)
         if is_default:
-            return (
-                f"DEFAULT {self._prepare_default_value()}"
-                if self._default
-                else ""
-            )
+            return f"DEFAULT {self._default}" if self._default else ""
         return ""
 
     @property
@@ -279,6 +297,7 @@ class Field(BaseField[FieldType], SQLSelectable):
     _available_comparison_types: Tuple[type, ...]
     _set_available_types: Tuple[type, ...]
 
+    # TODO: Write down normal docstring
     def __init__(
         self: Self,
         *args: Any,
@@ -299,10 +318,24 @@ class Field(BaseField[FieldType], SQLSelectable):
             default_value=default,
         )
 
+        default_value: Optional[str] = None
+        callable_default_value: Optional[
+            CallableDefaultType[FieldType],
+        ] = None
+
+        if callable(default):
+            callable_default_value = default
+
+        else:
+            default_value = self._prepare_default_value(
+                default_value=default,
+            )
+
         self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name or "",
             is_null=is_null,
-            default=default,
+            default=default_value,
+            callable_default=callable_default_value,
         )
 
     def __get__(
@@ -348,14 +381,19 @@ class Field(BaseField[FieldType], SQLSelectable):
         field = instance.__dict__[self._original_field_name]
         field._field_data.field_value = value  # type: ignore[assignment]
 
-    def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
+    def _prepare_default_value(
+        self: Self,
+        default_value: Optional[FieldType],
+    ) -> Optional[str]:
         """Prepare default value to specify it in Field declaration.
 
         It uses only in the method `_field_default`.
 
         :returns: prepared default value.
         """
-        return self._default
+        return (
+            str(default_value) if default_value is not None else default_value
+        )
 
     def in_(
         self: Self,

@@ -1,5 +1,4 @@
 import json
-import types
 from ast import literal_eval
 from typing import Any, Dict, Final, List, Optional, Tuple, Union
 
@@ -28,40 +27,40 @@ class JsonBase(Field[FieldType]):
             db_field_name=db_field_name,
         )
 
-    def _prepare_default_value(self: Self) -> FieldDefaultType[FieldType]:
+    def _prepare_default_value(
+        self: Self,
+        default_value: Optional[FieldType],
+    ) -> str:
         """Prepare default value for PostgreSQL DEFAULT statement.
 
         ### Returns:
         `Any available type for this class`.
         """
-        if type(self._default) == types.FunctionType:
-            return self._default
-
-        if isinstance(self._default, str):
+        if isinstance(default_value, str):
             try:
-                json.loads(self._default)
+                json.loads(default_value)
             except json.decoder.JSONDecodeError as exc:
                 raise FieldValueValidationError(
-                    f"Default value {self._default} of field "
+                    f"Default value {default_value} of field "
                     f"{self.__class__.__name__} "
                     f"can't be serialized in PSQL {self._field_type} type.",
                 ) from exc
-            return f"'{self._default}'"  # type: ignore[return-value]
+            return f"'{default_value}'"
 
-        if isinstance(self._default, (dict, list)):
-            return self._dump_default(  # type: ignore[return-value]
-                default_value=self._default,
+        if isinstance(default_value, (dict, list)):
+            return self._dump_default(
+                default_value=default_value,
             )
 
-        if isinstance(self._default, bytes):
-            return self._dump_default(  # type: ignore[return-value]
+        if isinstance(default_value, bytes):
+            return self._dump_default(
                 literal_eval(
-                    self._default.decode("utf-8"),
+                    default_value.decode("utf-8"),
                 ),
             )
 
         raise FieldDeclarationError(
-            f"Can't set default value {self._default} for "
+            f"Can't set default value {default_value} for "
             f"{self.__class__.__name__} field",
         )
 
