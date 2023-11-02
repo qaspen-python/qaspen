@@ -14,7 +14,6 @@ from typing import (
     Type,
     Union,
     cast,
-    final,
 )
 
 from typing_extensions import Self
@@ -269,11 +268,11 @@ class BaseField(Generic[FieldType], abc.ABC):
             return f"DEFAULT {self._default}" if self._default else ""
         return ""
 
-    @property
-    @final
-    def _field_type(self: Self) -> str:
+    @classmethod
+    def _field_type(cls: Type["BaseField[FieldType]"]) -> str:
         """Field type in the SQL."""
-        return self.__class__.__name__.upper()
+        print(type(cls))
+        return cls.__name__.upper()
 
     @property
     def _sql_type(self: Self) -> str:
@@ -284,7 +283,7 @@ class BaseField(Generic[FieldType], abc.ABC):
         ### Return
         SQL `string`.
         """
-        return self._field_type
+        return self._field_type()
 
 
 if TYPE_CHECKING:
@@ -325,8 +324,7 @@ class Field(BaseField[FieldType], SQLSelectable):
 
         if callable(default):
             callable_default_value = default
-
-        else:
+        elif default_value is not None:
             default_value = self._prepare_default_value(
                 default_value=default,
             )

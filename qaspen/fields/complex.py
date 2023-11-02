@@ -1,6 +1,6 @@
 import json
 from ast import literal_eval
-from typing import Any, Dict, Final, List, Optional, Tuple, Union
+from typing import Any, Dict, Final, List, Optional, Tuple, Type, Union
 
 from typing_extensions import Self
 
@@ -106,3 +106,58 @@ class Jsonb(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (dict, str, bytes)
+
+
+class Array(Field[List[Any]]):
+    """Field for ARRAY PostgreSQL type."""
+
+    _available_comparison_types: Tuple[
+        type,
+        ...,
+    ] = (
+        list,
+        Field,
+        AllOperator,
+        AnyOperator,
+    )
+    _set_available_types: Tuple[type, ...] = (list,)
+
+    def __init__(
+        self,
+        *args: Any,
+        base_field: Type[Field[Any]],
+        is_null: bool = False,
+        db_field_name: Optional[str] = None,
+        default: FieldDefaultType[List[Any]] = None,
+        dimension: Optional[int] = None,
+    ) -> None:
+        super().__init__(
+            *args,
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )
+
+        self.dimension: Final = dimension
+        self.base_field: Final = base_field
+
+    def _prepare_default_value(
+        self: Self,
+        default_value: Optional[List[Any]],
+    ) -> Optional[str]:
+        dumped_value = json.dumps(
+            default_value,
+            default=str,
+        )
+        dumped_value = dumped_value.replace("[", "{").replace("]", "}")
+        return dumped_value
+
+    @property
+    def _sql_type(self: Self) -> str:
+        sql_array_type: str = (
+            f"{self.base_field._field_type()} " f"{self._field_type()}"
+        )
+        if self.dimension:
+            sql_array_type += f"[{self.dimension}]"
+
+        return sql_array_type
