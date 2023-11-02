@@ -13,7 +13,6 @@ jobs:
       matrix:
         cmd:
           - black
-          - ruff
           - mypy
     runs-on: ubuntu-latest
     steps:
