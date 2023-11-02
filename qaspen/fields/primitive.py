@@ -185,7 +185,7 @@ class Numeric(BaseIntegerField):
 
     @property
     def _sql_type(self: Self) -> str:
-        field_type: str = self._field_type
+        field_type: str = self._field_type()
         if self.precision and self.scale:
             field_type += f"({self.precision}, {self.scale})"
         elif self.precision:
@@ -588,8 +588,8 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
     @property
     def _sql_type(self: Self) -> str:
         if self.with_timezone:
-            return f"{self._field_type} WITH TIME ZONE"
-        return self._field_type
+            return f"{self._field_type()} WITH TIME ZONE"
+        return self._field_type()
 
 
 class Date(BaseDatetimeField[datetime.date]):
