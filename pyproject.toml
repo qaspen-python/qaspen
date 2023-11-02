@@ -23,6 +23,9 @@ pre-commit = "^3.5.0"
 autoflake = "^2.2.1"
 yesqa = "^1.5.0"
 typing-extensions = "^4.8.0"
+anyio = "^4.0.0"
+pytest-xdist = "^3.3.1"
+pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
