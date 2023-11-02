@@ -21,3 +21,8 @@ FieldDefaultType = typing.Union[
     ],
     None,
 ]
+
+CallableDefaultType = typing.Callable[
+    [],
+    FieldType,
+]
