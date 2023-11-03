@@ -13,6 +13,7 @@ from qaspen.fields import operators
 from qaspen.fields.base import Field
 from qaspen.fields.utils import validate_max_length
 from qaspen.qaspen_types import FieldDefaultType, FieldType
+from qaspen.sql_type import primitive_types
 from qaspen.statements.combinable_statements.filter_statement import Filter
 
 
@@ -101,59 +102,34 @@ class BaseIntegerField(Field[int]):
             )
 
 
-class SmallInt(BaseIntegerField):
+class SmallIntField(BaseIntegerField):
     """SMALLINT field."""
 
     _available_max_value: int = 32767
     _available_min_value: int = -32768
+    _sql_type = primitive_types.SmallInt
 
 
-class Integer(BaseIntegerField):
+class IntegerField(BaseIntegerField):
     """INTEGER field."""
 
     _available_max_value: int = 2147483647
     _available_min_value: int = -2147483648
+    _sql_type = primitive_types.Integer
 
 
-class Boolean(Field[bool]):
-    """BOOLEAN field."""
-
-    _set_available_types: Tuple[type, ...] = (bool,)
-
-    def _validate_field_value(
-        self: Self,
-        field_value: Optional[bool],
-    ) -> None:
-        """Validate field value.
-
-        Check all possible BOOLEAN field values.
-
-        ### Parameters
-        - field_value: field to validate
-
-        ### Returns
-        - `None`
-        """
-        super()._validate_field_value(
-            field_value=field_value,
-        )
-
-        if field_value not in (True, False, None):
-            raise FieldValueValidationError(
-                f"Field value - `{field_value}` must be one of the following: "
-                "True, False, or None",
-            )
-
-
-class BigInt(BaseIntegerField):
+class BigIntField(BaseIntegerField):
     """BIGINT field."""
 
     _available_max_value: int = 9223372036854775807
     _available_min_value: int = -9223372036854775808
+    _sql_type = primitive_types.BigInt
 
 
-class Numeric(BaseIntegerField):
+class NumericField(BaseIntegerField):
     """NUMERIC field."""
+
+    _sql_type = primitive_types.Numeric
 
     def __init__(
         self: Self,
@@ -184,8 +160,8 @@ class Numeric(BaseIntegerField):
         self.scale: Optional[int] = scale
 
     @property
-    def _sql_type(self: Self) -> str:
-        field_type: str = self._field_type()
+    def _field_type(self: Self) -> str:
+        field_type: str = self._sql_type.sql_type()
         if self.precision and self.scale:
             field_type += f"({self.precision}, {self.scale})"
         elif self.precision:
@@ -194,16 +170,28 @@ class Numeric(BaseIntegerField):
         return field_type
 
 
-class Decimal(Numeric):
+class DecimalField(NumericField):
     """DECIMAL field.
 
     The same as `Numeric` field.
     """
 
+    _sql_type = primitive_types.Decimal  # type: ignore[assignment]
 
-class Real(Field[Union[int, str]]):
+
+class RealField(Field[Union[int, str]]):
     """REAL field."""
 
+    _available_comparison_types: Tuple[type, ...] = (
+        str,
+        float,
+        Field,
+        AnyOperator,
+        AllOperator,
+    )
+    _set_available_types: Tuple[type, ...] = (str, float)
+    _sql_type = primitive_types.Real
+
     def __init__(
         self: Self,
         *pos_arguments: Any,
@@ -219,9 +207,19 @@ class Real(Field[Union[int, str]]):
         )
 
 
-class DoublePrecision(Field[Union[int, str]]):
+class DoublePrecisionField(Field[Union[int, str]]):
     """DOUBLE PRECISION field."""
 
+    _available_comparison_types: Tuple[type, ...] = (
+        str,
+        float,
+        Field,
+        AnyOperator,
+        AllOperator,
+    )
+    _set_available_types: Tuple[type, ...] = (str, float)
+    _sql_type = primitive_types.DoublePrecision
+
     def __init__(
         self: Self,
         *pos_arguments: Any,
@@ -235,12 +233,47 @@ class DoublePrecision(Field[Union[int, str]]):
             default=default,
             db_field_name=db_field_name,
         )
+
+
+class BooleanField(Field[bool]):
+    """BOOLEAN field."""
+
+    _available_comparison_types: Tuple[type, ...] = (
+        bool,
+        Field,
+        AnyOperator,
+        AllOperator,
+    )
+    _set_available_types: Tuple[type, ...] = (bool,)
+    _sql_type = primitive_types.Boolean
+
+    def _validate_field_value(
+        self: Self,
+        field_value: Optional[bool],
+    ) -> None:
+        """Validate field value.
+
+        Check all possible BOOLEAN field values.
+
+        ### Parameters
+        - field_value: field to validate
+
+        ### Returns
+        - `None`
+        """
+        super()._validate_field_value(
+            field_value=field_value,
+        )
+
+        if field_value not in (True, False, None):
+            raise FieldValueValidationError(
+                f"Field value - `{field_value}` must be one of the following: "
+                "True, False, or None",
+            )
 
 
 class SerialBaseField(BaseIntegerField):
     """Base Serial field for all possible SERIAL fields."""
-
-    _sub_field: str
 
     def __init__(
         self: Self,
@@ -274,21 +307,23 @@ class SerialBaseField(BaseIntegerField):
 
     def _make_field_create_statement(self: Self) -> str:
         if self.next_val_seq_name:
-            return f"{self._original_field_name} {self._sub_field} NOT NULL DEFAULT nextval('{self.next_val_seq_name}')"
-        return f"{self._original_field_name} {self._sql_type}"
+            return (
+                f"{self._original_field_name} "
+                f"{self._sql_type.querystring()} NOT NULL "
+                f"DEFAULT nextval('{self.next_val_seq_name}')"
+            )
+        return f"{self._original_field_name} {self._sql_type.querystring()}"
 
 
-class SmallSerial(SerialBaseField, SmallInt):
+class SmallSerialField(SerialBaseField, SmallIntField):
     """SMALLSERIAL field.
 
     Its `SmallInt` field with `NOT NULL` property,
     and autoincrement functionality.
     """
 
-    _sub_field: str = "SMALLINT"
 
-
-class Serial(SerialBaseField, Integer):
+class SerialField(SerialBaseField, IntegerField):
     """SERIAL field.
 
     Its `Integer` field with `NOT NULL` property,
@@ -298,7 +333,7 @@ class Serial(SerialBaseField, Integer):
     _sub_field: str = "INTEGER"
 
 
-class BigSerial(SerialBaseField, BigInt):
+class BigSerialField(SerialBaseField, BigIntField):
     """BIGSERIAL field.
 
     Its `BigInt` field with `NOT NULL` property,
@@ -449,18 +484,20 @@ class BaseStringField(Field[str]):
             )
 
     @property
-    def _sql_type(self: Self) -> str:
-        return f"{self._field_type}({self._max_length})"
+    def _field_type(self: Self) -> str:
+        return f"{self._sql_type.sql_type()}({self._max_length})"
 
 
-class VarChar(BaseStringField):
+class VarCharField(BaseStringField):
     """Varchar Field.
 
     Behave like normal PostgreSQL VARCHAR field.
     """
 
+    _sql_type = primitive_types.VarChar
 
-class Text(Field[str]):
+
+class TextField(Field[str]):
     """Text field.
 
     Behave like normal PostgreSQL TEXT field.
@@ -468,9 +505,10 @@ class Text(Field[str]):
 
     _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: Tuple[type, ...] = (str,)
+    _sql_type = primitive_types.Text
 
 
-class Char(Field[str]):
+class CharField(Field[str]):
     """Char field.
 
     You cannot specify `max_length` parameter for this Field,
@@ -481,6 +519,7 @@ class Char(Field[str]):
 
     _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: Tuple[type, ...] = (str,)
+    _sql_type = primitive_types.Char
 
     def __init__(
         self: Self,
@@ -586,13 +625,13 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
         self.with_timezone: Final = with_timezone
 
     @property
-    def _sql_type(self: Self) -> str:
+    def _field_type(self: Self) -> str:
         if self.with_timezone:
-            return f"{self._field_type()} WITH TIME ZONE"
-        return self._field_type()
+            return f"{self._sql_type.sql_type()} WITH TIME ZONE"
+        return super()._field_type
 
 
-class Date(BaseDatetimeField[datetime.date]):
+class DateField(BaseDatetimeField[datetime.date]):
     """PostgreSQL type for `datetime.date` python type."""
 
     _available_comparison_types: Tuple[
@@ -605,9 +644,10 @@ class Date(BaseDatetimeField[datetime.date]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.date,)
+    _sql_type = primitive_types.Date
 
 
-class Time(BaseDateTimeFieldWithTZ[datetime.time]):
+class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
     """PostgreSQL type for `datetime.time` python type."""
 
     _database_default: str = "CURRENT_TIME"
@@ -622,9 +662,10 @@ class Time(BaseDateTimeFieldWithTZ[datetime.time]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.time,)
+    _sql_type = primitive_types.Time
 
 
-class Timestamp(BaseDateTimeFieldWithTZ[datetime.datetime]):
+class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     """PostgreSQL type for `datetime.datetime` python type."""
 
     _available_comparison_types: Tuple[
@@ -637,9 +678,10 @@ class Timestamp(BaseDateTimeFieldWithTZ[datetime.datetime]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.datetime,)
+    _sql_type = primitive_types.Timestamp
 
 
-class Interval(Field[datetime.timedelta]):
+class IntervalField(Field[datetime.timedelta]):
     """PostgreSQL type for `datetime.timedelta` python type."""
 
     _available_comparison_types: Tuple[
@@ -652,3 +694,4 @@ class Interval(Field[datetime.timedelta]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (datetime.timedelta,)
+    _sql_type = primitive_types.Interval
