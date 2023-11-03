@@ -77,7 +77,7 @@ class JsonBase(Field[FieldType]):
         return f"'{dump_value}'"
 
 
-class Json(JsonBase[Union[Dict[Any, Any], str]]):
+class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
     """Field for JSON PostgreSQL type."""
 
     _available_comparison_types: Tuple[
@@ -95,7 +95,7 @@ class Json(JsonBase[Union[Dict[Any, Any], str]]):
     _sql_type = complex_types.Json
 
 
-class Jsonb(JsonBase[Union[Dict[Any, Any], str, bytes]]):
+class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
     """Field for JSON PostgreSQL type."""
 
     _available_comparison_types: Tuple[
@@ -114,7 +114,7 @@ class Jsonb(JsonBase[Union[Dict[Any, Any], str, bytes]]):
     _sql_type = complex_types.Jsonb
 
 
-class Array(Field[List[Any]]):
+class ArrayField(Field[List[Any]]):
     """Field for ARRAY PostgreSQL type."""
 
     _available_comparison_types: Tuple[

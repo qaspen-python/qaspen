@@ -1,5 +1,5 @@
 """All Fields."""
-from qaspen.fields.complex import Json, Jsonb
+from qaspen.fields.complex import JsonbField, JsonField
 from qaspen.fields.primitive import (
     BigIntField,
     BigSerialField,
@@ -30,8 +30,8 @@ __all__ = [
     "DoublePrecisionField",
     "IntegerField",
     "IntervalField",
-    "Json",
-    "Jsonb",
+    "JsonField",
+    "JsonbField",
     "NumericField",
     "RealField",
     "SerialField",
