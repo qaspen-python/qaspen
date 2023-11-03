@@ -33,6 +33,7 @@ from qaspen.qaspen_types import (
     FieldType,
 )
 from qaspen.querystring.querystring import QueryString
+from qaspen.sql_type.base import SQLType
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
     FilterBetween,
@@ -92,6 +93,7 @@ class BaseField(Generic[FieldType], abc.ABC):
     """Base field class for all Fields."""
 
     _field_data: FieldData[FieldType]
+    _sql_type: Type[SQLType]
 
     def __set_name__(
         self: Self,
@@ -268,14 +270,8 @@ class BaseField(Generic[FieldType], abc.ABC):
             return f"DEFAULT {self._default}" if self._default else ""
         return ""
 
-    @classmethod
-    def _field_type(cls: Type["BaseField[FieldType]"]) -> str:
-        """Field type in the SQL."""
-        print(type(cls))
-        return cls.__name__.upper()
-
     @property
-    def _sql_type(self: Self) -> str:
+    def _field_type(self: Self) -> str:
         """Property for final SQL field Type.
 
         It can be changed in subclasses.
@@ -283,7 +279,7 @@ class BaseField(Generic[FieldType], abc.ABC):
         ### Return
         SQL `string`.
         """
-        return self._field_type()
+        return str(self._sql_type.querystring())
 
 
 if TYPE_CHECKING:
@@ -369,7 +365,7 @@ class Field(BaseField[FieldType]):
 
         if not isinstance(value, self._set_available_types):
             raise TypeError(
-                f"Can't assign not {self._field_type} "
+                f"Can't assign not {self._sql_type.querystring()} "
                 f"type to {self.__class__.__name__}",
             )
 
@@ -500,7 +496,7 @@ class Field(BaseField[FieldType]):
         self: Self,
     ) -> str:
         return (
-            f"{self._original_field_name} {self._sql_type} "
+            f"{self._original_field_name} {self._sql_type.sql_type()} "
             f"{self._field_null} {self._field_default}"
         )
 

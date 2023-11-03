@@ -8,6 +8,8 @@ from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
+from qaspen.sql_type import complex_types
+from qaspen.sql_type.base import SQLType
 
 
 class JsonBase(Field[FieldType]):
@@ -75,7 +77,7 @@ class JsonBase(Field[FieldType]):
         return f"'{dump_value}'"
 
 
-class Json(JsonBase[Union[Dict[Any, Any], str]]):
+class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
     """Field for JSON PostgreSQL type."""
 
     _available_comparison_types: Tuple[
@@ -83,15 +85,17 @@ class Json(JsonBase[Union[Dict[Any, Any], str]]):
         ...,
     ] = (
         dict,
+        list,
         str,
         Field,
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (dict, str)
+    _set_available_types: Tuple[type, ...] = (dict, list, str)
+    _sql_type = complex_types.Json
 
 
-class Jsonb(JsonBase[Union[Dict[Any, Any], str, bytes]]):
+class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
     """Field for JSON PostgreSQL type."""
 
     _available_comparison_types: Tuple[
@@ -101,14 +105,16 @@ class Jsonb(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         bytes,
         dict,
         str,
+        list,
         Field,
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (dict, str, bytes)
+    _set_available_types: Tuple[type, ...] = (dict, str, bytes, list)
+    _sql_type = complex_types.Jsonb
 
 
-class Array(Field[List[Any]]):
+class ArrayField(Field[List[Any]]):
     """Field for ARRAY PostgreSQL type."""
 
     _available_comparison_types: Tuple[
@@ -121,11 +127,12 @@ class Array(Field[List[Any]]):
         AnyOperator,
     )
     _set_available_types: Tuple[type, ...] = (list,)
+    _sql_type = complex_types.Array
 
     def __init__(
         self,
         *args: Any,
-        base_field: Type[Field[Any]],
+        base_type: Type[SQLType],
         is_null: bool = False,
         db_field_name: Optional[str] = None,
         default: FieldDefaultType[List[Any]] = None,
@@ -139,7 +146,7 @@ class Array(Field[List[Any]]):
         )
 
         self.dimension: Final = dimension
-        self.base_field: Final = base_field
+        self.base_type: Final = base_type
 
     def _prepare_default_value(
         self: Self,
@@ -153,9 +160,9 @@ class Array(Field[List[Any]]):
         return dumped_value
 
     @property
-    def _sql_type(self: Self) -> str:
+    def _field_type(self: Self) -> str:
         sql_array_type: str = (
-            f"{self.base_field._field_type()} " f"{self._field_type()}"
+            f"{self.base_type.querystring()} {self._sql_type.sql_type()}"
         )
         if self.dimension:
             sql_array_type += f"[{self.dimension}]"
