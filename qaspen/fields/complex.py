@@ -162,7 +162,7 @@ class ArrayField(Field[List[Any]]):
     @property
     def _field_type(self: Self) -> str:
         sql_array_type: str = (
-            f"{self.base_type.querystring()} " f"{self._sql_type.sql_type()}"
+            f"{self.base_type.querystring()} {self._sql_type.sql_type()}"
         )
         if self.dimension:
             sql_array_type += f"[{self.dimension}]"
