@@ -2,7 +2,6 @@ from typing import Final, Union
 
 from typing_extensions import Self
 
-from qaspen.base.sql_base import SQLSelectable
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
@@ -29,7 +28,7 @@ class Intersect(CombinableExpression):
         )
 
 
-class IntersectStatement(BaseStatement, SQLSelectable):
+class IntersectStatement(BaseStatement):
     intersect_statement: Intersect
 
     def __init__(

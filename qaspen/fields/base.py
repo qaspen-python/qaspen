@@ -292,7 +292,7 @@ if TYPE_CHECKING:
 OperatorTypes = Union[AnyOperator, AllOperator]
 
 
-class Field(BaseField[FieldType], SQLSelectable):
+class Field(BaseField[FieldType]):
     _available_comparison_types: Tuple[type, ...]
     _set_available_types: Tuple[type, ...]
 

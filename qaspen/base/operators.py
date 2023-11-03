@@ -7,7 +7,7 @@ from qaspen.base.sql_base import SQLSelectable
 from qaspen.querystring.querystring import QueryString
 
 
-class AnyOperator(SQLSelectable):
+class AnyOperator:
     def __init__(
         self: Self,
         subquery: SQLSelectable,
@@ -24,7 +24,7 @@ class AnyOperator(SQLSelectable):
         )
 
 
-class AllOperator(SQLSelectable):
+class AllOperator:
     def __init__(
         self: Self,
         subquery: SQLSelectable,
