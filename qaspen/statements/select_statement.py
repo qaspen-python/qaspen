@@ -15,7 +15,6 @@ from typing import (
 
 from typing_extensions import Self
 
-from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
 from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base import Field
@@ -53,7 +52,6 @@ if TYPE_CHECKING:
 
 class SelectStatement(
     BaseStatement,
-    SQLSelectable,
     ObjectExecutable["SelectStatementResult[FromTable]"],
     Generic[FromTable],
 ):

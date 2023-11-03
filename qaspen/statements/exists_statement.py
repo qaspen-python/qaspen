@@ -2,7 +2,6 @@ from typing import Any, Final, List, Tuple
 
 from typing_extensions import Self
 
-from qaspen.base.sql_base import SQLSelectable
 from qaspen.engine.base import BaseEngine
 from qaspen.exceptions import QueryResultLookupError
 from qaspen.qaspen_types import FromTable
@@ -18,7 +17,6 @@ from qaspen.statements.statement import BaseStatement
 class ExistsStatement(
     BaseStatement,
     CombinableExpression,
-    SQLSelectable,
     Executable[bool],
 ):
     def __init__(
