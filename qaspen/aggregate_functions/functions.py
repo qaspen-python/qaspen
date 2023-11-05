@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Final
 
 from qaspen.aggregate_functions.base import AggFunction
+from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -83,7 +84,7 @@ class Agg(AggFunction):
         func_argument: SQLSelectable | Any,
         alias: str | None = None,
     ) -> None:
-        """Create `COUNT` function.
+        """Create `AGG` function.
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
@@ -114,7 +115,7 @@ class ArrayAgg(AggFunction):
         order_by: list[SQLSelectable] | None = None,
         order_by_objs: list[OrderBy] | None = None,
     ) -> None:
-        """Initialize Coalesce function.
+        """Create `ARRAY_AGG` function.
 
         ### Parameters:
         - `func_argument`: arguments for the aggregate function.
@@ -161,6 +162,118 @@ class ArrayAgg(AggFunction):
     @property
     def _querystring_args(self: Self) -> list[str]:
         querystring_args = super()._querystring_args
+
+        if self.order_by:
+            for single_order_by in self.order_by:
+                querystring_args.append(
+                    str(single_order_by.querystring()),
+                )
+        if self.order_by_objs:
+            for order_by_obj in self.order_by_objs:
+                querystring_args.append(
+                    str(order_by_obj.querystring()),
+                )
+
+        return querystring_args
+
+
+class Sum(AggFunction):
+    """`SUM` function.
+
+    The PostgreSQL SUM() is an aggregate function
+    that returns the sum of values or distinct values.
+    """
+
+    function_name = "SUM"
+
+    def __init__(
+        self: Self,
+        func_argument: SQLSelectable,
+        alias: str | None = None,
+    ) -> None:
+        """Create `SUM` function.
+
+        ### Parameters:
+        - `func_argument`: It's an object with `querystring()` method
+        (Field, for example)
+        - `alias`: name for a `AS` clause in statement.
+        """
+        super().__init__(
+            func_argument,
+            alias=alias,
+        )
+
+
+class StringAgg(AggFunction):
+    """`STRING_AGG` function.
+
+    The PostgreSQL STRING_AGG() function is an aggregate function
+    that concatenates a list of strings and places a separator between them.
+    The function does not add the separator at the end of the string.
+    """
+
+    function_name = "STRING_AGG"
+
+    def __init__(
+        self: Self,
+        func_argument: SQLSelectable,
+        separator: str,
+        alias: str | None = None,
+        order_by: list[SQLSelectable] | None = None,
+        order_by_objs: list[OrderBy] | None = None,
+    ) -> None:
+        """Create `STRING_AGG` function.
+
+        ### Parameters:
+        - `func_argument`: arguments for the aggregate function.
+            Tt is Field instance usually.
+        - `separator`: separator for strings.
+        - `alias`: alias for the function result.
+        - `order_by`: list of `Field` to order by.
+        - `order_by_objs`: list of `OrderBy` objects.
+            It can be useful because sometimes you want to add
+            `DESC`/`ASC` and `NULLS FIRST/LAST`.
+        """
+        super().__init__(
+            func_argument,
+            alias=alias,
+        )
+
+        self.order_by: Final = order_by
+        self.order_by_objs: Final = order_by_objs
+        self.separator: Final = transform_value_to_sql(separator)
+
+    @property
+    def _template_args(self: Self) -> str:
+        order_by_args = ""
+        order_by_objects_args = ""
+
+        if self.order_by:
+            order_by_args = ", ".join(
+                ["{}" for _ in self.order_by],
+            )
+        if self.order_by_objs:
+            order_by_objects_args = ", ".join(
+                ["{}" for _ in self.order_by_objs],
+            )
+
+        if order_by_args and order_by_objects_args:
+            return (
+                "{}, {} ORDER BY "  # noqa: ISC003
+                + f"{order_by_args}, "
+                + order_by_objects_args
+            )
+        if order_by_args:
+            return "{}, {} ORDER BY " + order_by_args
+        if order_by_objects_args:
+            return "{}, {} ORDER BY " + order_by_objects_args
+
+        return "{}, {}"
+
+    @property
+    def _querystring_args(self: Self) -> list[str]:
+        querystring_args = super()._querystring_args
+        querystring_args.append(self.separator)
 
         if self.order_by:
             for single_order_by in self.order_by:
