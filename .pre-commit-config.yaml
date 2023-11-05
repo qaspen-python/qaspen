@@ -35,11 +35,11 @@ repos:
         language: system
         types: [ python ]
 
-      # - id: ruff
-      #   name: Check with ruff
-      #   entry: poetry run ruff check --force-exclude
-      #   language: system
-      #   types: [ python ]
+      - id: ruff
+        name: Check with ruff
+        entry: poetry run ruff check --force-exclude
+        language: system
+        types: [ python ]
 
       - id: mypy
         name: Validate types with MyPy

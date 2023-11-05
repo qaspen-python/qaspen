@@ -1,7 +1,7 @@
-import datetime
-from typing import Any, Final, Optional, Tuple, Union, overload
+from __future__ import annotations
 
-from typing_extensions import Self
+import datetime
+from typing import TYPE_CHECKING, Any, Final, Union, overload
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import (
@@ -11,37 +11,39 @@ from qaspen.exceptions import (
 )
 from qaspen.fields import operators
 from qaspen.fields.base import Field
-from qaspen.fields.utils import validate_max_length
+from qaspen.fields.utils import MAX_STRING_FIELD_LENGTH, validate_max_length
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import primitive_types
 from qaspen.statements.combinable_statements.filter_statement import Filter
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class BaseIntegerField(Field[int]):
     """Base field for all integer fields."""
 
-    _available_comparison_types: Tuple[type, ...] = (
+    _available_comparison_types: tuple[type, ...] = (
         int,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: Tuple[type, ...] = (int,)
-    _available_max_value: Optional[int]
-    _available_min_value: Optional[int]
+    _set_available_types: tuple[type, ...] = (int,)
+    _available_max_value: int | None
+    _available_min_value: int | None
 
     def __init__(
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: Optional[int] = None,
-        db_field_name: Optional[str] = None,
-        maximum: Optional[int] = None,
-        minimum: Optional[int] = None,
+        default: int | None = None,
+        db_field_name: str | None = None,
+        maximum: int | None = None,
+        minimum: int | None = None,
     ) -> None:
-        # TODO: Added CHECK constraint to these params
-        self._maximum: Optional[int] = maximum
-        self._minimum: Optional[int] = minimum
+        self._maximum: int | None = maximum
+        self._minimum: int | None = minimum
 
         super().__init__(
             *pos_arguments,
@@ -52,7 +54,7 @@ class BaseIntegerField(Field[int]):
 
     def _validate_field_value(
         self: Self,
-        field_value: Optional[int],
+        field_value: int | None,
     ) -> None:
         """Validate field value.
 
@@ -73,11 +75,12 @@ class BaseIntegerField(Field[int]):
             and field_value > self._available_max_value,
         )
         if is_max_value_reached:
-            raise FieldValueValidationError(
+            max_reached_err_msg: Final = (
                 f"Field value - `{field_value}` "
                 f"is greater than field `{self.__class__.__name__}` "
                 f"can accommodate - `{self._available_max_value}`",
             )
+            raise FieldValueValidationError(max_reached_err_msg)
 
         is_min_value_reached: Final = bool(
             field_value
@@ -85,21 +88,24 @@ class BaseIntegerField(Field[int]):
             and field_value < self._available_min_value,
         )
         if is_min_value_reached:
-            raise FieldValueValidationError(
+            min_reached_err_msg: Final = (
                 f"Field value - `{field_value}` "
                 f"is less than field `{self.__class__.__name__}` "
                 f"can accommodate - `{self._available_min_value}`",
             )
+            raise FieldValueValidationError(min_reached_err_msg)
         if field_value and self._maximum and field_value > self._maximum:
-            raise FieldValueValidationError(
+            value_max_reached_err_msg: Final = (
                 f"Field value - `{field_value}` is greater "
                 f"than maximum you set `{self._maximum}`",
             )
+            raise FieldValueValidationError(value_max_reached_err_msg)
         if field_value and self._minimum and field_value < self._minimum:
-            raise FieldValueValidationError(
+            value_min_reached_err_msg: Final = (
                 f"Field value - `{field_value}` is less "
                 f"than minimum you set `{self._minimum}`",
             )
+            raise FieldValueValidationError(value_min_reached_err_msg)
 
 
 class SmallIntField(BaseIntegerField):
@@ -134,18 +140,19 @@ class NumericField(BaseIntegerField):
     def __init__(
         self: Self,
         *pos_arguments: Any,
-        precision: Optional[int] = None,
-        scale: Optional[int] = None,
+        precision: int | None = None,
+        scale: int | None = None,
         is_null: bool = False,
-        default: Optional[int] = None,
-        db_field_name: Optional[str] = None,
-        maximum: Optional[int] = None,
-        minimum: Optional[int] = None,
+        default: int | None = None,
+        db_field_name: str | None = None,
+        maximum: int | None = None,
+        minimum: int | None = None,
     ) -> None:
         if not precision and scale:
-            raise FieldDeclarationError(
+            declaration_err_msg: Final = (
                 "You cannot specify `scale` without `precision`.",
             )
+            raise FieldDeclarationError(declaration_err_msg)
 
         super().__init__(
             *pos_arguments,
@@ -156,8 +163,8 @@ class NumericField(BaseIntegerField):
             minimum=minimum,
         )
 
-        self.precision: Optional[int] = precision
-        self.scale: Optional[int] = scale
+        self.precision: int | None = precision
+        self.scale: int | None = scale
 
     @property
     def _field_type(self: Self) -> str:
@@ -182,22 +189,22 @@ class DecimalField(NumericField):
 class RealField(Field[Union[int, str]]):
     """REAL field."""
 
-    _available_comparison_types: Tuple[type, ...] = (
+    _available_comparison_types: tuple[type, ...] = (
         str,
         float,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: Tuple[type, ...] = (str, float)
+    _set_available_types: tuple[type, ...] = (str, float)
     _sql_type = primitive_types.Real
 
     def __init__(
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: Union[int, str, None] = None,
-        db_field_name: Optional[str] = None,
+        default: int | str | None = None,
+        db_field_name: str | None = None,
     ) -> None:
         super().__init__(
             *pos_arguments,
@@ -210,22 +217,22 @@ class RealField(Field[Union[int, str]]):
 class DoublePrecisionField(Field[Union[int, str]]):
     """DOUBLE PRECISION field."""
 
-    _available_comparison_types: Tuple[type, ...] = (
+    _available_comparison_types: tuple[type, ...] = (
         str,
         float,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: Tuple[type, ...] = (str, float)
+    _set_available_types: tuple[type, ...] = (str, float)
     _sql_type = primitive_types.DoublePrecision
 
     def __init__(
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: Union[int, str, None] = None,
-        db_field_name: Optional[str] = None,
+        default: int | str | None = None,
+        db_field_name: str | None = None,
     ) -> None:
         super().__init__(
             *pos_arguments,
@@ -238,18 +245,18 @@ class DoublePrecisionField(Field[Union[int, str]]):
 class BooleanField(Field[bool]):
     """BOOLEAN field."""
 
-    _available_comparison_types: Tuple[type, ...] = (
+    _available_comparison_types: tuple[type, ...] = (
         bool,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: Tuple[type, ...] = (bool,)
+    _set_available_types: tuple[type, ...] = (bool,)
     _sql_type = primitive_types.Boolean
 
     def _validate_field_value(
         self: Self,
-        field_value: Optional[bool],
+        field_value: bool | None,
     ) -> None:
         """Validate field value.
 
@@ -265,11 +272,12 @@ class BooleanField(Field[bool]):
             field_value=field_value,
         )
 
-        if field_value not in (True, False, None):
-            raise FieldValueValidationError(
+        if field_value not in (True, False):
+            validation_err_msg: Final = (
                 f"Field value - `{field_value}` must be one of the following: "
-                "True, False, or None",
+                "True or False",
             )
+            raise FieldValueValidationError(validation_err_msg)
 
 
 class SerialBaseField(BaseIntegerField):
@@ -278,10 +286,10 @@ class SerialBaseField(BaseIntegerField):
     def __init__(
         self: Self,
         *pos_arguments: Any,
-        db_field_name: Optional[str] = None,
-        maximum: Optional[int] = None,
-        minimum: Optional[int] = None,
-        next_val_seq_name: Optional[str] = None,
+        db_field_name: str | None = None,
+        maximum: int | None = None,
+        minimum: int | None = None,
+        next_val_seq_name: str | None = None,
     ) -> None:
         """Create field with Serial signature.
 
@@ -303,7 +311,7 @@ class SerialBaseField(BaseIntegerField):
             minimum=minimum,
         )
 
-        self.next_val_seq_name: Optional[str] = next_val_seq_name
+        self.next_val_seq_name: str | None = next_val_seq_name
 
     def _make_field_create_statement(self: Self) -> str:
         if self.next_val_seq_name:
@@ -352,16 +360,18 @@ AvailableComparisonTypes = (
 
 
 class BaseStringField(Field[str]):
-    _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
-    _set_available_types: Tuple[type, ...] = (str,)
+    """Base Field for all string-related Fields."""
+
+    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
+    _set_available_types: tuple[type, ...] = (str,)
 
     @overload
     def __init__(
         self: Self,
         max_length: int = 255,
         is_null: bool = False,
-        default: Optional[str] = None,
-        db_field_name: Optional[str] = None,
+        default: str | None = None,
+        db_field_name: str | None = None,
     ) -> None:
         ...
 
@@ -369,8 +379,8 @@ class BaseStringField(Field[str]):
     def __init__(
         self: Self,
         is_null: bool = False,
-        default: Optional[str] = None,
-        db_field_name: Optional[str] = None,
+        default: str | None = None,
+        db_field_name: str | None = None,
     ) -> None:
         ...
 
@@ -379,11 +389,15 @@ class BaseStringField(Field[str]):
         *args: Any,
         max_length: int = 255,
         is_null: bool = False,
-        default: Optional[str] = None,
-        db_field_name: Optional[str] = None,
+        default: str | None = None,
+        db_field_name: str | None = None,
     ) -> None:
-        if max_length:
-            validate_max_length(max_length=max_length)
+        if max_length and validate_max_length(max_length=max_length):
+            declaration_err_msg: Final = (
+                f"`max_length` parameter must be less "
+                f"or equal to {MAX_STRING_FIELD_LENGTH}",
+            )
+            raise FieldDeclarationError(declaration_err_msg)
 
         self._max_length: int = max_length
 
@@ -398,69 +412,116 @@ class BaseStringField(Field[str]):
         self: Self,
         comparison_value: str,
     ) -> Filter:
+        """`LIKE` PostgreSQL clause.
+
+        It allows you to use `LIKE` clause.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.LikeOperator,
             )
-        raise FieldComparisonError(
+
+        comparison_err_msg: Final = (
             f"It's impossible to use `LIKE` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def not_like(
         self: Self,
         comparison_value: str,
     ) -> Filter:
+        """`NOT LIKE` PostgreSQL clause.
+
+        It allows you to use `NOT LIKE` clause.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.NotLikeOperator,
             )
-        raise FieldComparisonError(
+
+        comparison_err_msg: Final = (
             f"It's impossible to use `NOT LIKE` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def ilike(
         self: Self,
         comparison_value: str,
     ) -> Filter:
+        """`ILIKE` PostgreSQL clause.
+
+        It allows you to use `ILIKE` clause.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.ILikeOperator,
             )
-        raise FieldComparisonError(
+        comparison_err_msg: Final = (
             f"It's impossible to use `ILIKE` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def not_ilike(
         self: Self,
         comparison_value: str,
     ) -> Filter:
+        """`NOT ILIKE` PostgreSQL clause.
+
+        It allows you to use `NOT ILIKE` clause.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
                 operator=operators.NotILikeOperator,
             )
-        raise FieldComparisonError(
+
+        comparison_err_msg: Final = (
             f"It's impossible to use `NOT ILIKE` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def _validate_field_value(
         self: Self,
-        field_value: Optional[str],
+        field_value: str | None,
     ) -> None:
         """Validate field value.
 
@@ -477,11 +538,12 @@ class BaseStringField(Field[str]):
         if field_value and len(field_value) <= self._max_length:
             return
         if field_value and len(field_value) > self._max_length:
-            raise FieldValueValidationError(
+            validation_err_msg: Final = (
                 f"You cannot set value with length {len(field_value)} "
                 f"to the {self.__class__.__name__} with "
                 f"`max_length` - {self._max_length}",
             )
+            raise FieldValueValidationError(validation_err_msg)
 
     @property
     def _field_type(self: Self) -> str:
@@ -503,8 +565,8 @@ class TextField(Field[str]):
     Behave like normal PostgreSQL TEXT field.
     """
 
-    _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
-    _set_available_types: Tuple[type, ...] = (str,)
+    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
+    _set_available_types: tuple[type, ...] = (str,)
     _sql_type = primitive_types.Text
 
 
@@ -517,16 +579,16 @@ class CharField(Field[str]):
     If you want more characters, use `VarChar` field.
     """
 
-    _available_comparison_types: Tuple[type, ...] = AvailableComparisonTypes
-    _set_available_types: Tuple[type, ...] = (str,)
+    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
+    _set_available_types: tuple[type, ...] = (str,)
     _sql_type = primitive_types.Char
 
     def __init__(
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: Optional[str] = None,
-        db_field_name: Optional[str] = None,
+        default: str | None = None,
+        db_field_name: str | None = None,
     ) -> None:
         super().__init__(
             *pos_arguments,
@@ -537,7 +599,7 @@ class CharField(Field[str]):
 
     def _validate_field_value(
         self: Self,
-        field_value: Optional[str],
+        field_value: str | None,
     ) -> None:
         """Validate field value.
 
@@ -550,11 +612,12 @@ class CharField(Field[str]):
         if not field_value or len(field_value) == 1:
             return
 
-        raise FieldValueValidationError(
+        validation_err_msg: Final = (
             f"CHAR field must always contain "
             f"only one character. "
             f"You tried to set {field_value}",
         )
+        raise FieldValueValidationError(validation_err_msg)
 
 
 class BaseDatetimeField(Field[FieldType]):
@@ -563,18 +626,19 @@ class BaseDatetimeField(Field[FieldType]):
     _database_default: str = "CURRENT_DATE"
 
     def __init__(
-        self,
+        self: Self,
         *args: Any,
         is_null: bool = False,
-        db_field_name: Optional[str] = None,
+        db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
         database_default: bool = False,
     ) -> None:
         if default and database_default:
-            raise FieldDeclarationError(
+            declaration_err_msg: Final = (
                 "Please specify either `default` or `database_default` "
                 "for DateField.",
             )
+            raise FieldDeclarationError(declaration_err_msg)
 
         super().__init__(
             *args,
@@ -600,19 +664,20 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
     """Base Field for all Date/Time fields with TimeZone."""
 
     def __init__(
-        self,
+        self: Self,
         *args: Any,
         is_null: bool = False,
-        db_field_name: Optional[str] = None,
+        db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
         database_default: bool = False,
         with_timezone: bool = False,
     ) -> None:
         if default and database_default:
-            raise FieldDeclarationError(
+            declaration_err_msg: Final = (
                 "Please specify either `default` or `database_default` "
                 "for DateField.",
             )
+            raise FieldDeclarationError(declaration_err_msg)
 
         super().__init__(
             *args,
@@ -634,7 +699,7 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
 class DateField(BaseDatetimeField[datetime.date]):
     """PostgreSQL type for `datetime.date` python type."""
 
-    _available_comparison_types: Tuple[
+    _available_comparison_types: tuple[
         type,
         ...,
     ] = (
@@ -643,7 +708,7 @@ class DateField(BaseDatetimeField[datetime.date]):
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (datetime.date,)
+    _set_available_types: tuple[type, ...] = (datetime.date,)
     _sql_type = primitive_types.Date
 
 
@@ -652,7 +717,7 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
 
     _database_default: str = "CURRENT_TIME"
 
-    _available_comparison_types: Tuple[
+    _available_comparison_types: tuple[
         type,
         ...,
     ] = (
@@ -661,14 +726,14 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (datetime.time,)
+    _set_available_types: tuple[type, ...] = (datetime.time,)
     _sql_type = primitive_types.Time
 
 
 class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     """PostgreSQL type for `datetime.datetime` python type."""
 
-    _available_comparison_types: Tuple[
+    _available_comparison_types: tuple[
         type,
         ...,
     ] = (
@@ -677,14 +742,14 @@ class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (datetime.datetime,)
+    _set_available_types: tuple[type, ...] = (datetime.datetime,)
     _sql_type = primitive_types.Timestamp
 
 
 class IntervalField(Field[datetime.timedelta]):
     """PostgreSQL type for `datetime.timedelta` python type."""
 
-    _available_comparison_types: Tuple[
+    _available_comparison_types: tuple[
         type,
         ...,
     ] = (
@@ -693,5 +758,5 @@ class IntervalField(Field[datetime.timedelta]):
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (datetime.timedelta,)
+    _set_available_types: tuple[type, ...] = (datetime.timedelta,)
     _sql_type = primitive_types.Interval

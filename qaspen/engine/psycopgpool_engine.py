@@ -64,7 +64,7 @@ class PsycopgPoolEngine(
         if not self.connection_pool:
             await self.startup()
         if not self.connection_pool:
-            raise ValueError()
+            raise ValueError
 
         single_connection: Final = await self.connection_pool.getconn()
         async_cursor = single_connection.cursor()
@@ -80,7 +80,7 @@ class PsycopgPoolEngine(
         if not self.connection_pool:
             await self.startup()
         if not self.connection_pool:
-            raise ValueError()
+            raise ValueError
 
         async with self.connection_pool.connection() as async_conn:
             result_cursor = await async_conn.execute(str(querystring))
@@ -95,7 +95,7 @@ class PsycopgPoolEngine(
         if not self.connection_pool:
             await self.startup()
         if not self.connection_pool:
-            raise ValueError()
+            raise ValueError
 
         async with self.connection_pool.connection() as async_conn:
             await async_conn.execute(str(querystring))

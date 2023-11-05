@@ -10,4 +10,5 @@ class BaseStatement(abc.ABC):
 
     @abc.abstractmethod
     def querystring(self: Self) -> QueryString:
+        """Build `QueryString`."""
         ...

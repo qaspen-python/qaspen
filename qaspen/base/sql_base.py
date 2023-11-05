@@ -1,6 +1,7 @@
 import abc
+from typing import runtime_checkable
 
-from typing_extensions import Protocol, Self, runtime_checkable
+from typing_extensions import Protocol, Self
 
 from qaspen.querystring.querystring import QueryString
 

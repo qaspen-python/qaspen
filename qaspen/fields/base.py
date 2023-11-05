@@ -1,25 +1,12 @@
+from __future__ import annotations
+
 import abc
 import copy
 import dataclasses
 import types
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    Final,
-    Generic,
-    Optional,
-    Tuple,
-    Type,
-    Union,
-    cast,
-)
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Callable, Final, Generic, Union, cast
 
 from qaspen.base.operators import AllOperator, AnyOperator
-from qaspen.base.sql_base import SQLSelectable
 from qaspen.exceptions import (
     FieldComparisonError,
     FieldDeclarationError,
@@ -33,13 +20,16 @@ from qaspen.qaspen_types import (
     FieldType,
 )
 from qaspen.querystring.querystring import QueryString
-from qaspen.sql_type.base import SQLType
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
     FilterBetween,
 )
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from qaspen.base.sql_base import SQLSelectable
+    from qaspen.sql_type.base import SQLType
     from qaspen.table.base_table import BaseTable
 
 
@@ -79,11 +69,11 @@ class FieldData(Generic[FieldType]):
     """
 
     field_name: str
-    from_table: Type["BaseTable"] = None  # type: ignore[assignment]
+    from_table: type[BaseTable] = None  # type: ignore[assignment]
     is_null: bool = False
-    field_value: Union[FieldType, EmptyFieldValue, None] = EMPTY_FIELD_VALUE
-    default: Optional[str] = None
-    callable_default: Optional[Callable[[], FieldType]] = None
+    field_value: FieldType | EmptyFieldValue | None = EMPTY_FIELD_VALUE
+    default: str | None = None
+    callable_default: Callable[[], FieldType] | None = None
     prefix: str = ""
     alias: str = ""
     in_join: bool = False
@@ -93,7 +83,7 @@ class BaseField(Generic[FieldType], abc.ABC):
     """Base field class for all Fields."""
 
     _field_data: FieldData[FieldType]
-    _sql_type: Type[SQLType]
+    _sql_type: type[SQLType]
 
     def __set_name__(
         self: Self,
@@ -124,7 +114,7 @@ class BaseField(Generic[FieldType], abc.ABC):
     @abc.abstractmethod
     def _validate_field_value(
         self: Self,
-        field_value: Optional[FieldType],
+        field_value: FieldType | None,
     ) -> None:
         """Validate field value.
 
@@ -136,7 +126,7 @@ class BaseField(Generic[FieldType], abc.ABC):
     @abc.abstractmethod
     def _validate_default_value(
         self: Self,
-        default_value: Optional[FieldType],
+        default_value: FieldType | None,
     ) -> None:
         """Validate field default value.
 
@@ -148,7 +138,7 @@ class BaseField(Generic[FieldType], abc.ABC):
     def _prepare_default_value(
         self: Self,
         default_value: FieldType,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Prepare default value to specify it in Field declaration.
 
         It uses only in the method `_field_default`.
@@ -157,7 +147,7 @@ class BaseField(Generic[FieldType], abc.ABC):
         """
 
     @property
-    def value(self: Self) -> Union[FieldType, EmptyFieldValue, None]:
+    def value(self: Self) -> FieldType | EmptyFieldValue | None:
         """Return value of the field.
 
         It's valid only for fields after executing statement,
@@ -222,7 +212,7 @@ class BaseField(Generic[FieldType], abc.ABC):
         return field_name
 
     @property
-    def _default(self: Self) -> Optional[str]:
+    def _default(self: Self) -> str | None:
         """Return default value of the field.
 
         This default is already converted into SQL string.
@@ -236,7 +226,7 @@ class BaseField(Generic[FieldType], abc.ABC):
     @property
     def _callable_default(
         self: Self,
-    ) -> Optional[CallableDefaultType[FieldType]]:
+    ) -> CallableDefaultType[FieldType] | None:
         """Return callable object for default value for the field.
 
         This default value will be called in the statements
@@ -289,34 +279,56 @@ OperatorTypes = Union[AnyOperator, AllOperator]
 
 
 class Field(BaseField[FieldType]):
-    _available_comparison_types: Tuple[type, ...]
-    _set_available_types: Tuple[type, ...]
+    """Main Field class.
 
-    # TODO: Write down normal docstring
+    All subclasses must be inherited from this class.
+
+    `_available_comparison_types` defines what types
+    can be used in comparison methods, like `__eq__`.
+
+    `_set_available_types` defines what types can be
+    set as a value to the field.
+    """
+
+    _available_comparison_types: tuple[type, ...]
+    _set_available_types: tuple[type, ...]
+
     def __init__(
         self: Self,
         *args: Any,
         is_null: bool = False,
         default: FieldDefaultType[FieldType] = None,
-        db_field_name: Optional[str] = None,
+        db_field_name: str | None = None,
     ) -> None:
+        """Create new Field instance.
+
+        It's not possible to use not keyword arguments for
+        specifying parameters.
+
+        ### Parameters:
+        - `is_null`: Defines is Field can be `NULL` or not.
+        - `default`: Default value for the Field.
+            This default value can be callable object.
+            Note! This value will be set at the python level.
+        - `db_field_name`: name of the field in the database.
+        """
         if args:
-            raise FieldDeclarationError("Use only keyword arguments.")
+            args_err_msg: Final = "Use only keyword arguments."
+            raise FieldDeclarationError(args_err_msg)
 
         if is_null and default:
-            raise FieldDeclarationError(
+            err_msg: Final = (
                 "It's not possible to specify is_null and default. "
-                "Specify either is_null or default",
+                "Specify either is_null or default"
             )
+            raise FieldDeclarationError(err_msg)
 
         self._validate_default_value(
             default_value=default,
         )
 
-        default_value: Optional[str] = None
-        callable_default_value: Optional[
-            CallableDefaultType[FieldType],
-        ] = None
+        default_value: str | None = None
+        callable_default_value: CallableDefaultType[FieldType] | None = None
 
         if callable(default):
             callable_default_value = default
@@ -334,9 +346,9 @@ class Field(BaseField[FieldType]):
 
     def __get__(
         self: Self,
-        instance: "Optional[BaseTable]",
-        owner: "Type[BaseTable]",
-    ) -> "Field[FieldType]":
+        instance: BaseTable | None,
+        owner: type[BaseTable] | None,
+    ) -> Field[FieldType]:
         try:
             return cast(
                 Field[FieldType],
@@ -351,7 +363,7 @@ class Field(BaseField[FieldType]):
     def __set__(
         self: Self,
         instance: object,
-        value: Optional[Union[FieldType, EmptyFieldValue]],
+        value: FieldType | EmptyFieldValue | None,
     ) -> None:
         field: Field[FieldType]
         if isinstance(value, EmptyFieldValue) or value is None:
@@ -364,10 +376,11 @@ class Field(BaseField[FieldType]):
             return
 
         if not isinstance(value, self._set_available_types):
-            raise TypeError(
+            err_msg: Final = (
                 f"Can't assign not {self._sql_type.querystring()} "
                 f"type to {self.__class__.__name__}",
             )
+            raise TypeError(err_msg)
 
         self._validate_field_value(
             field_value=value,  # type: ignore[arg-type]
@@ -377,8 +390,8 @@ class Field(BaseField[FieldType]):
 
     def _prepare_default_value(
         self: Self,
-        default_value: Optional[FieldType],
-    ) -> Optional[str]:
+        default_value: FieldType | None,
+    ) -> str | None:
         """Prepare default value to specify it in Field declaration.
 
         It uses only in the method `_field_default`.
@@ -392,14 +405,62 @@ class Field(BaseField[FieldType]):
     def in_(
         self: Self,
         *comparison_values: FieldType,
-        subquery: Optional[SQLSelectable] = None,
+        subquery: SQLSelectable | None = None,
     ) -> Filter:
+        """`IN` PostgreSQL clause.
+
+        It allows you to use `IN` clause.
+        You can specify either unlimited number of `comparison` values
+        or `subquery`.
+
+        ### Parameters:
+        - `comparison_values`: values for `IN` clause,
+            they must be correct type. For example, if you are
+            working with string Field, you have to use str objects.
+        - `subquery`: Any object that provides `queryset()` method.
+
+        ### Returns:
+        Initialized `Filter` class.
+
+        Example:
+        -------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+
+
+        select_statement = (
+            Buns
+            .select()
+            .where(
+                Buns.name.in_(
+                    "Awesome",
+                    "Qaspen",
+                    "Project",
+                )
+            )
+        )
+
+        select_statement = (
+            Buns
+            .select()
+            .where(
+                Buns.name.in_(
+                    subquery=Buns.select(
+                        Buns.name,
+                    ),
+                ),
+            )
+        )
+        ```
+        """
         if subquery and comparison_values:
-            raise FilterComparisonError(
+            args_err_msg: Final = (
                 "It's not possible to specify subquery "
                 "with positional arguments in `in_` method. "
                 "Please choose either subquery or positional arguments.",
             )
+            raise FilterComparisonError(args_err_msg)
 
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
@@ -407,13 +468,14 @@ class Field(BaseField[FieldType]):
                 self._available_comparison_types,
             )
             if not is_valid_type:
-                raise FieldComparisonError(
+                err_msg = (
                     f"It's impossible to use `IN` operator "
                     f"to compare {self.__class__.__name__} "
                     f"and {type(comparison_value)}",
                 )
+                raise FieldComparisonError(err_msg)
 
-        where_parameters: Dict[str, Any] = {
+        where_parameters: dict[str, Any] = {
             "field": self,
             "operator": operators.InOperator,
         }
@@ -428,14 +490,62 @@ class Field(BaseField[FieldType]):
     def not_in(
         self: Self,
         *comparison_values: FieldType,
-        subquery: Optional[SQLSelectable] = None,
+        subquery: SQLSelectable | None = None,
     ) -> Filter:
+        """`NOT IN` PostgreSQL clause.
+
+        It allows you to use `NOT IN` clause.
+        You can specify either unlimited number of `comparison` values
+        or `subquery`.
+
+        ### Parameters:
+        - `comparison_values`: values for `NOT IN` clause,
+            they must be correct type. For example, if you are
+            working with string Field, you have to use str objects.
+        - `subquery`: Any object that provides `queryset()` method.
+
+        ### Returns:
+        Initialized `Filter` class.
+
+        Example:
+        -------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+
+
+        select_statement = (
+            Buns
+            .select()
+            .where(
+                Buns.name.not_in(
+                    "Awesome",
+                    "Qaspen",
+                    "Project",
+                )
+            )
+        )
+
+        select_statement = (
+            Buns
+            .select()
+            .where(
+                Buns.name.not_in(
+                    subquery=Buns.select(
+                        Buns.name,
+                    ),
+                ),
+            )
+        )
+        ```
+        """
         if subquery and comparison_values:
-            raise FilterComparisonError(
+            args_err_msg: Final = (
                 "It's not possible to specify subquery "
                 "with positional arguments in `not_in` method. "
                 "Please choose either subquery or positional arguments.",
             )
+            raise FilterComparisonError(args_err_msg)
 
         for comparison_value in comparison_values:
             is_valid_type: bool = isinstance(
@@ -443,13 +553,14 @@ class Field(BaseField[FieldType]):
                 self._available_comparison_types,
             )
             if not is_valid_type:
-                raise FieldComparisonError(
+                err_msg = (
                     f"It's impossible to use `NOT IN` operator "
                     f"to compare {self.__class__.__name__} "
                     f"and {type(comparison_value)}",
                 )
+                raise FieldComparisonError(err_msg)
 
-        where_parameters: Dict[str, Any] = {
+        where_parameters: dict[str, Any] = {
             "field": self,
             "operator": operators.NotInOperator,
         }
@@ -463,9 +574,20 @@ class Field(BaseField[FieldType]):
 
     def between(
         self: Self,
-        left_value: Union[FieldType, "Field[Any]"],
-        right_value: Union[FieldType, "Field[Any]"],
+        left_value: FieldType | Field[Any],
+        right_value: FieldType | Field[Any],
     ) -> FilterBetween:
+        """`BETWEEN` PostgreSQL clause.
+
+        It allows you to use `BETWEEN` clause.
+
+        ### Parameters:
+        - `left_value`: left-side value in the between clause.
+        - `right_value`: right-side value in the between clause.
+
+        ### Returns:
+        Initialized `FilterBetween`.
+        """
         is_valid_type: Final[bool] = all(
             (
                 isinstance(
@@ -486,11 +608,12 @@ class Field(BaseField[FieldType]):
                 right_comparison_value=right_value,
             )
 
-        raise FieldComparisonError(
+        type_err_msg = (
             f"Incorrect type of one of the values "
             f"in `BETWEEN operator`. "
             f"You can use one of these - {self._available_comparison_types}",
         )
+        raise FieldComparisonError(type_err_msg)
 
     def _make_field_create_statement(
         self: Self,
@@ -501,6 +624,11 @@ class Field(BaseField[FieldType]):
         )
 
     def querystring(self: Self) -> QueryString:
+        """Build QueryString class.
+
+        ### Returns:
+        Built `QueryString`.
+        """
         return QueryString(
             self.field_name,
             sql_template="{}",
@@ -508,7 +636,7 @@ class Field(BaseField[FieldType]):
 
     def __eq__(  # type: ignore[override]
         self: Self,
-        comparison_value: Union[FieldType, "Field[Any]", OperatorTypes],
+        comparison_value: FieldType | Field[Any] | OperatorTypes,
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -521,21 +649,34 @@ class Field(BaseField[FieldType]):
                 comparison_value=comparison_value,
                 operator=operators.EqualOperator,
             )
-        raise FieldComparisonError(
+
+        comparison_err_msg: Final = (
             f"It's impossible to use `!=` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def eq(
         self: Self,
-        comparison_value: Union[FieldType, "Field[Any]", OperatorTypes],
+        comparison_value: FieldType | Field[Any] | OperatorTypes,
     ) -> Filter:
+        """Analog for `==` (`__eq__` method) operation.
+
+        Works exactly the same. It exists just because some
+        people prefer to use methods instead of python comparison.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         return self.__eq__(comparison_value)
 
     def __ne__(  # type: ignore[override]
         self: Self,
-        comparison_value: Union[FieldType, "Field[Any]", OperatorTypes],
+        comparison_value: FieldType | Field[Any] | OperatorTypes,
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -548,21 +689,34 @@ class Field(BaseField[FieldType]):
                 comparison_value=comparison_value,
                 operator=operators.NotEqualOperator,
             )
-        raise FieldComparisonError(
+
+        comparison_err_msg: Final = (
             f"It's impossible to use `!=` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def neq(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
+        """Analog for `!=` (`__ne__` method) operation.
+
+        Works exactly the same. It exists just because some
+        people prefer to use methods instead of python comparison.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         return self.__ne__(comparison_value)
 
     def __gt__(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -570,21 +724,34 @@ class Field(BaseField[FieldType]):
                 comparison_value=comparison_value,
                 operator=operators.GreaterOperator,
             )
-        raise FieldComparisonError(
+
+        comparison_err_msg: Final = (
             f"It's impossible to use `>` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def gt(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
+        """Analog for `>` (`__gt__` method) operation.
+
+        Works exactly the same. It exists just because some
+        people prefer to use methods instead of python comparison.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         return self.__gt__(comparison_value)
 
     def __ge__(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -592,21 +759,33 @@ class Field(BaseField[FieldType]):
                 comparison_value=comparison_value,
                 operator=operators.GreaterEqualOperator,
             )
-        raise FieldComparisonError(
+        comparison_err_msg: Final = (
             f"It's impossible to use `>=` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def gte(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
+        """Analog for `>=` (`__ge__` method) operation.
+
+        Works exactly the same. It exists just because some
+        people prefer to use methods instead of python comparison.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         return self.__ge__(comparison_value)
 
     def __lt__(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -614,21 +793,33 @@ class Field(BaseField[FieldType]):
                 comparison_value=comparison_value,
                 operator=operators.LessOperator,
             )
-        raise FieldComparisonError(
+        comparison_err_msg: Final = (
             f"It's impossible to use `<` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def lt(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
+        """Analog for `<` (`__lt__` method) operation.
+
+        Works exactly the same. It exists just because some
+        people prefer to use methods instead of python comparison.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         return self.__lt__(comparison_value)
 
     def __le__(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -636,30 +827,48 @@ class Field(BaseField[FieldType]):
                 comparison_value=comparison_value,
                 operator=operators.LessEqualOperator,
             )
-        raise FieldComparisonError(
+        comparison_err_msg: Final = (
             f"It's impossible to use `<=` operator "
             f"to compare {self.__class__.__name__} "
             f"and {type(comparison_value)}",
         )
+        raise FieldComparisonError(comparison_err_msg)
 
     def lte(
         self: Self,
-        comparison_value: Union[FieldType, OperatorTypes],
+        comparison_value: FieldType | OperatorTypes,
     ) -> Filter:
+        """Analog for `<=` (`__le__` method) operation.
+
+        Works exactly the same. It exists just because some
+        people prefer to use methods instead of python comparison.
+
+        ### Parameters:
+        - `comparison_value`: value to compare with.
+
+        ### Returns:
+        Initialized `Filter`.
+        """
         return self.__le__(comparison_value)
 
     def _is_the_same_field(
         self: Self,
-        second_field: "BaseField[FieldType]",
+        other_field: BaseField[FieldType],
     ) -> bool:
         """Compare two fields.
 
         Return `True` if they are the same, else `False`.
         They are equal if they `_field_data`s are the same.
-        """
-        return self._field_data == second_field._field_data
 
-    def _with_prefix(self: Self, prefix: str) -> "Field[FieldType]":
+        ### Parameters:
+        - `other_field`: field to compare with.
+
+        ### Returns:
+        Are fields the same or not.
+        """
+        return self._field_data == other_field._field_data
+
+    def _with_prefix(self: Self, prefix: str) -> Field[FieldType]:
         """Give Field a prefix.
 
         Make a Field deepcopy and set new prefix.
@@ -674,7 +883,7 @@ class Field(BaseField[FieldType]):
         field._field_data.prefix = prefix
         return field
 
-    def _with_alias(self: Self, alias: str) -> "Field[FieldType]":
+    def _with_alias(self: Self, alias: str) -> Field[FieldType]:
         """Give Field an alias.
 
         Make a Field deepcopy and set new alias.
@@ -691,7 +900,7 @@ class Field(BaseField[FieldType]):
 
     def _validate_field_value(
         self: Self,
-        field_value: Optional[FieldType],
+        field_value: FieldType | None,
     ) -> None:
         """Validate field value.
 
@@ -717,13 +926,17 @@ class Field(BaseField[FieldType]):
                 field_value=default_value,  # type: ignore[arg-type]
             )
         except FieldValueValidationError as exc:
-            raise FieldValueValidationError(
-                f"Wrong default value in the field "
-                f"{self.__class__.__name__}",
-            ) from exc
-
-        if not isinstance(default_value, self._set_available_types):
-            raise FieldValueValidationError(
+            validation_err_msg: Final = (
                 f"Wrong default value in the field "
                 f"{self.__class__.__name__}",
             )
+            raise FieldValueValidationError(
+                validation_err_msg,
+            ) from exc
+
+        if not isinstance(default_value, self._set_available_types):
+            type_err_msg: Final = (
+                f"Wrong default value in the field "
+                f"{self.__class__.__name__}",
+            )
+            raise FieldValueValidationError(type_err_msg)

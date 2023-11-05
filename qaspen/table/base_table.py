@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import copy
 import inspect
-from typing import Any, Dict, Final, List, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
 
 from qaspen.fields.base import Field
-from qaspen.qaspen_types import FieldType
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
+
+if TYPE_CHECKING:
+    from qaspen.qaspen_types import FieldType
 
 T_ = TypeVar(
     "T_",
@@ -13,18 +17,21 @@ T_ = TypeVar(
 )
 
 
-class BaseTable(
-    MetaTable,
-    abstract=True,
-):
+class BaseTable(MetaTable, abstract=True):
+    """Main Table in the `Qaspen` library.
+
+    Any Table must be created with this class as base class.
+    """
+
     @classmethod
     def select(
-        cls: Type[T_],
+        cls: type[T_],
         *select_fields: Field[FieldType],
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
-        :param select_fields: fields to select. By default select all possible fields.
+        :param select_fields: fields to select.
+            By default select all possible fields.
 
         :returns: SelectStatement.
         """
@@ -35,7 +42,7 @@ class BaseTable(
         return select_statement
 
     @classmethod
-    def all_fields(cls: Type[T_]) -> List[Field[FieldType]]:
+    def all_fields(cls: type[T_]) -> list[Field[FieldType]]:
         """Return all fields in the table.
 
         :returns: list of fields.
@@ -43,7 +50,7 @@ class BaseTable(
         return [*cls._table_meta.table_fields.values()]
 
     @classmethod
-    def aliased(cls: Type[T_], alias: str) -> Type[T_]:
+    def aliased(cls: type[T_], alias: str) -> type[T_]:
         """Create aliased version of the Table.
 
         ### Parameters
@@ -67,7 +74,7 @@ class BaseTable(
         return cls._aliased(alias=alias)
 
     @classmethod
-    def _aliased(cls: Type[T_], alias: str) -> Type[T_]:
+    def _aliased(cls: type[T_], alias: str) -> type[T_]:
         """Add alias to the table.
 
         We must create new `aliased_table` because in other
@@ -90,7 +97,7 @@ class BaseTable(
             cls,
             lambda member: not (inspect.isroutine(member)),
         )
-        only_field_attributes: Dict[str, Field[Any]] = {
+        only_field_attributes: dict[str, Field[Any]] = {
             attribute[0]: copy.deepcopy(attribute[1])
             for attribute in attributes
             if issubclass(type(attribute[1]), Field)
@@ -119,7 +126,7 @@ class BaseTable(
         return aliased_table
 
     @classmethod
-    def is_aliased(cls: Type[T_]) -> bool:
+    def is_aliased(cls: type[T_]) -> bool:
         """Return flag that says does the table have an alias.
 
         :returns: boolean flag.
@@ -127,11 +134,18 @@ class BaseTable(
         return bool(cls._table_meta.alias)
 
     @classmethod
-    def original_table_name(cls: Type[T_]) -> str:
+    def original_table_name(cls: type[T_]) -> str:
+        """Return original name of the table.
+
+        Without aliases and other modifications.
+
+        ### Returns:
+        Table name as a string.
+        """
         return cls._table_meta.table_name
 
     @classmethod
-    def table_name(cls: Type[T_]) -> str:
+    def table_name(cls: type[T_]) -> str:
         """Return the original table name or alias to it.
 
         :returns: original table name or alias.
@@ -140,7 +154,7 @@ class BaseTable(
 
     @classmethod
     def _retrieve_field(
-        cls: Type[T_],
+        cls: type[T_],
         field_name: str,
     ) -> Field[Any]:
         try:
@@ -148,7 +162,10 @@ class BaseTable(
                 Field[Any],
                 cls.__dict__[field_name],
             )
-        except LookupError:
-            raise AttributeError(
-                f"Table `{cls.__name__}` doesn't have `{field_name}` field",
+        except LookupError as lookup_err:
+            lookup_err_msg: Final = (
+                f"Table `{cls.__name__}` doesn't have `{field_name}` field"
             )
+            raise AttributeError(
+                lookup_err_msg,
+            ) from lookup_err
