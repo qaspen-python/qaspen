@@ -9,6 +9,7 @@ from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
 
 if TYPE_CHECKING:
+    from qaspen.aggregate_functions.base import AggFunction
     from qaspen.qaspen_types import FieldType
 
 T_ = TypeVar(
@@ -26,7 +27,7 @@ class BaseTable(MetaTable, abstract=True):
     @classmethod
     def select(
         cls: type[T_],
-        *select_fields: Field[FieldType],
+        *select: Field[FieldType] | AggFunction,
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
@@ -36,7 +37,7 @@ class BaseTable(MetaTable, abstract=True):
         :returns: SelectStatement.
         """
         select_statement: Final[SelectStatement[T_]] = SelectStatement(
-            select_fields=select_fields or cls.all_fields(),
+            select_objects=select or cls.all_fields(),
             from_table=cls,
         )
         return select_statement

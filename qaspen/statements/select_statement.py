@@ -10,7 +10,9 @@ from typing import (
     overload,
 )
 
+from qaspen.aggregate_functions.base import AggFunction
 from qaspen.fields.aliases import FieldAliases
+from qaspen.fields.base import Field
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import ObjectExecutable
@@ -23,7 +25,6 @@ from qaspen.statements.combinable_statements.join_statement import (
     JoinType,
 )
 from qaspen.statements.combinable_statements.order_by_statement import (
-    OrderBy,
     OrderByStatement,
 )
 from qaspen.statements.statement import BaseStatement
@@ -33,8 +34,8 @@ from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from qaspen.clauses.order_by import OrderBy
     from qaspen.engine.base import BaseEngine
-    from qaspen.fields.base import Field
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,
     )
@@ -71,10 +72,21 @@ class SelectStatement(
     def __init__(
         self: Self,
         from_table: type[FromTable],
-        select_fields: Iterable[Field[Any]],
+        select_objects: Iterable[Field[Any] | AggFunction],
     ) -> None:
         self._from_table: Final[type[FromTable]] = from_table
-        self._select_fields: Iterable[Field[Any],] = select_fields
+
+        self._select_fields: Iterable[Field[Any]] = []
+        self._select_agg_functions: Iterable[AggFunction] = []
+
+        for select_object in select_objects:
+            if isinstance(select_object, Field):
+                self._select_fields.append(select_object)
+            elif isinstance(select_object, AggFunction):
+                self._select_agg_functions.append(
+                    select_object,
+                )
+
         self.final_select_fields: list[Field[Any]] = []
         self.exist_prefixes: Final[list[str]] = []
 
@@ -816,16 +828,30 @@ class SelectStatement(
         to_select_fields: str = ", ".join(
             [field.field_name for field in self._prepare_fields()],
         )
+        to_select_agg_funcs = ", ".join(
+            [
+                str(agg_func.querystring())
+                for agg_func in self._select_agg_functions
+            ],
+        )
+
+        if to_select_fields and to_select_agg_funcs:
+            final_select_objects = f"{to_select_fields}, {to_select_agg_funcs}"
+        elif to_select_fields and not to_select_agg_funcs:
+            final_select_objects = to_select_fields
+        elif to_select_agg_funcs and not to_select_fields:
+            final_select_objects = to_select_agg_funcs
+
         if self._from_table._table_meta.alias:
             return QueryString(
-                to_select_fields or "1",
+                final_select_objects or "1",
                 self._from_table._table_meta.table_name,
                 self._from_table._table_meta.alias,
                 sql_template="SELECT {} FROM {} as {}",
             )
 
         return QueryString(
-            to_select_fields or "1",
+            final_select_objects or "1",
             self._from_table._table_meta.table_name,
             sql_template="SELECT {} FROM {}",
         )

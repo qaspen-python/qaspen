@@ -4,7 +4,6 @@ import dataclasses
 import enum
 import functools
 import operator
-import warnings
 from typing import TYPE_CHECKING, Any, Final, Iterable
 
 from qaspen.querystring.querystring import QueryString
@@ -54,13 +53,6 @@ class Join(CombinableExpression):
 
     def querystring(self: Self) -> QueryString:
         """Build `QueryString`."""
-        if not self._fields:
-            warnings.warn(
-                f"You have JOIN with table {self._join_table.__name__} "
-                f"but don't select any fields from this table. "
-                f"It's possible mistake.",
-                stacklevel=2,
-            )
         return QueryString(
             self.join_type,
             self._join_table.original_table_name(),
