@@ -25,7 +25,6 @@ from qaspen.statements.combinable_statements.join_statement import (
     JoinType,
 )
 from qaspen.statements.combinable_statements.order_by_statement import (
-    OrderBy,
     OrderByStatement,
 )
 from qaspen.statements.statement import BaseStatement
@@ -35,6 +34,7 @@ from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from qaspen.clauses.order_by import OrderBy
     from qaspen.engine.base import BaseEngine
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,

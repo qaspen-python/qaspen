@@ -20,12 +20,14 @@ class AggFunction(ABC):
         self: Self,
         *func_argument: SQLSelectable | Any,
         alias: str | None = None,
+        **_kwargs: Any,
     ) -> None:
         """Initialize AggFunction.
 
         ### Parameters:
         - `func_argument`: arguments for the aggregate function.
         - `alias`: alias for the function result.
+        - `kwargs`: any additional parameters for subclasses.
         """
         self.func_arguments: list[SQLSelectable | Any] = [
             *func_argument,
@@ -45,10 +47,21 @@ class AggFunction(ABC):
         ### Returns:
         `QueryString` for aggregate function.
         """
-        template_args = ", ".join(
+        return QueryString(
+            *self._querystring_args,
+            sql_template=self.function_name + "(" + self._template_args + ")",
+        )
+
+    @property
+    def _template_args(self: Self) -> str:
+        return ", ".join(
             ["{}" for _ in self.func_arguments],
         )
+
+    @property
+    def _querystring_args(self: Self) -> list[str]:
         querystring_args: list[str] = []
+
         for func_argument in self.func_arguments:
             if isinstance(func_argument, SQLSelectable):
                 querystring_args.append(
@@ -58,7 +71,5 @@ class AggFunction(ABC):
                 querystring_args.append(
                     transform_value_to_sql(func_argument),
                 )
-        return QueryString(
-            *querystring_args,
-            sql_template=self.function_name + "(" + template_args + ")",
-        )
+
+        return querystring_args
