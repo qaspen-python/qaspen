@@ -287,3 +287,111 @@ class StringAgg(AggFunction):
                 )
 
         return querystring_args
+
+
+class Max(AggFunction):
+    """`MAX` function.
+
+    PostgreSQL MAX function is an aggregate function
+    that returns the maximum value in a set of values.
+    """
+
+    function_name = "MAX"
+
+    def __init__(
+        self: Self,
+        func_argument: SQLSelectable,
+        alias: str | None = None,
+    ) -> None:
+        """Create `MAX` function.
+
+        ### Parameters:
+        - `func_argument`: It's an object with `querystring()` method
+        (Field, for example)
+        - `alias`: name for a `AS` clause in statement.
+        """
+        super().__init__(
+            func_argument,
+            alias=alias,
+        )
+
+
+class Min(AggFunction):
+    """`MIN` function.
+
+    PostgreSQL MIN() function an aggregate function
+    that returns the minimum value in a set of values.
+    """
+
+    function_name = "MIN"
+
+    def __init__(
+        self: Self,
+        func_argument: SQLSelectable,
+        alias: str | None = None,
+    ) -> None:
+        """Create `MIN` function.
+
+        ### Parameters:
+        - `func_argument`: It's an object with `querystring()` method
+        (Field, for example)
+        - `alias`: name for a `AS` clause in statement.
+        """
+        super().__init__(
+            func_argument,
+            alias=alias,
+        )
+
+
+class Greatest(AggFunction):
+    """`GREATEST` function.
+
+    In PostgreSQL, the GREATEST() function returns the largest
+    value from the specified values.
+    """
+
+    function_name = "GREATEST"
+
+    def __init__(
+        self: Self,
+        *func_argument: SQLSelectable,
+        alias: str | None = None,
+    ) -> None:
+        """Create `GREATEST` function.
+
+        ### Parameters:
+        - `func_argument`: It's an object with `querystring()` method
+        (Field, for example)
+        - `alias`: name for a `AS` clause in statement.
+        """
+        super().__init__(
+            *func_argument,
+            alias=alias,
+        )
+
+
+class Least(AggFunction):
+    """`LEAST` function.
+
+    In PostgreSQL, the LEAST() functions returns the smallest
+    values from specified values.
+    """
+
+    function_name = "LEAST"
+
+    def __init__(
+        self: Self,
+        *func_argument: SQLSelectable,
+        alias: str | None = None,
+    ) -> None:
+        """Create `LEAST` function.
+
+        ### Parameters:
+        - `func_argument`: It's an object with `querystring()` method
+        (Field, for example)
+        - `alias`: name for a `AS` clause in statement.
+        """
+        super().__init__(
+            *func_argument,
+            alias=alias,
+        )
