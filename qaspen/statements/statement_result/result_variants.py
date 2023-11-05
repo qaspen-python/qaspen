@@ -1,7 +1,10 @@
-import abc
-from typing import Any, Generic, List, Tuple, TypeVar
+from __future__ import annotations
 
-from typing_extensions import Self
+import abc
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 ListResultType = TypeVar(
     "ListResultType",
@@ -21,7 +24,8 @@ class StatementResult(abc.ABC):
     @abc.abstractmethod
     def raw_result(
         self: Self,
-    ) -> List[Tuple[Any, ...]]:
+    ) -> list[tuple[Any, ...]]:
+        """Return result as-is from engine."""
         ...
 
 
@@ -49,5 +53,5 @@ class ObjecttableStatementResult(
     """
 
     @abc.abstractmethod
-    def as_objects(self: Self) -> List[ObjectResultType]:
+    def as_objects(self: Self) -> list[ObjectResultType]:
         """Return list of objects."""

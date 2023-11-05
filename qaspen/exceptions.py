@@ -1,46 +1,33 @@
 class QaspenBaseError(Exception):
-    pass
+    """Base error for all errors."""
 
 
 class FieldBaseError(QaspenBaseError):
-    pass
+    """Base error for all field-related errors."""
 
 
 class FieldValueValidationError(FieldBaseError):
-    pass
+    """Error for field value validation error."""
 
 
 class FieldDeclarationError(FieldBaseError):
-    pass
-
-
-class StringFieldDeclarationError(FieldDeclarationError):
-    pass
+    """Error for field declaration error."""
 
 
 class FieldComparisonError(FieldBaseError):
-    pass
+    """Error for error in field comparison.
+
+    Usually if types are incorrect.
+    """
 
 
 class FilterComparisonError(FieldBaseError):
-    pass
-
-
-class OnJoinError(QaspenBaseError):
-    pass
-
-
-class OnJoinComparisonError(OnJoinError):
-    pass
-
-
-class OnJoinFieldsError(OnJoinError):
-    pass
+    """Error if there is an mistake in Filter."""
 
 
 class QueryResultError(QaspenBaseError):
-    pass
+    """Base error for QueryResult exceptions."""
 
 
 class QueryResultLookupError(QueryResultError):
-    pass
+    """Error for processing result from engine."""

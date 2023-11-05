@@ -1,15 +1,19 @@
-from typing import Any, Dict, Final, Generic, List, Tuple, Type
+from __future__ import annotations
 
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Dict, Final, Generic, List
 
-from qaspen.fields.aliases import FieldAliases
 from qaspen.qaspen_types import FromTable
 from qaspen.statements.statement_result.result_variants import (
     ListableStatementResult,
     ObjecttableStatementResult,
     StatementResult,
 )
-from qaspen.table.base_table import BaseTable
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from qaspen.fields.aliases import FieldAliases
+    from qaspen.table.base_table import BaseTable
 
 
 class SelectStatementResult(
@@ -28,19 +32,19 @@ class SelectStatementResult(
 
     def __init__(
         self: Self,
-        from_table: Type[FromTable],
-        query_result: List[Tuple[Any, ...]],
+        from_table: type[FromTable],
+        query_result: list[tuple[Any, ...]],
         aliases: FieldAliases,
     ) -> None:
         self.from_table: Final = from_table
         self.query_result: Final = query_result
         self.aliases: Final = aliases
 
-    def as_list(self: Self) -> List[Dict[str, Any]]:
+    def as_list(self: Self) -> list[dict[str, Any]]:
         """Return list of dicts.
 
         Example:
-        ------
+        -------
         ```python
         # Assume that each table has only one row.
         import asyncio
@@ -87,7 +91,7 @@ class SelectStatementResult(
         ]
         ```
         """
-        result_list: List[Dict[str, Any]] = []
+        result_list: list[dict[str, Any]] = []
 
         for single_query_result in self.query_result:
             zip_expression = zip(
@@ -97,7 +101,7 @@ class SelectStatementResult(
 
             result_list.append({})
 
-            for single_query_result, field in zip_expression:
+            for single_query_record, field in zip_expression:
                 is_from_table: bool = (
                     field.aliased_field._field_data.from_table
                     is self.from_table
@@ -108,7 +112,7 @@ class SelectStatementResult(
                 if is_from_table:
                     result_dict[
                         field.aliased_field._original_field_name
-                    ] = single_query_result
+                    ] = single_query_record
                 else:
                     joined_results = result_dict.setdefault(
                         f"_{field.aliased_field._table_name}",
@@ -116,15 +120,15 @@ class SelectStatementResult(
                     )
                     joined_results[
                         field.aliased_field._original_field_name
-                    ] = single_query_result
+                    ] = single_query_record
 
         return result_list
 
-    def as_objects(self: Self) -> List[FromTable]:
+    def as_objects(self: Self) -> list[FromTable]:
         """Return list of objects.
 
         Example:
-        ------
+        -------
         ```python
         # Assume that each table has only one row.
         import asyncio
@@ -170,7 +174,7 @@ class SelectStatementResult(
             # `filling` - name of the field
         ```
         """
-        result_objects: List[FromTable] = []
+        result_objects: list[FromTable] = []
 
         for single_query_result in self.query_result:
             zip_expression = zip(
@@ -178,19 +182,19 @@ class SelectStatementResult(
                 self.aliases.values(),
             )
 
-            temporary_dict: Dict[
-                Type[BaseTable],
-                Dict[str, Any],
+            temporary_dict: dict[
+                type[BaseTable],
+                dict[str, Any],
             ] = {}
 
-            for single_query_result, field in zip_expression:
+            for single_query_record, field in zip_expression:
                 model_params_dict = temporary_dict.setdefault(
                     field.aliased_field._field_data.from_table,
                     {},
                 )
                 model_params_dict[
                     field.aliased_field._original_field_name
-                ] = single_query_result
+                ] = single_query_record
 
             main_table_params = temporary_dict.pop(self.from_table)
             main_table = self.from_table(**main_table_params)
@@ -205,7 +209,7 @@ class SelectStatementResult(
 
         return result_objects
 
-    def raw_result(self: Self) -> List[Tuple[Any, ...]]:
+    def raw_result(self: Self) -> list[tuple[Any, ...]]:
         """Return result of the query as in engine.
 
         :returns: list of tuples.

@@ -35,7 +35,8 @@ build-backend = "poetry.core.masonry.api"
 line-length = 79
 select = ["ALL"]
 fixable = ["ALL"]
-ignore = ["ANN401", "D100"]
+ignore = ["ANN401", "D100", "D107", "SLF001", "D105", "TRY003", "PLR0913", "FBT001", "FBT002", "S608"]
+exclude = ["./qaspen/engine", "qaspen/fields/operators.py"]
 
 [tool.black]
 line-length = 79
@@ -47,8 +48,3 @@ strict = true
 profile = "black"
 multi_line_output = 3
 line_length = 79
-
-[tool.qaspen]
-models_file = ""
-models_folder = ""
-migrations_folder = ""

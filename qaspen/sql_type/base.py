@@ -1,4 +1,4 @@
-from typing import Tuple, Type, Union
+from __future__ import annotations
 
 from qaspen.querystring.querystring import QueryString
 
@@ -18,15 +18,27 @@ class SQLType:
     converting.
     """
 
-    python_type: Union[type, Tuple[type, ...]]
+    python_type: type | tuple[type, ...]
 
     @classmethod
-    def querystring(cls: Type["SQLType"]) -> QueryString:
+    def querystring(cls: type[SQLType]) -> QueryString:
+        """Build querystring.
+
+        Usually it equals to upper name of the class.
+
+        ### Returns:
+        new `QueryString`.
+        """
         return QueryString(
             cls.sql_type(),
             sql_template="{}",
         )
 
     @classmethod
-    def sql_type(cls: Type["SQLType"]) -> str:
+    def sql_type(cls: type[SQLType]) -> str:
+        """Build string Type in PostgreSQL.
+
+        ### Returns:
+        string.
+        """
         return cls.__name__.upper()

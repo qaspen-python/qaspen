@@ -1,25 +1,29 @@
+from __future__ import annotations
+
 import json
 from ast import literal_eval
-from typing import Any, Dict, Final, List, Optional, Tuple, Type, Union
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Union
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import complex_types
-from qaspen.sql_type.base import SQLType
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from qaspen.sql_type.base import SQLType
 
 
 class JsonBase(Field[FieldType]):
     """Base field for JSON and JSONB PostgreSQL fields."""
 
     def __init__(
-        self,
+        self: Self,
         *args: Any,
         is_null: bool = False,
-        db_field_name: Optional[str] = None,
+        db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
     ) -> None:
         super().__init__(
@@ -31,7 +35,7 @@ class JsonBase(Field[FieldType]):
 
     def _prepare_default_value(
         self: Self,
-        default_value: Optional[FieldType],
+        default_value: FieldType | None,
     ) -> str:
         """Prepare default value for PostgreSQL DEFAULT statement.
 
@@ -42,10 +46,13 @@ class JsonBase(Field[FieldType]):
             try:
                 json.loads(default_value)
             except json.decoder.JSONDecodeError as exc:
-                raise FieldValueValidationError(
+                validation_err_msg: Final = (
                     f"Default value {default_value} of field "
                     f"{self.__class__.__name__} "
                     f"can't be serialized in PSQL {self._field_type} type.",
+                )
+                raise FieldValueValidationError(
+                    validation_err_msg,
                 ) from exc
             return f"'{default_value}'"
 
@@ -61,14 +68,15 @@ class JsonBase(Field[FieldType]):
                 ),
             )
 
-        raise FieldDeclarationError(
+        type_err_msg: Final = (
             f"Can't set default value {default_value} for "
             f"{self.__class__.__name__} field",
         )
+        raise FieldDeclarationError(type_err_msg)
 
     def _dump_default(
         self: Self,
-        default_value: Union[Dict[Any, Any], List[Any]],
+        default_value: dict[Any, Any] | list[Any],
     ) -> str:
         dump_value: Final = json.dumps(
             default_value,
@@ -80,7 +88,7 @@ class JsonBase(Field[FieldType]):
 class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
     """Field for JSON PostgreSQL type."""
 
-    _available_comparison_types: Tuple[
+    _available_comparison_types: tuple[
         type,
         ...,
     ] = (
@@ -91,14 +99,14 @@ class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (dict, list, str)
+    _set_available_types: tuple[type, ...] = (dict, list, str)
     _sql_type = complex_types.Json
 
 
 class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
     """Field for JSON PostgreSQL type."""
 
-    _available_comparison_types: Tuple[
+    _available_comparison_types: tuple[
         type,
         ...,
     ] = (
@@ -110,14 +118,14 @@ class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (dict, str, bytes, list)
+    _set_available_types: tuple[type, ...] = (dict, str, bytes, list)
     _sql_type = complex_types.Jsonb
 
 
 class ArrayField(Field[List[Any]]):
     """Field for ARRAY PostgreSQL type."""
 
-    _available_comparison_types: Tuple[
+    _available_comparison_types: tuple[
         type,
         ...,
     ] = (
@@ -126,17 +134,17 @@ class ArrayField(Field[List[Any]]):
         AllOperator,
         AnyOperator,
     )
-    _set_available_types: Tuple[type, ...] = (list,)
+    _set_available_types: tuple[type, ...] = (list,)
     _sql_type = complex_types.Array
 
     def __init__(
-        self,
+        self: Self,
         *args: Any,
-        base_type: Type[SQLType],
+        base_type: type[SQLType],
         is_null: bool = False,
-        db_field_name: Optional[str] = None,
-        default: FieldDefaultType[List[Any]] = None,
-        dimension: Optional[int] = None,
+        db_field_name: str | None = None,
+        default: FieldDefaultType[list[Any]] = None,
+        dimension: int | None = None,
     ) -> None:
         super().__init__(
             *args,
@@ -150,14 +158,13 @@ class ArrayField(Field[List[Any]]):
 
     def _prepare_default_value(
         self: Self,
-        default_value: Optional[List[Any]],
-    ) -> Optional[str]:
+        default_value: list[Any] | None,
+    ) -> str | None:
         dumped_value = json.dumps(
             default_value,
             default=str,
         )
-        dumped_value = dumped_value.replace("[", "{").replace("]", "}")
-        return dumped_value
+        return dumped_value.replace("[", "{").replace("]", "}")
 
     @property
     def _field_type(self: Self) -> str:

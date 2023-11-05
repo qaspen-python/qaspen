@@ -1,6 +1,9 @@
-from typing import Any, List, Type
+from __future__ import annotations
 
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class QueryString:
@@ -20,10 +23,10 @@ class QueryString:
         sql_template: str,
     ) -> None:
         self.sql_template: str = sql_template
-        self.template_arguments: List[Any] = list(template_arguments)
+        self.template_arguments: list[Any] = list(template_arguments)
 
     @classmethod
-    def empty(cls: Type["QueryString"]) -> "EmptyQueryString":
+    def empty(cls: type[QueryString]) -> EmptyQueryString:
         """Create `EmptyQueryString`.
 
         :returns: EmptyQueryString.
@@ -37,7 +40,7 @@ class QueryString:
         :returns: QueryString as a string.
 
         Example:
-        ------
+        -------
         ```python
         qs1 = QueryString(
             "good_field",
@@ -53,7 +56,7 @@ class QueryString:
 
     def __add__(
         self: Self,
-        additional_querystring: "QueryString",
+        additional_querystring: QueryString,
     ) -> Self:
         """Combine two QueryStrings.
 
@@ -64,7 +67,7 @@ class QueryString:
         :returns: self.
 
         Example:
-        ------
+        -------
         ```python
         qs1 = QueryString(
             "good_field",
@@ -84,7 +87,7 @@ class QueryString:
             return self
 
         self.sql_template += (
-            f"{self.add_delimiter}" f"{additional_querystring.sql_template}"
+            f"{self.add_delimiter}{additional_querystring.sql_template}"
         )
         self.template_arguments.extend(
             additional_querystring.template_arguments,

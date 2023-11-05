@@ -1,31 +1,36 @@
+from __future__ import annotations
+
 import dataclasses
 import functools
 import operator
-from typing import TYPE_CHECKING, Any, Final, Iterable, List, Optional
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Final, Iterable
 
 from qaspen.querystring.querystring import OrderByQueryString, QueryString
 from qaspen.statements.statement import BaseStatement
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
     from qaspen.fields.base import Field
 
 
 class OrderBy:
+    """Main class for PostgreSQL OrderBy."""
+
     def __init__(
         self: Self,
-        field: "Field[Any]",
+        field: Field[Any],
         ascending: bool = True,
         nulls_first: bool = True,
     ) -> None:
-        self.field: Final["Field[Any]"] = field  # type: ignore[arg-type]
+        self.field: Final[Field[Any]] = field  # type: ignore[arg-type]
         self.ascending: Final[bool] = ascending
         self.nulls_first: Final[bool] = nulls_first
 
     def querystring(self: Self) -> OrderByQueryString:
+        """Build `QueryString`."""
         querystring_template: Final[str] = "{} {} {}"
-        querystring_arguments: List[str] = [self.field.field_name]
+        querystring_arguments: list[str] = [self.field.field_name]
 
         if self.ascending is True:
             querystring_arguments.append("ASC")
@@ -45,17 +50,32 @@ class OrderBy:
 
 @dataclasses.dataclass
 class OrderByStatement(BaseStatement):
-    order_by_expressions: List[OrderBy] = dataclasses.field(
+    """OrderBy statement for high-level statements.
+
+    It is used in Select/Update/Insert/Delete Statements.
+
+    `order_by_expressions` contains all created order_bys.
+    """
+
+    order_by_expressions: list[OrderBy] = dataclasses.field(
         default_factory=list,
     )
 
     def order_by(
         self: Self,
-        field: Optional["Field[Any]"] = None,
+        field: Field[Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
-        order_by_statements: Optional[Iterable[OrderBy]] = None,
+        order_by_statements: Iterable[OrderBy] | None = None,
     ) -> None:
+        """Create new `OrderBy`.
+
+        ### Parameters:
+        - `field`: field to order by.
+        - `ascending`: `ASC` or `DESC` order.
+        - `nulls_first`: `NULL` first or not.
+        - `order_by_statements`: already initialized OrderBys.
+        """
         if field:
             self.order_by_expressions.append(
                 OrderBy(
@@ -71,6 +91,7 @@ class OrderByStatement(BaseStatement):
             )
 
     def querystring(self: Self) -> QueryString:
+        """Build `QueryString`."""
         if not self.order_by_expressions:
             return QueryString.empty()
         final_order_by: OrderByQueryString = functools.reduce(

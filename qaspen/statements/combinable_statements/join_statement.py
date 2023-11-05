@@ -1,14 +1,12 @@
+from __future__ import annotations
+
 import dataclasses
 import enum
 import functools
 import operator
 import warnings
-from typing import TYPE_CHECKING, Any, Final, Iterable, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Final, Iterable
 
-from typing_extensions import Self
-
-from qaspen.fields.base import Field
-from qaspen.qaspen_types import FieldType
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
@@ -16,37 +14,52 @@ from qaspen.statements.combinable_statements.combinations import (
 from qaspen.statements.statement import BaseStatement
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from qaspen.fields.base import Field
+    from qaspen.qaspen_types import FieldType
     from qaspen.table.base_table import BaseTable
 
 
 class Join(CombinableExpression):
+    """Main class for PostgreSQL JOINs.
+
+    It can work alone as a class and it's possible
+    to inherit from it to create new types of JOINs.
+
+    `join_type` is used for creating QueryString,
+    basically it is join type.
+    """
+
     join_type: str = "JOIN"
 
     def __init__(
         self: Self,
-        fields: Optional[Iterable[Field[Any]]],
-        from_table: Type["BaseTable"],
-        join_table: Type["BaseTable"],
+        fields: Iterable[Field[Any]] | None,
+        from_table: type[BaseTable],
+        join_table: type[BaseTable],
         on: CombinableExpression,
         join_alias: str,
     ) -> None:
-        self._from_table: Final[Type["BaseTable"]] = from_table
-        self._join_table: Final[Type["BaseTable"]] = join_table
+        self._from_table: Final[type[BaseTable]] = from_table
+        self._join_table: Final[type[BaseTable]] = join_table
         self._based_on: CombinableExpression = on
         self._alias: str = join_alias
 
-        self._fields: Optional[List[Field[Any]]] = None
+        self._fields: list[Field[Any]] | None = None
         if fields:
             self._fields = self._process_select_fields(
                 fields=fields,
             )
 
     def querystring(self: Self) -> QueryString:
+        """Build `QueryString`."""
         if not self._fields:
             warnings.warn(
                 f"You have JOIN with table {self._join_table.__name__} "
                 f"but don't select any fields from this table. "
                 f"It's possible mistake.",
+                stacklevel=2,
             )
         return QueryString(
             self.join_type,
@@ -58,8 +71,13 @@ class Join(CombinableExpression):
 
     def add_fields(
         self: Self,
-        fields: List[Field[Any]],
+        fields: list[Field[Any]],
     ) -> None:
+        """Add new fields to the join.
+
+        ### Parameters:
+        - `fields`: fields to add.
+        """
         processed_fields = self._process_select_fields(
             fields=fields,
         )
@@ -82,57 +100,80 @@ class Join(CombinableExpression):
     def _process_select_fields(
         self: Self,
         fields: Iterable[Field[Any]],
-    ) -> List[Field[Any]]:
-        fields_with_prefix: List[Field[Any]] = [
+    ) -> list[Field[Any]]:
+        fields_with_prefix: list[Field[Any]] = [
             self._prefixed_field(field=field) for field in fields
         ]
         return fields_with_prefix
 
-    def _join_fields(self: Self) -> Optional[List[Field[Any]]]:
+    def _join_fields(self: Self) -> list[Field[Any]] | None:
         return self._fields
 
 
 class InnerJoin(Join):
+    """Class for `INNER JOIN` join type."""
+
     join_type: str = "INNER JOIN"
 
 
 class LeftOuterJoin(Join):
+    """Class for `LEFT JOIN` join type."""
+
     join_type: str = "LEFT JOIN"
 
 
 class RightOuterJoin(Join):
+    """Class for `RIGHT JOIN` join type."""
+
     join_type: str = "RIGHT JOIN"
 
 
 class FullOuterJoin(Join):
+    """Class for `FULL OUTER JOIN` join type."""
+
     join_type: str = "FULL OUTER JOIN"
 
 
 class JoinType(enum.Enum):
-    JOIN: Type[Join] = Join
-    INNERJOIN: Type[InnerJoin] = InnerJoin
-    LEFTJOIN: Type[LeftOuterJoin] = LeftOuterJoin
-    RIGHTJOIN: Type[RightOuterJoin] = RightOuterJoin
-    FULLOUTERJOIN: Type[FullOuterJoin] = FullOuterJoin
+    """ENUM for JoinType."""
+
+    JOIN: type[Join] = Join
+    INNERJOIN: type[InnerJoin] = InnerJoin
+    LEFTJOIN: type[LeftOuterJoin] = LeftOuterJoin
+    RIGHTJOIN: type[RightOuterJoin] = RightOuterJoin
+    FULLOUTERJOIN: type[FullOuterJoin] = FullOuterJoin
 
 
 @dataclasses.dataclass
 class JoinStatement(BaseStatement):
-    join_expressions: List[Join] = dataclasses.field(
-        default_factory=list,
-    )
-    used_aliases: List[int] = dataclasses.field(
+    """Join statement for high-level statements.
+
+    It is used in Select/Update/Insert/Delete Statements.
+
+    `join_expressions` contains all created joins.
+    """
+
+    join_expressions: list[Join] = dataclasses.field(
         default_factory=list,
     )
 
     def join(
         self: Self,
-        join_table: Type["BaseTable"],
-        from_table: Type["BaseTable"],
+        join_table: type[BaseTable],
+        from_table: type[BaseTable],
         on: CombinableExpression,
         join_type: JoinType,
-        fields: Optional[Iterable[Field[Any]]] = None,
+        fields: Iterable[Field[Any]] | None = None,
     ) -> None:
+        """Create new join.
+
+        ### Parameters:
+        - `join_table`: Table for join.
+        - `from_table`: main Table from the query.
+        - `on`: `ON` condition (Filter class usually).
+        - `join_type`: type of the JOIN.
+        - `fields`: fields to select from `join_table`.
+        """
         join_alias = (
             join_table._table_meta.alias or join_table.original_table_name()
         )
@@ -148,12 +189,17 @@ class JoinStatement(BaseStatement):
 
     def add_join(
         self: Self,
-        *join_expressions: Join,
+        *join_expression: Join,
     ) -> None:
-        for join_expression in join_expressions:
-            self.join_expressions.append(join_expression)
+        """Add new join.
+
+        ### Parameters:
+        - `join_expression`: instance of Join (or its subclasses).
+        """
+        self.join_expressions.extend(join_expression)
 
     def querystring(self: Self) -> QueryString:
+        """Build `QueryString`."""
         if not self.join_expressions:
             return QueryString.empty()
 
@@ -168,8 +214,8 @@ class JoinStatement(BaseStatement):
 
     def _retrieve_all_join_fields(
         self: Self,
-    ) -> List[Field[Any]]:
-        all_joins_fields: List[Field[Any]] = []
+    ) -> list[Field[Any]]:
+        all_joins_fields: list[Field[Any]] = []
         for join_expression in self.join_expressions:
             if join_fields := join_expression._join_fields():
                 all_joins_fields.extend(join_fields)

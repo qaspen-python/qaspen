@@ -68,3 +68,7 @@ class ANDOperator(BaseOperator):
 
 class OROperator(BaseOperator):
     operation_template: str = "OR"
+
+
+class NotOperator(BaseOperator):
+    operation_template: str = "NOT ({})"

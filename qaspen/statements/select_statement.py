@@ -1,29 +1,19 @@
+from __future__ import annotations
+
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Final,
     Generator,
     Generic,
     Iterable,
-    List,
-    Optional,
-    Tuple,
-    Type,
     overload,
 )
 
-from typing_extensions import Self
-
-from qaspen.engine.base import BaseEngine
 from qaspen.fields.aliases import FieldAliases
-from qaspen.fields.base import Field
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import ObjectExecutable
-from qaspen.statements.combinable_statements.combinations import (
-    CombinableExpression,
-)
 from qaspen.statements.combinable_statements.filter_statement import (
     FilterStatement,
 )
@@ -41,6 +31,13 @@ from qaspen.statements.sub_statements.limit_statement import LimitStatement
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 
 if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from qaspen.engine.base import BaseEngine
+    from qaspen.fields.base import Field
+    from qaspen.statements.combinable_statements.combinations import (
+        CombinableExpression,
+    )
     from qaspen.statements.exists_statement import ExistsStatement
     from qaspen.statements.intersect_statement import IntersectStatement
     from qaspen.statements.statement_result.select_result import (
@@ -73,13 +70,13 @@ class SelectStatement(
 
     def __init__(
         self: Self,
-        from_table: Type[FromTable],
+        from_table: type[FromTable],
         select_fields: Iterable[Field[Any]],
     ) -> None:
-        self._from_table: Final[Type[FromTable]] = from_table
+        self._from_table: Final[type[FromTable]] = from_table
         self._select_fields: Iterable[Field[Any],] = select_fields
-        self.final_select_fields: List[Field[Any]] = []
-        self.exist_prefixes: Final[List[str]] = []
+        self.final_select_fields: list[Field[Any]] = []
+        self.exist_prefixes: Final[list[str]] = []
 
         self._filter_statement: FilterStatement = FilterStatement()
         self._limit_statement: LimitStatement = LimitStatement()
@@ -92,7 +89,7 @@ class SelectStatement(
 
     def __await__(
         self: Self,
-    ) -> Generator[None, None, "SelectStatementResult[FromTable]"]:
+    ) -> Generator[None, None, SelectStatementResult[FromTable]]:
         """SelectStatement can be awaited.
 
         Example:
@@ -111,7 +108,7 @@ class SelectStatement(
     async def execute(
         self: Self,
         engine: BaseEngine[Any, Any],
-    ) -> "SelectStatementResult[FromTable]":
+    ) -> SelectStatementResult[FromTable]:
         """Execute select statement.
 
         This is manual execution.
@@ -128,7 +125,7 @@ class SelectStatement(
             SelectStatementResult,
         )
 
-        raw_query_result: List[Tuple[Any, ...],] = await engine.run_query(
+        raw_query_result: list[tuple[Any, ...],] = await engine.run_query(
             querystring=self.querystring(),
         )
 
@@ -182,7 +179,7 @@ class SelectStatement(
         ```
         In this statement `&` is AND, `|` is OR.
         """
-        self._filter_statement.where(*where_arguments)
+        self._filter_statement.add_filter(*where_arguments)
         return self
 
     def limit(
@@ -260,10 +257,10 @@ class SelectStatement(
 
     def order_by(
         self: Self,
-        field: Optional[Field[Any]] = None,
+        field: Field[Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
-        order_bys: Optional[Iterable[OrderBy]] = None,
+        order_bys: Iterable[OrderBy] | None = None,
     ) -> Self:
         """Set ORDER BY.
 
@@ -324,25 +321,25 @@ class SelectStatement(
     @overload
     def union(
         self: Self,
-        union_with: "SelectStatement[FromTable]",
+        union_with: SelectStatement[FromTable],
         union_all: bool = False,
-    ) -> "UnionStatement[FromTable]":
+    ) -> UnionStatement[FromTable]:
         ...
 
     @overload
     def union(
         self: Self,
-        union_with: "SelectStatement[Any]",
+        union_with: SelectStatement[Any],
         union_all: bool = False,
-    ) -> "UnionStatement[FromTable]":
+    ) -> UnionStatement[FromTable]:
         ...
 
     def union(
         self: Self,
-        union_with: "SelectStatement[FromTable]",
+        union_with: SelectStatement[FromTable],
         union_all: bool = False,
-    ) -> "UnionStatement[FromTable]":
-        """Creates union statement.
+    ) -> UnionStatement[FromTable]:
+        """Create union statement.
 
         Combines two `SelectStatement`'s and creates
         `UnionStatement`.
@@ -380,8 +377,8 @@ class SelectStatement(
 
     def intersect(
         self: Self,
-        intersect_with: "SelectStatement[FromTable]",
-    ) -> "IntersectStatement":
+        intersect_with: SelectStatement[FromTable],
+    ) -> IntersectStatement:
         """Create intersect statement.
 
         Combines two `SelectStatement`'s and creates
@@ -415,7 +412,7 @@ class SelectStatement(
             right_expression=intersect_with,
         )
 
-    def exists(self: Self) -> "ExistsStatement":
+    def exists(self: Self) -> ExistsStatement:
         """Create exists statement.
 
         Create exists statement that return True or False.
@@ -447,7 +444,7 @@ class SelectStatement(
 
     def join(
         self: Self,
-        join_table: Type["BaseTable"],
+        join_table: type[BaseTable],
         based_on: CombinableExpression,
     ) -> Self:
         """Add `JOIN` to the SelectStatement.
@@ -497,7 +494,7 @@ class SelectStatement(
 
     def inner_join(
         self: Self,
-        join_table: Type["BaseTable"],
+        join_table: type[BaseTable],
         based_on: CombinableExpression,
     ) -> Self:
         """Add `INNER JOIN` to the SelectStatement.
@@ -547,7 +544,7 @@ class SelectStatement(
 
     def left_join(
         self: Self,
-        join_table: Type["BaseTable"],
+        join_table: type[BaseTable],
         based_on: CombinableExpression,
     ) -> Self:
         """Add `LEFT JOIN` to the SelectStatement.
@@ -598,7 +595,7 @@ class SelectStatement(
 
     def right_join(
         self: Self,
-        join_table: Type["BaseTable"],
+        join_table: type[BaseTable],
         based_on: CombinableExpression,
     ) -> Self:
         """Add `RIGHT JOIN` to the SelectStatement.
@@ -648,7 +645,7 @@ class SelectStatement(
 
     def full_outer_join(
         self: Self,
-        join_table: Type["BaseTable"],
+        join_table: type[BaseTable],
         based_on: CombinableExpression,
     ) -> Self:
         """Add `FULL OUTER JOIN` to the SelectStatement.
@@ -771,7 +768,7 @@ class SelectStatement(
 
     def _join_on(
         self: Self,
-        join_table: Type["BaseTable"],
+        join_table: type[BaseTable],
         based_on: CombinableExpression,
         join_type: JoinType,
     ) -> Self:
@@ -785,23 +782,22 @@ class SelectStatement(
 
     async def _run_query(
         self: Self,
-    ) -> "SelectStatementResult[FromTable]":
+    ) -> SelectStatementResult[FromTable]:
         if not self._from_table._table_meta.database_engine:
-            raise AttributeError(
-                "There is no database engine.",
-            )
+            engine_err_msg: Final = "There is no database engine."
+            raise AttributeError(engine_err_msg)
         return await self.execute(
             engine=self._from_table._table_meta.database_engine,
         )
 
     def _prepare_fields(
         self: Self,
-    ) -> List[Field[Any]]:
+    ) -> list[Field[Any]]:
         if self.final_select_fields:
             return self.final_select_fields
-        final_select_fields: Final[List[Field[Any]]] = []
+        final_select_fields: Final[list[Field[Any]]] = []
 
-        fields_to_select: List[Field[Any]] = []
+        fields_to_select: list[Field[Any]] = []
         fields_to_select.extend(self._prepare_select_fields())
         fields_to_select.extend(
             self._join_statement._retrieve_all_join_fields(),
@@ -836,11 +832,11 @@ class SelectStatement(
 
     def _prepare_select_fields(
         self: Self,
-    ) -> List[Field[Any]]:
-        fields_from_original_table: List[Field[Any]] = []
-        fields_from_joined_table: Dict[
+    ) -> list[Field[Any]]:
+        fields_from_original_table: list[Field[Any]] = []
+        fields_from_joined_table: dict[
             str,
-            List[Field[Any]],
+            list[Field[Any]],
         ] = {}
 
         for field in self._select_fields:

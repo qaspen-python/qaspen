@@ -1,38 +1,46 @@
+from __future__ import annotations
+
 import copy
 import dataclasses
-from typing import Any, Dict, Final, List, Optional, Type
+from typing import TYPE_CHECKING, Any, ClassVar, Final
 
-from typing_extensions import Self
-
-from qaspen.engine.base import BaseEngine
 from qaspen.fields.base import EmptyFieldValue, Field
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+    from qaspen.engine.base import BaseEngine
 
 
 @dataclasses.dataclass
 class MetaTableData:
+    """All data about the table."""
+
     table_name: str = ""
     abstract: bool = False
-    table_fields: Dict[str, Field[Any]] = dataclasses.field(
+    table_fields: dict[str, Field[Any]] = dataclasses.field(
         default_factory=dict,
     )
-    database_engine: Optional[BaseEngine[Any, Any]] = None
-    alias: Optional[str] = None
+    database_engine: BaseEngine[Any, Any] | None = None
+    alias: str | None = None
 
 
 class MetaTable:
+    """Meta Table."""
+
     _table_meta: MetaTableData = MetaTableData()
-    _subclasses: List[Type["MetaTable"]] = []
+    _subclasses: ClassVar[list[type[MetaTable]]] = []
 
     def __init_subclass__(
-        cls: Type["MetaTable"],
-        table_name: Optional[str] = None,
+        cls: type[MetaTable],
+        table_name: str | None = None,
         abstract: bool = False,
         **kwargs: Any,
     ) -> None:
         if not table_name:
             table_name = cls.__name__.lower()
 
-        table_fields: Final[Dict[str, Field[Any]],] = cls._parse_table_fields()
+        table_fields: Final[dict[str, Field[Any]],] = cls._parse_table_fields()
 
         cls._table_meta = MetaTableData(
             table_name=table_name,
@@ -61,13 +69,13 @@ class MetaTable:
                 new_field_value,
             )
 
-    def __getattr__(  # TODO: We I implemented it?
+    def __getattr__(
         self: Self,
         attribute: str,
     ) -> Any:
         return self.__dict__[attribute]
 
-    def __getattribute__(self, attribute: str) -> Any:
+    def __getattribute__(self: Self, attribute: str) -> Any:
         """Return value of the value instead of the instance of the field.
 
         Value of the field will be returned only
@@ -88,9 +96,9 @@ class MetaTable:
 
     @classmethod
     def _parse_table_fields(
-        cls: Type["MetaTable"],
-    ) -> Dict[str, Field[Any]]:
-        table_fields: Final[Dict[str, Field[Any]]] = {
+        cls: type[MetaTable],
+    ) -> dict[str, Field[Any]]:
+        table_fields: Final[dict[str, Field[Any]]] = {
             field_class._field_data.field_name: field_class
             for field_class in cls.__dict__.values()
             if isinstance(field_class, Field)
@@ -100,8 +108,8 @@ class MetaTable:
 
     @classmethod
     def _retrieve_not_abstract_subclasses(
-        cls: Type["MetaTable"],
-    ) -> List[Type["MetaTable"]]:
+        cls: type[MetaTable],
+    ) -> list[type[MetaTable]]:
         return [
             subclass
             for subclass in cls._subclasses
