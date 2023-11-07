@@ -34,8 +34,8 @@ from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from qaspen.abc.db_engine import BaseEngine
     from qaspen.clauses.order_by import OrderBy
-    from qaspen.engine.base import BaseEngine
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,
     )
@@ -119,7 +119,7 @@ class SelectStatement(
 
     async def execute(
         self: Self,
-        engine: BaseEngine[Any, Any],
+        engine: BaseEngine[Any, Any, Any, Any],
     ) -> SelectStatementResult[FromTable]:
         """Execute select statement.
 
@@ -137,7 +137,7 @@ class SelectStatement(
             SelectStatementResult,
         )
 
-        raw_query_result: list[tuple[Any, ...],] = await engine.run_query(
+        raw_query_result: list[tuple[Any, ...],] = await engine.execute(
             querystring=self.querystring(),
         )
 

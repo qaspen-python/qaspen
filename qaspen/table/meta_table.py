@@ -9,7 +9,7 @@ from qaspen.fields.base import EmptyFieldValue, Field
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.engine.base import BaseEngine
+    from qaspen.abc.db_engine import BaseEngine
 
 
 @dataclasses.dataclass
@@ -21,7 +21,7 @@ class MetaTableData:
     table_fields: dict[str, Field[Any]] = dataclasses.field(
         default_factory=dict,
     )
-    database_engine: BaseEngine[Any, Any] | None = None
+    database_engine: BaseEngine[Any, Any, Any, Any] | None = None
     alias: str | None = None
 
 

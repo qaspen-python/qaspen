@@ -17,7 +17,7 @@ from qaspen.statements.statement_result.select_result import (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.engine.base import BaseEngine
+    from qaspen.abc.db_engine import BaseEngine
     from qaspen.statements.select_statement import SelectStatement
 
 
@@ -134,10 +134,10 @@ class UnionStatement(
 
     async def execute(
         self: Self,
-        engine: BaseEngine[Any, Any],
+        engine: BaseEngine[Any, Any, Any, Any],
     ) -> SelectStatementResult[FromTable]:
         """Execute SQL query and return result."""
-        raw_query_result: list[tuple[Any, ...],] = await engine.run_query(
+        raw_query_result: list[tuple[Any, ...],] = await engine.execute(
             querystring=self.querystring(),
         )
 

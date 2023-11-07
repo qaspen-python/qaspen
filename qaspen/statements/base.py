@@ -3,7 +3,7 @@ from typing import Any, Generator, Generic, TypeVar
 
 from typing_extensions import Self
 
-from qaspen.engine.base import BaseEngine
+from qaspen.abc.db_engine import BaseEngine
 
 StatementResultType = TypeVar(
     "StatementResultType",
@@ -22,7 +22,7 @@ class Executable(abc.ABC, Generic[StatementResultType]):
     @abc.abstractmethod
     async def execute(
         self: Self,
-        engine: BaseEngine[Any, Any],
+        engine: BaseEngine[Any, Any, Any, Any],
     ) -> StatementResultType:
         """Execute SQL query and return result."""
 
@@ -39,7 +39,7 @@ class ObjectExecutable(Executable[StatementResultType]):
     @abc.abstractmethod
     async def execute(
         self: Self,
-        engine: BaseEngine[Any, Any],
+        engine: BaseEngine[Any, Any, Any, Any],
     ) -> StatementResultType:
         """Execute SQL query and return result."""
 
