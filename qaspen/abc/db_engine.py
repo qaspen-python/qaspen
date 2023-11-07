@@ -28,6 +28,8 @@ class BaseEngine(
 ):
     """Base engine class for all possible engines."""
 
+    engine_type: str
+
     def __init__(
         self: Self,
         **_kwargs: Any,
@@ -45,6 +47,7 @@ class BaseEngine(
             default=None,
         )
 
+    @abstractmethod
     async def execute(
         self: Self,
         querystring: QueryString,
@@ -66,18 +69,6 @@ class BaseEngine(
         ### Returns:
         Raw result from database driver.
         """
-        querystring_result: EngineExecuteResult
-
-        if in_pool:
-            querystring_result = await self._execute_in_pool(
-                querystring=querystring,
-            )
-        else:
-            querystring_result = await self._execute_in_new_connection(
-                querystring=querystring,
-            )
-
-        return querystring_result
 
     @abstractmethod
     async def prepare_database(
@@ -125,7 +116,7 @@ class BaseEngine(
         """
 
     @abstractmethod
-    async def transaction(self: Self) -> EngineTransaction:
+    def transaction(self: Self) -> EngineTransaction:
         """Create new transaction.
 
         Create new transaction.
@@ -133,36 +124,4 @@ class BaseEngine(
 
         ### Returns:
         Transaction for this engine.
-        """
-
-    @abstractmethod
-    async def _execute_in_pool(
-        self: Self,
-        querystring: QueryString,
-    ) -> EngineExecuteResult:
-        """Execute query in connection from the pool.
-
-        Get connection from the pool and execute querystring.
-
-        ### Parameters:
-        - `querystring`: `QueryString` or it's subclasses.
-
-        ### Returns:
-        Raw result from database driver.
-        """
-
-    @abstractmethod
-    async def _execute_in_new_connection(
-        self: Self,
-        querystring: QueryString,
-    ) -> EngineExecuteResult:
-        """Execute query in a new connection.
-
-        Make new connection and execute querystring.
-
-        ### Parameters:
-        - `querystring`: `QueryString` or it's subclasses.
-
-        ### Returns:
-        Raw result from database driver.
         """
