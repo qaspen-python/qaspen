@@ -13,7 +13,7 @@ from qaspen.statements.statement import BaseStatement
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.engine.base import BaseEngine
+    from qaspen.abc.db_engine import BaseEngine
     from qaspen.qaspen_types import FromTable
     from qaspen.statements.select_statement import SelectStatement
 
@@ -56,7 +56,7 @@ class ExistsStatement(
 
     async def execute(
         self: Self,
-        engine: BaseEngine[Any, Any],
+        engine: BaseEngine[Any, Any, Any, Any],
     ) -> bool:
         """Execute Exists statement.
 
@@ -64,7 +64,7 @@ class ExistsStatement(
 
         :param engine: subclass of BaseEngine.
         """
-        raw_query_result: list[tuple[bool, ...],] = await engine.run_query(
+        raw_query_result: list[tuple[bool, ...],] = await engine.execute(
             querystring=self.querystring_for_select(),
         )
 

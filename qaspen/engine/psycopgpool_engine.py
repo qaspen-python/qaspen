@@ -1,101 +1,116 @@
-from typing import Any, Final, List, Tuple
+from __future__ import annotations
 
-from psycopg import AsyncConnection, AsyncCursor
+import contextvars
+import warnings
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+
+from psycopg import AsyncConnection
 from psycopg_pool import AsyncConnectionPool
-from typing_extensions import Self
 
-from qaspen.engine.base import BaseEngine, BaseTransaction
-from qaspen.engine.enums import DataBaseType
-from qaspen.querystring.querystring import QueryString
+from qaspen.abc.db_engine import BaseEngine
+from qaspen.abc.db_transaction import BaseTransaction
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
-class PsycopgPoolTransaction(
-    BaseTransaction[AsyncConnection],  # type: ignore[type-arg]
+class PsycopgTransaction(
+    BaseTransaction[
+        "PsycopgEngine",
+        AsyncConnection[Any],
+    ],
 ):
-    @property
-    def cursor(self: Self) -> AsyncCursor[Any]:
-        return self.transaction_connection.cursor()
+    """"""
 
-    async def run_query(
-        self: Self,
-        querystring: QueryString,
-    ) -> List[Tuple[Any, ...]]:
-        result_cursor = await self.cursor.execute(
-            query=str(querystring),
-        )
-        return await result_cursor.fetchall()
+    async def __aenter__(self: Self) -> Self:
+        """Enter in the async context manager.
 
-    async def run_query_without_result(
-        self: Self,
-        querystring: QueryString,
-    ) -> None:
-        await self.cursor.execute(
-            query=str(querystring),
-        )
+        This method must setup new transaction.
 
-    async def rollback(self: Self) -> None:
-        await self.transaction_connection.rollback()
-
-    async def commit(self: Self) -> None:
-        await self.transaction_connection.commit()
+        ### Returns:
+        New transaction context manager.
+        """
+        self.connection = await self.retrieve_connection()
+        self.transaction = self.connection.cursor()
+        return self
 
 
-class PsycopgPoolEngine(
-    BaseEngine[AsyncConnectionPool, PsycopgPoolTransaction],
+class PsycopgEngine(
+    BaseEngine[
+        AsyncConnection[Any],
+        AsyncConnectionPool,
+        Any,
+        List[Tuple[Any, ...]],
+    ],
 ):
-    database_type: DataBaseType = DataBaseType.POSTGRESQL
+    """Engine for PostgreSQL based on `psycopg`."""
 
-    async def startup(self: Self) -> None:
-        connection_pool: AsyncConnectionPool = AsyncConnectionPool(
-            conninfo=self.connection_string,
-            **self.connection_parameters,
-        )
-
-        await connection_pool.open()
-
-        self.connection_pool = connection_pool
-
-    async def shutdown(self: Self) -> None:
-        if self.connection_pool:
-            await self.connection_pool.close()
-            self.connection_pool = None
-
-    async def transaction(self: Self) -> PsycopgPoolTransaction:
-        if not self.connection_pool:
-            await self.startup()
-        if not self.connection_pool:
-            raise ValueError
-
-        single_connection: Final = await self.connection_pool.getconn()
-        async_cursor = single_connection.cursor()
-        return PsycopgPoolTransaction(
-            transaction_connection=await self.connection_pool.getconn(),
-        )
-
-    async def run_query(
+    def __init__(
         self: Self,
-        querystring: QueryString,
-        in_transaction: bool = True,
-    ) -> List[Tuple[Any, ...]]:
-        if not self.connection_pool:
-            await self.startup()
-        if not self.connection_pool:
-            raise ValueError
-
-        async with self.connection_pool.connection() as async_conn:
-            result_cursor = await async_conn.execute(str(querystring))
-            result = await result_cursor.fetchall()
-            return result
-
-    async def run_query_without_result(
-        self: Self,
-        querystring: QueryString,
-        in_transaction: bool = True,
+        connection_url: str,
+        open_connection_pool_wait: bool | None = None,
+        open_connection_pool_timeout: float | None = None,
+        close_connection_pool_timeout: float | None = None,
+        connection_pool_params: Dict[str, Any] | None = None,
     ) -> None:
-        if not self.connection_pool:
-            await self.startup()
-        if not self.connection_pool:
-            raise ValueError
+        self.connection_url = connection_url
+        self.running_transaction: contextvars.ContextVar[
+            PsycopgTransaction | None,
+        ] = contextvars.ContextVar(
+            "running_transaction",
+            default=None,
+        )
+        self.connection_pool_params = connection_pool_params or {}
+        self.connection_pool: AsyncConnectionPool | None = None
+        self.open_connection_pool_wait = open_connection_pool_wait
+        self.open_connection_pool_timeout = open_connection_pool_timeout
+        self.close_connection_pool_timeout = close_connection_pool_timeout
 
-        async with self.connection_pool.connection() as async_conn:
-            await async_conn.execute(str(querystring))
+    async def prepare_database(self: Self) -> None:
+        """Prepare database.
+
+        Create necessary extensions.
+        """
+
+    async def create_connection_pool(self: Self) -> AsyncConnectionPool:
+        """Create new connection pool.
+
+        If connection pool already exists return it.
+
+        ### Returns:
+        `AsyncConnectionPool`
+        """
+        if not self.connection_pool:
+            self.connection_pool = AsyncConnectionPool(
+                conninfo=self.connection_url,
+                **self.connection_pool_params,
+            )
+            await self.connection_pool.open(
+                wait=self.open_connection_pool_wait or True,
+                timeout=self.open_connection_pool_timeout or 30,
+            )
+
+        return self.connection_pool
+
+    async def stop_connection_pool(
+        self: Self,
+    ) -> None:
+        """Close connection pool.
+
+        If connection pool doesn't exist, raise an error.
+        """
+        if not self.connection_pool:
+            warnings.warn(
+                "Try to close not existing connection pool.",
+                stacklevel=2,
+            )
+            return
+
+        await self.connection_pool.close(
+            timeout=self.close_connection_pool_timeout or 30,
+        )
+
+    async def connection(self: Self) -> AsyncConnection[Any]:
+        return await AsyncConnection.connect(
+            conninfo=self.connection_url,
+        )
