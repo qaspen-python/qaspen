@@ -3,10 +3,12 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Any,
+    Dict,
     Final,
     Generator,
     Generic,
     Iterable,
+    List,
     overload,
 )
 
@@ -15,7 +17,7 @@ from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
-from qaspen.statements.base import ObjectExecutable
+from qaspen.statements.base import Executable
 from qaspen.statements.combinable_statements.filter_statement import (
     FilterStatement,
 )
@@ -41,16 +43,13 @@ if TYPE_CHECKING:
     )
     from qaspen.statements.exists_statement import ExistsStatement
     from qaspen.statements.intersect_statement import IntersectStatement
-    from qaspen.statements.statement_result.select_result import (
-        SelectStatementResult,
-    )
     from qaspen.statements.union_statement import UnionStatement
     from qaspen.table.base_table import BaseTable
 
 
 class SelectStatement(
     BaseStatement,
-    ObjectExecutable["SelectStatementResult[FromTable]"],
+    Executable[List[Dict[str, Any]]],
     Generic[FromTable],
 ):
     """Main entry point for all SELECT queries.
@@ -101,7 +100,7 @@ class SelectStatement(
 
     def __await__(
         self: Self,
-    ) -> Generator[None, None, SelectStatementResult[FromTable]]:
+    ) -> Generator[None, None, list[dict[str, Any]]]:
         """SelectStatement can be awaited.
 
         Example:
@@ -115,12 +114,21 @@ class SelectStatement(
             print(list_of_buns)
         ```
         """
-        return self._run_query().__await__()
+        engine: BaseEngine[
+            Any,
+            Any,
+            Any,
+        ] | None = self._from_table._table_meta.database_engine
+        if not engine:
+            engine_err_msg: Final = "There is no database engine."
+            raise AttributeError(engine_err_msg)
+
+        return self.execute(engine=engine).__await__()
 
     async def execute(
         self: Self,
-        engine: BaseEngine[Any, Any, Any, Any],
-    ) -> SelectStatementResult[FromTable]:
+        engine: BaseEngine[Any, Any, Any],
+    ) -> list[dict[str, Any]]:
         """Execute select statement.
 
         This is manual execution.
@@ -133,21 +141,12 @@ class SelectStatement(
         ### Returns
         :returns: list of dicts or list of table instances.
         """
-        from qaspen.statements.statement_result.select_result import (
-            SelectStatementResult,
-        )
-
-        raw_query_result: list[tuple[Any, ...],] = await engine.execute(
+        raw_query_result: list[dict[str, Any]] = await engine.execute(
             querystring=self.querystring(),
+            fetch_results=True,
         )
 
-        query_result: SelectStatementResult[FromTable] = SelectStatementResult(
-            from_table=self._from_table,
-            query_result=raw_query_result,
-            aliases=self._field_aliases,
-        )
-
-        return query_result
+        return raw_query_result
 
     def where(
         self: Self,
@@ -791,16 +790,6 @@ class SelectStatement(
             join_type=join_type,
         )
         return self
-
-    async def _run_query(
-        self: Self,
-    ) -> SelectStatementResult[FromTable]:
-        if not self._from_table._table_meta.database_engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-        return await self.execute(
-            engine=self._from_table._table_meta.database_engine,
-        )
 
     def _prepare_fields(
         self: Self,

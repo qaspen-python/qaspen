@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import contextvars
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generic
+from typing import TYPE_CHECKING, Any, Generic, Literal, overload
 
 from qaspen.abc.abc_types import (
     DBConnection,
@@ -45,12 +45,32 @@ class BaseEngine(
             default=None,
         )
 
+    @overload
+    async def execute(  # type: ignore[misc]
+        self: Self,
+        querystring: QueryString,
+        in_pool: bool = True,
+        fetch_results: Literal[True] = True,
+        **_kwargs: Any,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @overload
+    async def execute(
+        self: Self,
+        querystring: QueryString,
+        in_pool: bool = True,
+        fetch_results: Literal[False] = False,
+        **_kwargs: Any,
+    ) -> None:
+        ...
+
     @abstractmethod
     async def execute(
         self: Self,
         querystring: QueryString,
         in_pool: bool = True,
-        fetch_results: bool | None = None,
+        fetch_results: bool = True,
         **_kwargs: Any,
     ) -> list[dict[str, Any]] | None:
         """Execute a querystring.

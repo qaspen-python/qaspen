@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any, Final, cast
 
 from qaspen.exceptions import QueryResultLookupError
 from qaspen.querystring.querystring import QueryString
@@ -35,7 +35,18 @@ class ExistsStatement(
 
     def __await__(self: Self) -> Any:
         """Make ExistsStatement awaitable."""
-        return self._run_query().__await__()
+        engine: BaseEngine[
+            Any,
+            Any,
+            Any,
+        ] | None = (
+            self._select_statement._from_table._table_meta.database_engine
+        )
+        if not engine:
+            engine_err_msg: Final = "There is no database engine."
+            raise AttributeError(engine_err_msg)
+
+        return self.execute(engine=engine).__await__()
 
     def querystring(self: Self) -> QueryString:
         """Return querystring for comparisons.
@@ -56,7 +67,7 @@ class ExistsStatement(
 
     async def execute(
         self: Self,
-        engine: BaseEngine[Any, Any, Any, Any],
+        engine: BaseEngine[Any, Any, Any],
     ) -> bool:
         """Execute Exists statement.
 
@@ -64,12 +75,16 @@ class ExistsStatement(
 
         :param engine: subclass of BaseEngine.
         """
-        raw_query_result: list[tuple[bool, ...],] = await engine.execute(
+        raw_query_result: list[dict[str, Any]] = await engine.execute(
             querystring=self.querystring_for_select(),
+            fetch_results=True,
         )
 
         try:
-            return raw_query_result[0][0]
+            return cast(
+                bool,
+                raw_query_result[0]["exists"],
+            )
         except LookupError as exc:
             lookup_err_msg: Final = (
                 "Cannot get result for ExistsStatement. "
@@ -78,15 +93,3 @@ class ExistsStatement(
             raise QueryResultLookupError(
                 lookup_err_msg,
             ) from exc
-
-    async def _run_query(
-        self: Self,
-    ) -> bool:
-        if not self._select_statement._from_table._table_meta.database_engine:
-            no_engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(no_engine_err_msg)
-        return await self.execute(
-            engine=(
-                self._select_statement._from_table._table_meta.database_engine
-            ),
-        )

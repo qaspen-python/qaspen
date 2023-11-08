@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, Generator, Generic
+from typing import TYPE_CHECKING, Any, Dict, Final, Generator, Generic, List
 
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.qaspen_types import FromTable
@@ -10,9 +10,6 @@ from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
 from qaspen.statements.statement import BaseStatement
-from qaspen.statements.statement_result.select_result import (
-    SelectStatementResult,
-)
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -47,7 +44,7 @@ class SQLUnion(CombinableExpression):
 class UnionStatement(
     BaseStatement,
     SQLSelectable,
-    Executable[SelectStatementResult[FromTable]],
+    Executable[List[Dict[str, Any]]],
     Generic[FromTable],
 ):
     """Union statement.
@@ -73,7 +70,7 @@ class UnionStatement(
 
     def __await__(
         self: Self,
-    ) -> Generator[None, None, SelectStatementResult[FromTable]]:
+    ) -> Generator[None, None, list[dict[str, Any]]]:
         """SelectStatement can be awaited.
 
         Example:
@@ -87,7 +84,32 @@ class UnionStatement(
             print(list_of_buns)
         ```
         """
-        return self._run_query().__await__()
+        first_select_statement: Final = self._start_select_statement(
+            statement=self.union_statement.left_expression,  # type: ignore[arg-type]
+        )
+
+        engine: BaseEngine[
+            Any,
+            Any,
+            Any,
+        ] | None = (
+            first_select_statement._from_table._table_meta.database_engine
+        )
+        if not engine:
+            engine_err_msg: Final = "There is no database engine."
+            raise AttributeError(engine_err_msg)
+
+        return self.execute(engine=engine).__await__()
+
+    async def execute(
+        self: Self,
+        engine: BaseEngine[Any, Any, Any],
+    ) -> list[dict[str, Any]]:
+        """Execute SQL query and return result."""
+        raw_query_result: list[dict[str, Any]] = await engine.execute(
+            querystring=self.querystring(),
+        )
+        return raw_query_result
 
     def union(
         self: Self,
@@ -131,38 +153,3 @@ class UnionStatement(
                 statement=statement.left_expression,  # type: ignore[arg-type]
             )
         return statement
-
-    async def execute(
-        self: Self,
-        engine: BaseEngine[Any, Any, Any, Any],
-    ) -> SelectStatementResult[FromTable]:
-        """Execute SQL query and return result."""
-        raw_query_result: list[tuple[Any, ...],] = await engine.execute(
-            querystring=self.querystring(),
-        )
-
-        first_select_statement: Final = self._start_select_statement(
-            statement=self.union_statement.left_expression,  # type: ignore[arg-type]
-        )
-
-        query_result: SelectStatementResult[FromTable] = SelectStatementResult(
-            from_table=first_select_statement._from_table,
-            query_result=raw_query_result,
-            aliases=first_select_statement._field_aliases,
-        )
-
-        return query_result
-
-    async def _run_query(
-        self: Self,
-    ) -> SelectStatementResult[FromTable]:
-        first_select_statement: Final = self._start_select_statement(
-            statement=self.union_statement.left_expression,  # type: ignore[arg-type]
-        )
-
-        if not first_select_statement._from_table._table_meta.database_engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-        return await self.execute(
-            engine=first_select_statement._from_table._table_meta.database_engine,
-        )
