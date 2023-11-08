@@ -51,7 +51,7 @@ class BaseEngine(
         querystring: QueryString,
         in_pool: bool = True,
         **_kwargs: Any,
-    ) -> list[dict[str, Any]]:
+    ) -> list[dict[str, Any]] | None:
         """Execute a querystring.
 
         Run querystring and return raw result as in
