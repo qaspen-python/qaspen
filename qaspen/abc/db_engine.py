@@ -50,6 +50,7 @@ class BaseEngine(
         self: Self,
         querystring: QueryString,
         in_pool: bool = True,
+        fetch_results: bool | None = None,
         **_kwargs: Any,
     ) -> list[dict[str, Any]] | None:
         """Execute a querystring.
