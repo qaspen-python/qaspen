@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any, Generic
 from qaspen.abc.abc_types import (
     DBConnection,
     EngineConnectionPool,
-    EngineExecuteResult,
     EngineTransaction,
 )
 
@@ -23,7 +22,6 @@ class BaseEngine(
         DBConnection,
         EngineConnectionPool,
         EngineTransaction,
-        EngineExecuteResult,
     ],
 ):
     """Base engine class for all possible engines."""
@@ -53,7 +51,7 @@ class BaseEngine(
         querystring: QueryString,
         in_pool: bool = True,
         **_kwargs: Any,
-    ) -> EngineExecuteResult:
+    ) -> list[dict[str, Any]]:
         """Execute a querystring.
 
         Run querystring and return raw result as in

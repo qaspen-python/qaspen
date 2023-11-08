@@ -15,7 +15,3 @@ EngineConnectionPool = TypeVar(
 EngineTransaction = TypeVar(
     "EngineTransaction",
 )
-
-EngineExecuteResult = TypeVar(
-    "EngineExecuteResult",
-)
