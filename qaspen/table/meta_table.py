@@ -21,7 +21,7 @@ class MetaTableData:
     table_fields: dict[str, Field[Any]] = dataclasses.field(
         default_factory=dict,
     )
-    database_engine: BaseEngine[Any, Any, Any, Any] | None = None
+    database_engine: BaseEngine[Any, Any, Any] | None = None
     alias: str | None = None
 
 
