@@ -84,6 +84,7 @@ class PydanticResult(StatementResult, Generic[PydanticType]):
         if not self._pydantic_model and not pydantic_model:
             # TO.DO.: NEED TO ALLOW TO CREATE PYDANTIC MODEL IN RUNTIME
             # BY OUR SELVES.
+            # ISSUE: https://github.com/qaspen-python/qaspen/issues/41
             raise Exception("TODO WOW!")  # noqa: TRY002, EM101
 
         if pydantic_model:
