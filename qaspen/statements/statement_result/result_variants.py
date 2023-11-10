@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Final, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -20,6 +20,17 @@ class RawStatementResult(abc.ABC):
     It will be used when user perform any query
     that can return the result.
     """
+
+    def __init__(
+        self: Self,
+        engine_result: list[dict[str, Any]],
+    ) -> None:
+        """Initialize result statement.
+
+        ### Params:
+        - `engine_result`: result from the engine.
+        """
+        self._engine_result: Final = engine_result
 
     @abc.abstractmethod
     def result(
@@ -46,6 +57,9 @@ class PydanticStatementResult(abc.ABC, Generic[PydanticType]):
         You can pass the pydantic model in the method and
         result will be transformed into you pydantic model.
 
-        This passed pydantic model will override pydantic model
-        that you passed when building statement.
+        ### Parameters:
+        - `pydantic_model`: pydantic model for engine result.
+
+        ### Returns:
+        list of `pydantic_models`.
         """

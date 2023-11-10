@@ -30,7 +30,15 @@ class SelectStatementResult(
         engine_result: list[dict[str, Any]],
         pydantic_model: type[PydanticType] | None = None,
     ) -> None:
-        self._engine_result: Final = engine_result
+        """Initialize `SelectStatementResult`.
+
+        It is used to get results after statement execution.
+
+        ### Parameters:
+        - `engine_result`: result from the engine.
+        - `pydantic_model`: pydantic model for engine result.
+        """
+        super().__init__(engine_result=engine_result)
         self._pydantic_model: Final = pydantic_model
 
     def result(
