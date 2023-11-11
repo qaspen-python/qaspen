@@ -1,57 +1,60 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-ListResultType = TypeVar(
-    "ListResultType",
-)
-ObjectResultType = TypeVar(
-    "ObjectResultType",
-)
+    from qaspen.qaspen_types import PydanticType
 
 
-class StatementResult(abc.ABC):
-    """Base result for statement.
+class RawStatementResult(abc.ABC):
+    """Base class for all result statements.
 
-    Allow result to return raw result.
-    As-is from engine.
+    It will be used when user perform any query
+    that can return the result.
     """
 
-    @abc.abstractmethod
-    def raw_result(
+    def __init__(
         self: Self,
-    ) -> list[tuple[Any, ...]]:
-        """Return result as-is from engine."""
-        ...
+        engine_result: list[dict[str, Any]],
+    ) -> None:
+        """Initialize result statement.
 
-
-class ListableStatementResult(
-    abc.ABC,
-    Generic[ListResultType],
-):
-    """List result.
-
-    Allow to return query result as a string.
-    """
+        ### Params:
+        - `engine_result`: result from the engine.
+        """
+        self._engine_result: Final = engine_result
 
     @abc.abstractmethod
-    def as_list(self: Self) -> ListResultType:
-        """Return results as a list with data."""
+    def result(
+        self: Self,
+    ) -> list[dict[str, Any]]:
+        """Return result as-is from engine.
+
+        As any `Engine` must return result
+        as `list[dict[str, Any]]`, this method
+        must return just clear engine result.
+        """
 
 
-class ObjecttableStatementResult(
-    abc.ABC,
-    Generic[ObjectResultType],
-):
-    """Object result.
-
-    Allow to return query result as an object/list of objects.
-    """
+class PydanticStatementResult(abc.ABC):
+    """Result as a pydantic model."""
 
     @abc.abstractmethod
-    def as_objects(self: Self) -> list[ObjectResultType]:
-        """Return list of objects."""
+    def to_pydantic(
+        self: Self,
+        pydantic_model: type[PydanticType] | None = None,
+    ) -> list[PydanticType]:
+        """Return result as a pydantic model.
+
+        You can pass the pydantic model in the method and
+        result will be transformed into you pydantic model.
+
+        ### Parameters:
+        - `pydantic_model`: pydantic model for engine result.
+
+        ### Returns:
+        list of `pydantic_models`.
+        """
