@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any, Final, Generic, TypeVar
-
-from pydantic import BaseModel
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-PydanticType = TypeVar(
-    "PydanticType",
-    bound=BaseModel,
-)
+    from qaspen.qaspen_types import PydanticType
 
 
 class RawStatementResult(abc.ABC):
@@ -44,11 +39,11 @@ class RawStatementResult(abc.ABC):
         """
 
 
-class PydanticStatementResult(abc.ABC, Generic[PydanticType]):
+class PydanticStatementResult(abc.ABC):
     """Result as a pydantic model."""
 
     @abc.abstractmethod
-    def as_pydantic(
+    def to_pydantic(
         self: Self,
         pydantic_model: type[PydanticType] | None = None,
     ) -> list[PydanticType]:

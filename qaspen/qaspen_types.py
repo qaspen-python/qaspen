@@ -1,5 +1,7 @@
 import typing
 
+from pydantic import BaseModel
+
 if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
@@ -26,3 +28,8 @@ CallableDefaultType = typing.Callable[
     [],
     FieldType,
 ]
+
+PydanticType = typing.TypeVar(
+    "PydanticType",
+    bound=BaseModel,
+)

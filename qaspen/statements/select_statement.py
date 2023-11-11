@@ -3,12 +3,10 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
     Final,
     Generator,
     Generic,
     Iterable,
-    List,
     overload,
 )
 
@@ -30,6 +28,9 @@ from qaspen.statements.combinable_statements.order_by_statement import (
     OrderByStatement,
 )
 from qaspen.statements.statement import BaseStatement
+from qaspen.statements.statement_result.select_statement_result import (
+    SelectStatementResult,
+)
 from qaspen.statements.sub_statements.limit_statement import LimitStatement
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 
@@ -49,7 +50,7 @@ if TYPE_CHECKING:
 
 class SelectStatement(
     BaseStatement,
-    Executable[List[Dict[str, Any]]],
+    Executable[SelectStatementResult],
     Generic[FromTable],
 ):
     """Main entry point for all SELECT queries.
@@ -96,11 +97,9 @@ class SelectStatement(
         self._join_statement: JoinStatement = JoinStatement()
         self._field_aliases: FieldAliases = FieldAliases()
 
-        self._as_objects: bool = False
-
     def __await__(
         self: Self,
-    ) -> Generator[None, None, list[dict[str, Any]]]:
+    ) -> Generator[None, None, SelectStatementResult]:
         """SelectStatement can be awaited.
 
         Example:
@@ -128,7 +127,7 @@ class SelectStatement(
     async def execute(
         self: Self,
         engine: BaseEngine[Any, Any, Any],
-    ) -> list[dict[str, Any]]:
+    ) -> SelectStatementResult:
         """Execute select statement.
 
         This is manual execution.
@@ -146,7 +145,9 @@ class SelectStatement(
             fetch_results=True,
         )
 
-        return raw_query_result
+        return SelectStatementResult(
+            engine_result=raw_query_result,
+        )
 
     def where(
         self: Self,

@@ -1,9 +1,9 @@
 """Statement result for SelectStatement."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, List, TypeVar
+from typing import TYPE_CHECKING, Any, Final, List
 
-from pydantic import BaseModel, TypeAdapter
+from pydantic import TypeAdapter
 
 from qaspen.statements.statement_result.result_variants import (
     PydanticStatementResult,
@@ -13,15 +13,12 @@ from qaspen.statements.statement_result.result_variants import (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-PydanticType = TypeVar(
-    "PydanticType",
-    bound=BaseModel,
-)
+    from qaspen.qaspen_types import PydanticType
 
 
 class SelectStatementResult(
     RawStatementResult,
-    PydanticStatementResult[PydanticType],
+    PydanticStatementResult,
 ):
     """Result for select statement."""
 
@@ -47,7 +44,7 @@ class SelectStatementResult(
         """Return result as-is from engine."""
         return self._engine_result
 
-    def as_pydantic(
+    def to_pydantic(
         self: Self,
         pydantic_model: type[PydanticType] | None = None,
     ) -> list[PydanticType]:
@@ -58,6 +55,12 @@ class SelectStatementResult(
 
         This passed pydantic model will override pydantic model
         that you passed when building statement.
+
+        ### Parameters:
+        - `pydantic_model`: pydantic model for engine result.
+
+        ### Returns:
+        list of `pydantic_models`.
         """
         if not self._pydantic_model and not pydantic_model:
             # TO.DO.: NEED TO ALLOW TO CREATE PYDANTIC MODEL IN RUNTIME
