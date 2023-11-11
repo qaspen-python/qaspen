@@ -175,13 +175,13 @@ class BaseField(Generic[FieldType], abc.ABC):
         return self._field_data.from_table.original_table_name()
 
     @property
-    def _original_field_name(self: Self) -> str:
-        """Return name of the field without prefix and alias.
+    def alias(self: Self) -> str | None:
+        """Return alias to the field if it exists.
 
-        ### Return
-        `str` Field name.
+        ### Returns:
+        `alias` or `None`.
         """
-        return self._field_data.field_name
+        return self._field_data.alias
 
     @property
     def field_name(self: Self) -> str:
@@ -210,6 +210,15 @@ class BaseField(Generic[FieldType], abc.ABC):
             field_name += f" AS {alias}"
 
         return field_name
+
+    @property
+    def _original_field_name(self: Self) -> str:
+        """Return name of the field without prefix and alias.
+
+        ### Return
+        `str` Field name.
+        """
+        return self._field_data.field_name
 
     @property
     def _default(self: Self) -> str | None:
@@ -851,6 +860,22 @@ class Field(BaseField[FieldType]):
         """
         return self.__le__(comparison_value)
 
+    def with_alias(
+        self: Self,
+        alias_name: str,
+    ) -> Self:
+        """Set alias to the field.
+
+        ### Parameters:
+        - `alias_name`: name of the alias to the field.
+
+        ### Returns
+        `Field` with new prefix.
+        """
+        return self._with_alias(
+            alias=alias_name,
+        )
+
     def _is_the_same_field(
         self: Self,
         other_field: BaseField[FieldType],
@@ -883,7 +908,7 @@ class Field(BaseField[FieldType]):
         field._field_data.prefix = prefix
         return field
 
-    def _with_alias(self: Self, alias: str) -> Field[FieldType]:
+    def _with_alias(self: Self, alias: str) -> Self:
         """Give Field an alias.
 
         Make a Field deepcopy and set new alias.
@@ -894,7 +919,7 @@ class Field(BaseField[FieldType]):
         ### Returns
         `Field` with new alias.
         """
-        field: Field[FieldType] = copy.deepcopy(self)
+        field: Self = copy.deepcopy(self)
         field._field_data.alias = alias
         return field
 

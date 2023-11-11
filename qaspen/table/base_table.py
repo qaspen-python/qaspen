@@ -27,7 +27,7 @@ class BaseTable(MetaTable, abstract=True):
     @classmethod
     def select(
         cls: type[T_],
-        *select: Field[FieldType] | AggFunction,
+        *select: Field[Any] | AggFunction,
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
