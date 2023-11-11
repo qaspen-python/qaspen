@@ -49,7 +49,7 @@ if sys.version_info >= (3, 9):
             Field with an alias.
             """
             field_alias: str
-            aliased_field: Field
+            aliased_field: Field[Any]
             if exists_alias := field.alias:
                 field_alias = exists_alias
                 aliased_field = field
@@ -57,7 +57,7 @@ if sys.version_info >= (3, 9):
                 aliased_field = field.with_alias(
                     alias_name=field._original_field_name,
                 )
-                field_alias = aliased_field.alias
+                field_alias = aliased_field.alias  # type: ignore[assignment]
 
             self.data[field_alias] = FieldAlias(
                 aliased_field=field,
