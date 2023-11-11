@@ -80,7 +80,7 @@ class SelectStatementResult(
         - `msgspec_struct`: msgspec struct for engine result.
 
         ### Returns:
-        list of `msgspec_struct`
+        list of `msgspec_struct`.
         """
         return [
             msgspec_struct(**single_result)
