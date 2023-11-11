@@ -34,8 +34,7 @@ if sys.version_info >= (3, 9):
         """Class for all aliases."""
 
         def __init__(self: Self) -> None:
-            self.alias_field_map: dict[str, FieldAlias] = {}
-            self.last_alias_number: int = 0
+            self.data: dict[str, FieldAlias] = {}
 
         def add_alias(
             self: Self,
@@ -49,18 +48,24 @@ if sys.version_info >= (3, 9):
             ### Returns:
             Field with an alias.
             """
-            self.last_alias_number += 1
+            field_alias: str
+            aliased_field: Field[Any]
+            if exists_alias := field.alias:
+                field_alias = exists_alias
+                aliased_field = field
+            else:
+                aliased_field = field.with_alias(
+                    alias_name=field._original_field_name,
+                )
+                field_alias = aliased_field.alias  # type: ignore[assignment]
 
-            alias: Final = f"A{self.last_alias_number}"
-            new_aliased_field: Final = field._with_alias(alias=alias)
-
-            self.alias_field_map[f"A{self.last_alias_number}"] = FieldAlias(
-                aliased_field=new_aliased_field,
+            self.data[field_alias] = FieldAlias(
+                aliased_field=field,
             )
-            return new_aliased_field
+            return field
 
         def __str__(self: Self) -> str:
-            return str(self.alias_field_map)
+            return str(self.data)
 
 else:
 
@@ -83,15 +88,21 @@ else:
             ### Returns:
             Field with an alias.
             """
-            self.last_alias_number += 1
+            field_alias: str
+            aliased_field: Field[Any]
+            if exists_alias := field.alias:
+                field_alias = exists_alias
+                aliased_field = field
+            else:
+                aliased_field = field.with_alias(
+                    alias_name=field._original_field_name,
+                )
+                field_alias = aliased_field.alias  # type: ignore[assignment]
 
-            alias: Final = f"A{self.last_alias_number}"
-            new_aliased_field: Final = field._with_alias(alias=alias)
-
-            self.data[f"A{self.last_alias_number}"] = FieldAlias(
-                aliased_field=new_aliased_field,
+            self.data[field_alias] = FieldAlias(
+                aliased_field=field,
             )
-            return new_aliased_field
+            return field
 
         def __str__(self: Self) -> str:
             return str(self.data)

@@ -1,11 +1,12 @@
 """Statement result for SelectStatement."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, List
+from typing import TYPE_CHECKING, Any, List
 
 from pydantic import TypeAdapter
 
 from qaspen.statements.statement_result.result_variants import (
+    MSGSpecStatementResult,
     PydanticStatementResult,
     RawStatementResult,
 )
@@ -13,19 +14,19 @@ from qaspen.statements.statement_result.result_variants import (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.qaspen_types import PydanticType
+    from qaspen.qaspen_types import MSGSpecStruct, PydanticModel
 
 
 class SelectStatementResult(
     RawStatementResult,
     PydanticStatementResult,
+    MSGSpecStatementResult,
 ):
     """Result for select statement."""
 
     def __init__(
         self: Self,
         engine_result: list[dict[str, Any]],
-        pydantic_model: type[PydanticType] | None = None,
     ) -> None:
         """Initialize `SelectStatementResult`.
 
@@ -36,7 +37,6 @@ class SelectStatementResult(
         - `pydantic_model`: pydantic model for engine result.
         """
         super().__init__(engine_result=engine_result)
-        self._pydantic_model: Final = pydantic_model
 
     def result(
         self: Self,
@@ -46,8 +46,8 @@ class SelectStatementResult(
 
     def to_pydantic(
         self: Self,
-        pydantic_model: type[PydanticType] | None = None,
-    ) -> list[PydanticType]:
+        pydantic_model: type[PydanticModel],
+    ) -> list[PydanticModel]:
         """Return result as a pydantic model.
 
         You can pass the pydantic model in the method and
@@ -62,19 +62,27 @@ class SelectStatementResult(
         ### Returns:
         list of `pydantic_models`.
         """
-        if not self._pydantic_model and not pydantic_model:
-            # TO.DO.: NEED TO ALLOW TO CREATE PYDANTIC MODEL IN RUNTIME
-            # BY OUR SELVES.
-            # ISSUE: https://github.com/qaspen-python/qaspen/issues/41
-            raise Exception("TODO WOW!")  # noqa: TRY002, EM101
-
-        if pydantic_model:
-            type_adapter = TypeAdapter(
-                List[pydantic_model],  # type: ignore[valid-type]
-            )
-            return type_adapter.validate_python(self._engine_result)
-
         type_adapter = TypeAdapter(
-            List[self._pydantic_model],  # type: ignore[name-defined]
+            List[pydantic_model],  # type: ignore[valid-type]
         )
         return type_adapter.validate_python(self._engine_result)
+
+    def to_msgspec(
+        self: Self,
+        msgspec_struct: type[MSGSpecStruct],
+    ) -> list[MSGSpecStruct]:
+        """Return result as a list of msgspec structs.
+
+        You can pass the msgspec struct type in the method and
+        result will be transformed into you pydantic model.
+
+        ### Parameters:
+        - `msgspec_struct`: msgspec struct for engine result.
+
+        ### Returns:
+        list of `msgspec_struct`.
+        """
+        return [
+            msgspec_struct(**single_result)
+            for single_result in self._engine_result
+        ]

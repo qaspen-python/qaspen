@@ -1,5 +1,6 @@
 import typing
 
+from msgspec import Struct
 from pydantic import BaseModel
 
 if typing.TYPE_CHECKING:
@@ -29,7 +30,12 @@ CallableDefaultType = typing.Callable[
     FieldType,
 ]
 
-PydanticType = typing.TypeVar(
-    "PydanticType",
+PydanticModel = typing.TypeVar(
+    "PydanticModel",
     bound=BaseModel,
+)
+
+MSGSpecStruct = typing.TypeVar(
+    "MSGSpecStruct",
+    bound=Struct,
 )
