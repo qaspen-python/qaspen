@@ -1,16 +1,21 @@
 """Tests for BaseField."""
 from __future__ import annotations
 
-from typing import Any, Callable, Final
+from typing import TYPE_CHECKING, Any, Callable, Final
 
 import pytest
 
 from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.base import Field
-from tests.test_fields.conftest import (
+from qaspen.table.base_table import BaseTable
+from tests.test_fields.base_test.conftest import (
     ForTestField,
+    ForTestTable,
     calculate_default_field_value,
 )
+
+if TYPE_CHECKING:
+    from qaspen.statements.combinable_statements.filter_statement import Filter
 
 
 def test_no_args_in_parameters() -> None:
@@ -31,6 +36,15 @@ def test_db_field_name_param() -> None:
     field = Field[str](db_field_name=field_name)
 
     assert field._original_field_name == field_name
+
+
+def test_automate_field_name() -> None:
+    """Test that field_name will be set automatically in Table."""
+
+    class ForTestTable(BaseTable):
+        field_in_table = Field[str]()
+
+    assert ForTestTable.field_in_table._original_field_name == "field_in_table"
 
 
 @pytest.mark.parametrize(
@@ -119,3 +133,22 @@ def test_field_field_data(
         field._field_data.callable_default == excepted_default_callable_value
     )
     assert field._field_data.field_name == db_field_name
+
+
+def test_field_in_method_with_values() -> None:
+    """Test `in_` method with comparison_values."""
+    comparison_values = (
+        "search",
+        "this",
+        "string",
+    )
+    filter_statement: Final[Filter] = ForTestTable.name.in_(*comparison_values)
+
+    assert filter_statement.comparison_values == comparison_values
+
+    qs = str(filter_statement.querystring())
+    assert qs == ("fortesttable.name IN ('search', 'this', 'string')")
+
+
+def test_field_in_method_with_subquery() -> None:
+    """Test `in_` method with subquery."""

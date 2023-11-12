@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable, Union
 
 from qaspen.fields.base import Field
+from qaspen.table.base_table import BaseTable
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -38,3 +39,9 @@ class ForTestField(Field[Union[str, float]]):
             default=default,
             db_field_name=db_field_name,
         )
+
+
+class ForTestTable(BaseTable):
+    """Class for test purposes."""
+
+    name: ForTestField = ForTestField()
