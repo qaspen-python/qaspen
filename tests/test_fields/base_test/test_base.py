@@ -7,10 +7,12 @@ import pytest
 
 from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.base import Field
+from qaspen.statements.combinable_statements.filter_statement import (
+    EMPTY_VALUE,
+)
 from qaspen.table.base_table import BaseTable
 from tests.test_fields.base_test.conftest import (
     ForTestField,
-    ForTestTable,
     calculate_default_field_value,
 )
 
@@ -135,20 +137,43 @@ def test_field_field_data(
     assert field._field_data.field_name == db_field_name
 
 
-def test_field_in_method_with_values() -> None:
-    """Test `in_` method with comparison_values."""
+def test_field_in_method_with_values(test_for_test_table: BaseTable) -> None:
+    """Test `in_` method with comparison_values.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
     comparison_values = (
         "search",
         "this",
         "string",
     )
-    filter_statement: Final[Filter] = ForTestTable.name.in_(*comparison_values)
+    filter_statement: Final[Filter] = test_for_test_table.name.in_(
+        *comparison_values,
+    )
 
     assert filter_statement.comparison_values == comparison_values
+    assert filter_statement.comparison_value == EMPTY_VALUE
 
-    qs = str(filter_statement.querystring())
-    assert qs == ("fortesttable.name IN ('search', 'this', 'string')")
+    querystring = str(filter_statement.querystring())
+    assert querystring == ("fortesttable.name IN ('search', 'this', 'string')")
 
 
-def test_field_in_method_with_subquery() -> None:
-    """Test `in_` method with subquery."""
+def test_field_in_method_with_subquery(test_for_test_table: BaseTable) -> None:
+    """Test `in_` method with subquery.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    subquery = test_for_test_table.select(test_for_test_table.name)
+    filter_statement: Final[Filter] = test_for_test_table.name.in_(
+        subquery=subquery,
+    )
+
+    assert filter_statement.comparison_value == subquery
+    assert filter_statement.comparison_values == EMPTY_VALUE
+
+    querystring = str(filter_statement.querystring())
+    assert querystring == (
+        "fortesttable.name IN (SELECT fortesttable.name FROM fortesttable)"
+    )

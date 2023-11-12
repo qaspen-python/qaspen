@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Union
 
+import pytest
+
 from qaspen.fields.base import Field
 from qaspen.table.base_table import BaseTable
 
@@ -41,7 +43,13 @@ class ForTestField(Field[Union[str, float]]):
         )
 
 
-class ForTestTable(BaseTable):
-    """Class for test purposes."""
+@pytest.fixture()
+def test_for_test_table() -> type[BaseTable]:
+    """Return table class for testing."""
 
-    name: ForTestField = ForTestField()
+    class ForTestTable(BaseTable):
+        """Class for test purposes."""
+
+        name: ForTestField = ForTestField()
+
+    return ForTestTable
