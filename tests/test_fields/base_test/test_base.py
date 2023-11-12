@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING, Any, Callable, Final
 
 import pytest
 
-from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
+from qaspen.exceptions import (
+    FieldDeclarationError,
+    FieldValueValidationError,
+    FilterComparisonError,
+)
 from qaspen.fields.base import Field
 from qaspen.statements.combinable_statements.filter_statement import (
     EMPTY_VALUE,
@@ -177,3 +181,21 @@ def test_field_in_method_with_subquery(test_for_test_table: BaseTable) -> None:
     assert querystring == (
         "fortesttable.name IN (SELECT fortesttable.name FROM fortesttable)"
     )
+
+
+def test_field_in_method_with_subquery_and_values(
+    test_for_test_table: BaseTable,
+) -> None:
+    """Test `in_` method.
+
+    Check that it is raising an error if there are both
+    subquery and values.
+    """
+    subquery = test_for_test_table.select(test_for_test_table.name)
+    with pytest.raises(expected_exception=FilterComparisonError):
+        test_for_test_table.name.in_(
+            "search",
+            "this",
+            "string",
+            subquery=subquery,
+        )
