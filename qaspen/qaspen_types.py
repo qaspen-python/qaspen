@@ -20,7 +20,7 @@ FieldDefaultType = typing.Union[
     FieldType,
     typing.Callable[
         [],
-        typing.Union[FieldType, typing.Any],
+        FieldType,
     ],
     None,
 ]

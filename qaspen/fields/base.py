@@ -264,8 +264,7 @@ class BaseField(Generic[FieldType], abc.ABC):
 
     @property
     def _field_default(self: Self) -> str:
-        is_default: Final = self._default and callable(self._default)
-        if is_default:
+        if self._default:
             return f"DEFAULT {self._default}" if self._default else ""
         return ""
 
@@ -341,7 +340,7 @@ class Field(BaseField[FieldType]):
 
         if callable(default):
             callable_default_value = default
-        elif default_value is not None:
+        elif default is not None:
             default_value = self._prepare_default_value(
                 default_value=default,
             )
