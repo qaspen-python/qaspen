@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import copy
 import inspect
-from typing import TYPE_CHECKING, Any, Final, TypeVar, cast
+import typing
 
 from qaspen.fields.base import Field
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from qaspen.aggregate_functions.base import AggFunction
     from qaspen.qaspen_types import FieldType
 
-T_ = TypeVar(
+T_ = typing.TypeVar(
     "T_",
     bound="BaseTable",
 )
@@ -27,7 +27,7 @@ class BaseTable(MetaTable, abstract=True):
     @classmethod
     def select(
         cls: type[T_],
-        *select: Field[Any] | AggFunction,
+        *select: Field[typing.Any] | AggFunction,
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
@@ -36,7 +36,7 @@ class BaseTable(MetaTable, abstract=True):
 
         :returns: SelectStatement.
         """
-        select_statement: Final[SelectStatement[T_]] = SelectStatement(
+        select_statement: typing.Final[SelectStatement[T_]] = SelectStatement(
             select_objects=select or cls.all_fields(),
             from_table=cls,
         )
@@ -98,7 +98,7 @@ class BaseTable(MetaTable, abstract=True):
             cls,
             lambda member: not (inspect.isroutine(member)),
         )
-        only_field_attributes: dict[str, Field[Any]] = {
+        only_field_attributes: dict[str, Field[typing.Any]] = {
             attribute[0]: copy.deepcopy(attribute[1])
             for attribute in attributes
             if issubclass(type(attribute[1]), Field)
@@ -154,17 +154,33 @@ class BaseTable(MetaTable, abstract=True):
         return cls._table_meta.alias or cls.original_table_name()
 
     @classmethod
+    def schemed_table_name(cls: type[T_]) -> str:
+        """Return the original table name or alias to it with schema.
+
+        :returns: original table name or alias with corresponding schema.
+        """
+        return f"{cls._table_meta.table_schema}.{cls.table_name()}"
+
+    @classmethod
+    def schemed_original_table_name(cls: type[T_]) -> str:
+        """Return the original table name with schema.
+
+        :returns: original table name with corresponding schema.
+        """
+        return f"{cls._table_meta.table_schema}.{cls.original_table_name()}"
+
+    @classmethod
     def _retrieve_field(
         cls: type[T_],
         field_name: str,
-    ) -> Field[Any]:
+    ) -> Field[typing.Any]:
         try:
-            return cast(
-                Field[Any],
+            return typing.cast(
+                Field[typing.Any],
                 cls.__dict__[field_name],
             )
         except LookupError as lookup_err:
-            lookup_err_msg: Final = (
+            lookup_err_msg: typing.Final = (
                 f"Table `{cls.__name__}` doesn't have `{field_name}` field"
             )
             raise AttributeError(

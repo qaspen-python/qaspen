@@ -17,6 +17,7 @@ class MetaTableData:
     """All data about the table."""
 
     table_name: str = ""
+    table_schema: str = "public"
     abstract: bool = False
     table_fields: dict[str, Field[Any]] = dataclasses.field(
         default_factory=dict,
@@ -34,6 +35,7 @@ class MetaTable:
     def __init_subclass__(
         cls: type[MetaTable],
         table_name: str | None = None,
+        table_schema: str = "public",
         abstract: bool = False,
         **kwargs: Any,
     ) -> None:
@@ -44,6 +46,7 @@ class MetaTable:
 
         cls._table_meta = MetaTableData(
             table_name=table_name,
+            table_schema=table_schema,
             abstract=abstract,
             table_fields=table_fields,
         )

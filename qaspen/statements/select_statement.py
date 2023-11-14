@@ -835,14 +835,14 @@ class SelectStatement(
         if self._from_table._table_meta.alias:
             return QueryString(
                 final_select_objects or "1",
-                self._from_table._table_meta.table_name,
+                self._from_table.schemed_original_table_name(),
                 self._from_table._table_meta.alias,
                 sql_template="SELECT {} FROM {} as {}",
             )
 
         return QueryString(
             final_select_objects or "1",
-            self._from_table._table_meta.table_name,
+            self._from_table.schemed_original_table_name(),
             sql_template="SELECT {} FROM {}",
         )
 
