@@ -273,8 +273,7 @@ class BaseField(Generic[FieldType], abc.ABC):
 
     @property
     def _field_default(self: Self) -> str:
-        is_default: Final = self._default and callable(self._default)
-        if is_default:
+        if self._default:
             return f"DEFAULT {self._default}" if self._default else ""
         return ""
 
@@ -350,7 +349,7 @@ class Field(BaseField[FieldType]):
 
         if callable(default):
             callable_default_value = default
-        elif default_value is not None:
+        elif default is not None:
             default_value = self._prepare_default_value(
                 default_value=default,
             )
@@ -406,18 +405,15 @@ class Field(BaseField[FieldType]):
         field = instance.__dict__[self._original_field_name]
         field._field_data.field_value = value  # type: ignore[assignment]
 
-    def _prepare_default_value(
-        self: Self,
-        default_value: FieldType | None,
-    ) -> str | None:
-        """Prepare default value to specify it in Field declaration.
+    def querystring(self: Self) -> QueryString:
+        """Build QueryString class.
 
-        It uses only in the method `_field_default`.
-
-        :returns: prepared default value.
+        ### Returns:
+        Built `QueryString`.
         """
-        return (
-            str(default_value) if default_value is not None else default_value
+        return QueryString(
+            self.field_name,
+            sql_template="{}",
         )
 
     def in_(
@@ -632,25 +628,6 @@ class Field(BaseField[FieldType]):
             f"You can use one of these - {self._available_comparison_types}",
         )
         raise FieldComparisonError(type_err_msg)
-
-    def _make_field_create_statement(
-        self: Self,
-    ) -> str:
-        return (
-            f"{self._original_field_name} {self._sql_type.sql_type()} "
-            f"{self._field_null} {self._field_default}"
-        )
-
-    def querystring(self: Self) -> QueryString:
-        """Build QueryString class.
-
-        ### Returns:
-        Built `QueryString`.
-        """
-        return QueryString(
-            self.field_name,
-            sql_template="{}",
-        )
 
     def __eq__(  # type: ignore[override]
         self: Self,
@@ -974,3 +951,25 @@ class Field(BaseField[FieldType]):
                 f"{self.__class__.__name__}",
             )
             raise FieldValueValidationError(type_err_msg)
+
+    def _make_field_create_statement(
+        self: Self,
+    ) -> str:
+        return (
+            f"{self._original_field_name} {self._sql_type.sql_type()} "
+            f"{self._field_null} {self._field_default}"
+        )
+
+    def _prepare_default_value(
+        self: Self,
+        default_value: FieldType | None,
+    ) -> str | None:
+        """Prepare default value to specify it in Field declaration.
+
+        It uses only in the method `_field_default`.
+
+        :returns: prepared default value.
+        """
+        return (
+            str(default_value) if default_value is not None else default_value
+        )
