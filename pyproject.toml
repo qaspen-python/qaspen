@@ -33,7 +33,7 @@ line-length = 79
 select = ["ALL"]
 fixable = ["ALL"]
 ignore = ["ANN401", "D100", "D107", "SLF001", "D105", "TRY003", "PLR0913", "FBT001", "FBT002", "S608", "S101"]
-exclude = ["./qaspen/engine", "qaspen/fields/operators.py"]
+exclude = ["qaspen/fields/operators.py"]
 
 [tool.black]
 line-length = 79

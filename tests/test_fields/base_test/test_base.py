@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Final
 import pytest
 
 from qaspen.exceptions import (
+    FieldComparisonError,
     FieldDeclarationError,
     FieldValueValidationError,
     FilterComparisonError,
@@ -202,6 +203,18 @@ def test_field_in_method_with_subquery_and_values(
         )
 
 
+def test_field_in_method_wrong_parameter_type() -> None:
+    """Test `in_` method.
+
+    Check that method is failing if comparison types are wrong.
+    """
+    with pytest.raises(expected_exception=FieldComparisonError):
+        ForTestField().in_(
+            "normal_param",
+            {"not": "correct", "type": 0},  # type: ignore[arg-type]
+        )
+
+
 def test_field_not_in_method_with_values(
     test_for_test_table: BaseTable,
 ) -> None:
@@ -225,3 +238,56 @@ def test_field_not_in_method_with_values(
     assert querystring == (
         "fortesttable.name NOT IN ('search', 'this', 'string')"
     )
+
+
+def test_field_not_in_method_with_subquery(
+    test_for_test_table: BaseTable,
+) -> None:
+    """Test `not_in` method with subquery.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    subquery = test_for_test_table.select(test_for_test_table.name)
+    filter_statement: Final[Filter] = test_for_test_table.name.not_in(
+        subquery=subquery,
+    )
+
+    assert filter_statement.comparison_value == subquery
+    assert filter_statement.comparison_values == EMPTY_VALUE
+
+    querystring = str(filter_statement.querystring())
+    assert querystring == (
+        "fortesttable.name NOT IN "
+        "(SELECT fortesttable.name FROM public.fortesttable)"
+    )
+
+
+def test_field_not_in_method_with_subquery_and_values(
+    test_for_test_table: BaseTable,
+) -> None:
+    """Test `not_in` method.
+
+    Check that it is raising an error if there are both
+    subquery and values.
+    """
+    subquery = test_for_test_table.select(test_for_test_table.name)
+    with pytest.raises(expected_exception=FilterComparisonError):
+        test_for_test_table.name.not_in(
+            "search",
+            "this",
+            "string",
+            subquery=subquery,
+        )
+
+
+def test_field_not_in_method_wrong_parameter_type() -> None:
+    """Test `not_in` method.
+
+    Check that method is failing if comparison types are wrong.
+    """
+    with pytest.raises(expected_exception=FieldComparisonError):
+        ForTestField().in_(
+            "normal_param",
+            {"not": "correct", "type": 0},  # type: ignore[arg-type]
+        )
