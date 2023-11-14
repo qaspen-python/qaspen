@@ -179,7 +179,8 @@ def test_field_in_method_with_subquery(test_for_test_table: BaseTable) -> None:
 
     querystring = str(filter_statement.querystring())
     assert querystring == (
-        "fortesttable.name IN (SELECT fortesttable.name FROM fortesttable)"
+        "fortesttable.name IN "
+        "(SELECT fortesttable.name FROM public.fortesttable)"
     )
 
 
