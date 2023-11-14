@@ -55,7 +55,7 @@ class Join(CombinableExpression):
         """Build `QueryString`."""
         return QueryString(
             self.join_type,
-            self._join_table.original_table_name(),
+            self._join_table.schemed_original_table_name(),
             self._join_table._table_meta.alias or self._alias,
             self._based_on.querystring(),
             sql_template="{} {} AS {} ON {}",

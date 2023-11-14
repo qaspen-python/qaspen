@@ -175,6 +175,15 @@ class BaseField(Generic[FieldType], abc.ABC):
         return self._field_data.from_table.original_table_name()
 
     @property
+    def _schemed_table_name(self: Self) -> str:
+        """Return aliased table name with schema of this field.
+
+        ### Return
+        `str` table name.
+        """
+        return self._field_data.from_table.schemed_table_name()
+
+    @property
     def alias(self: Self) -> str | None:
         """Return alias to the field if it exists.
 
