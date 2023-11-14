@@ -179,7 +179,8 @@ def test_field_in_method_with_subquery(test_for_test_table: BaseTable) -> None:
 
     querystring = str(filter_statement.querystring())
     assert querystring == (
-        "fortesttable.name IN (SELECT fortesttable.name FROM fortesttable)"
+        "fortesttable.name IN "
+        "(SELECT fortesttable.name FROM public.fortesttable)"
     )
 
 
@@ -199,3 +200,28 @@ def test_field_in_method_with_subquery_and_values(
             "string",
             subquery=subquery,
         )
+
+
+def test_field_not_in_method_with_values(
+    test_for_test_table: BaseTable,
+) -> None:
+    """Test `not_in` field method.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    comparison_values = (
+        "search",
+        "this",
+        "string",
+    )
+    filter_statement: Final[Filter] = test_for_test_table.name.not_in(
+        *comparison_values,
+    )
+    assert filter_statement.comparison_values == comparison_values
+    assert filter_statement.comparison_value == EMPTY_VALUE
+
+    querystring = str(filter_statement.querystring())
+    assert querystring == (
+        "fortesttable.name NOT IN ('search', 'this', 'string')"
+    )
