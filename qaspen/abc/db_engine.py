@@ -9,6 +9,7 @@ from qaspen.abc.abc_types import (
     EngineConnectionPool,
     EngineTransaction,
 )
+from qaspen.utils.engine_utils import parse_database
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -30,6 +31,7 @@ class BaseEngine(
 
     def __init__(
         self: Self,
+        connection_url: str,
         **_kwargs: Any,
     ) -> None:
         """Initialize Engine.
@@ -44,6 +46,7 @@ class BaseEngine(
             "running_transaction",
             default=None,
         )
+        self.connection_url = connection_url
 
     @overload
     async def execute(  # type: ignore[misc]
@@ -144,3 +147,12 @@ class BaseEngine(
         ### Returns:
         Transaction for this engine.
         """
+
+    @property
+    def database(self: Self) -> str:
+        """Get database from connection url.
+
+        ### Returns:
+        Connection from connection url.
+        """
+        return parse_database(self.connection_url)
