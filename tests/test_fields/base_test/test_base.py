@@ -12,8 +12,10 @@ from qaspen.exceptions import (
     FilterComparisonError,
 )
 from qaspen.fields.base import Field
+from qaspen.fields.operators import BetweenOperator, InOperator, NotInOperator
 from qaspen.statements.combinable_statements.filter_statement import (
     EMPTY_VALUE,
+    FilterBetween,
 )
 from qaspen.table.base_table import BaseTable
 from tests.test_fields.base_test.conftest import (
@@ -159,6 +161,8 @@ def test_field_in_method_with_values(test_for_test_table: BaseTable) -> None:
 
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
+    assert filter_statement.field in [test_for_test_table.name]
+    assert filter_statement.operator == InOperator
 
     querystring = str(filter_statement.querystring())
     assert querystring == ("fortesttable.name IN ('search', 'this', 'string')")
@@ -177,6 +181,8 @@ def test_field_in_method_with_subquery(test_for_test_table: BaseTable) -> None:
 
     assert filter_statement.comparison_value == subquery
     assert filter_statement.comparison_values == EMPTY_VALUE
+    assert filter_statement.field in [test_for_test_table.name]
+    assert filter_statement.operator == InOperator
 
     querystring = str(filter_statement.querystring())
     assert querystring == (
@@ -233,6 +239,8 @@ def test_field_not_in_method_with_values(
     )
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
+    assert filter_statement.field in [test_for_test_table.name]
+    assert filter_statement.operator == NotInOperator
 
     querystring = str(filter_statement.querystring())
     assert querystring == (
@@ -255,6 +263,8 @@ def test_field_not_in_method_with_subquery(
 
     assert filter_statement.comparison_value == subquery
     assert filter_statement.comparison_values == EMPTY_VALUE
+    assert filter_statement.field in [test_for_test_table.name]
+    assert filter_statement.operator == NotInOperator
 
     querystring = str(filter_statement.querystring())
     assert querystring == (
@@ -290,4 +300,48 @@ def test_field_not_in_method_wrong_parameter_type() -> None:
         ForTestField().in_(
             "normal_param",
             {"not": "correct", "type": 0},  # type: ignore[arg-type]
+        )
+
+
+def test_field_between_method(test_for_test_table: BaseTable) -> None:
+    """Test `between` method."""
+    left_value: Final = "left"
+    right_value: Final = "right"
+    filter_between: Final[FilterBetween] = test_for_test_table.name.between(
+        left_value=left_value,
+        right_value=right_value,
+    )
+
+    assert filter_between.left_comparison_value == left_value
+    assert filter_between.right_comparison_value == right_value
+    assert filter_between.field in [test_for_test_table.name]
+    assert filter_between.operator == BetweenOperator
+
+    querystring: Final = str(filter_between.querystring())
+    assert querystring == ("fortesttable.name BETWEEN 'left' AND 'right'")
+
+
+@pytest.mark.parametrize(
+    ("left_value", "right_value"),
+    [
+        ("correct", 12),
+        (12, "correct"),
+        ({"incorrect": 0}, 12),
+        ({"incorrect": 0}, [1, 2, 3]),
+        ({1, 2, 3}, ("incorrect", "types")),
+    ],
+)
+def test_field_between_method_incorrect_type(
+    test_for_test_table: BaseTable,
+    left_value: Any,
+    right_value: Any,
+) -> None:
+    """Test `between` method.
+
+    Check that method is failing if comparison types are wrong.
+    """
+    with pytest.raises(expected_exception=FieldComparisonError):
+        test_for_test_table.name.between(
+            left_value=left_value,
+            right_value=right_value,
         )

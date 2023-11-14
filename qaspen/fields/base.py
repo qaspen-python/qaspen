@@ -624,8 +624,8 @@ class Field(BaseField[FieldType]):
 
         type_err_msg = (
             f"Incorrect type of one of the values "
-            f"in `BETWEEN operator`. "
-            f"You can use one of these - {self._available_comparison_types}",
+            f"in `BETWEEN`. "
+            f"You can use these - {self._available_comparison_types}",
         )
         raise FieldComparisonError(type_err_msg)
 
