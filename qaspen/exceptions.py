@@ -2,6 +2,10 @@ class QaspenBaseError(Exception):
     """Base error for all errors."""
 
 
+class DatabaseUrlParseError(QaspenBaseError):
+    """If database from connection url cannot be parsed."""
+
+
 class FieldBaseError(QaspenBaseError):
     """Base error for all field-related errors."""
 

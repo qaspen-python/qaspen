@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import contextvars
+import typing
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generic, Literal, overload
 
 from qaspen.abc.abc_types import (
     DBConnection,
     EngineConnectionPool,
     EngineTransaction,
 )
+from qaspen.utils.engine_utils import parse_database
 
-if TYPE_CHECKING:
+if typing.TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.querystring.querystring import QueryString
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 
 class BaseEngine(
     ABC,
-    Generic[
+    typing.Generic[
         DBConnection,
         EngineConnectionPool,
         EngineTransaction,
@@ -30,7 +31,8 @@ class BaseEngine(
 
     def __init__(
         self: Self,
-        **_kwargs: Any,
+        connection_url: str,
+        **_kwargs: typing.Any,
     ) -> None:
         """Initialize Engine.
 
@@ -44,24 +46,25 @@ class BaseEngine(
             "running_transaction",
             default=None,
         )
+        self.connection_url = connection_url
 
-    @overload
+    @typing.overload
     async def execute(  # type: ignore[misc]
         self: Self,
         querystring: QueryString,
         in_pool: bool = True,
-        fetch_results: Literal[True] = True,
-        **_kwargs: Any,
-    ) -> list[dict[str, Any]]:
+        fetch_results: typing.Literal[True] = True,
+        **_kwargs: typing.Any,
+    ) -> list[dict[str, typing.Any]]:
         ...
 
-    @overload
+    @typing.overload
     async def execute(
         self: Self,
         querystring: QueryString,
         in_pool: bool = True,
-        fetch_results: Literal[False] = False,
-        **_kwargs: Any,
+        fetch_results: typing.Literal[False] = False,
+        **_kwargs: typing.Any,
     ) -> None:
         ...
 
@@ -71,8 +74,8 @@ class BaseEngine(
         querystring: QueryString,
         in_pool: bool = True,
         fetch_results: bool = True,
-        **_kwargs: Any,
-    ) -> list[dict[str, Any]] | None:
+        **_kwargs: typing.Any,
+    ) -> list[dict[str, typing.Any]] | None:
         """Execute a querystring.
 
         Run querystring and return raw result as in
@@ -95,7 +98,7 @@ class BaseEngine(
     ) -> None:
         """Prepare database.
 
-        Anything that must be done before database will be
+        typing.Anything that must be done before database will be
         ready to execute queries.
 
         For example, create extensions in PostgreSQL.
@@ -144,3 +147,12 @@ class BaseEngine(
         ### Returns:
         Transaction for this engine.
         """
+
+    @property
+    def database(self: Self) -> str:
+        """Get database from connection url.
+
+        ### Returns:
+        Connection from connection url.
+        """
+        return parse_database(self.connection_url)
