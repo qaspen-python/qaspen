@@ -18,7 +18,10 @@ def calculate_default_field_value() -> str:
 
 
 class ForTestField(Field[Union[str, float]]):
-    """Field class for testing."""
+    """Field class for testing.
+
+    It supports `string` and `float` types.
+    """
 
     _available_comparison_types: tuple[type, ...] = (
         str,
@@ -43,13 +46,37 @@ class ForTestField(Field[Union[str, float]]):
         )
 
 
+class ForTestFieldInt(Field[int]):
+    """Field class for testing.
+
+    It supports `int` type.
+    """
+
+    _available_comparison_types: tuple[type, ...] = (int,)
+    _set_available_types: tuple[type, ...] = (int,)
+
+    def __init__(
+        self: Self,
+        *args: Any,  # noqa: ARG002
+        is_null: bool = False,
+        default: int | Callable[[], int] | None = None,
+        db_field_name: str | None = None,
+    ) -> None:
+        super().__init__(
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )
+
+
 @pytest.fixture()
-def test_for_test_table() -> type[BaseTable]:
+def for_test_table() -> type[BaseTable]:
     """Return table class for testing."""
 
     class ForTestTable(BaseTable):
         """Class for test purposes."""
 
         name: ForTestField = ForTestField()
+        count: ForTestFieldInt = ForTestFieldInt()
 
     return ForTestTable

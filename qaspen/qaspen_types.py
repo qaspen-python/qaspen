@@ -3,6 +3,8 @@ import typing
 from msgspec import Struct
 from pydantic import BaseModel
 
+from qaspen.base.operators import AllOperator, AnyOperator
+
 if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
@@ -39,3 +41,5 @@ MSGSpecStruct = typing.TypeVar(
     "MSGSpecStruct",
     bound=Struct,
 )
+
+OperatorTypes = typing.Union[AnyOperator, AllOperator]

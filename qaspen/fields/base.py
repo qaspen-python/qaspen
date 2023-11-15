@@ -4,9 +4,8 @@ import abc
 import copy
 import dataclasses
 import types
-from typing import TYPE_CHECKING, Any, Callable, Final, Generic, Union, cast
+from typing import TYPE_CHECKING, Any, Callable, Final, Generic, cast
 
-from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import (
     FieldComparisonError,
     FieldDeclarationError,
@@ -18,6 +17,7 @@ from qaspen.qaspen_types import (
     CallableDefaultType,
     FieldDefaultType,
     FieldType,
+    OperatorTypes,
 )
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.combinable_statements.filter_statement import (
@@ -287,12 +287,6 @@ class BaseField(Generic[FieldType], abc.ABC):
         SQL `string`.
         """
         return str(self._sql_type.querystring())
-
-
-if TYPE_CHECKING:
-    from qaspen.table.base_table import BaseTable
-
-OperatorTypes = Union[AnyOperator, AllOperator]
 
 
 class Field(BaseField[FieldType]):
@@ -638,7 +632,17 @@ class Field(BaseField[FieldType]):
                 field=self,
                 operator=operators.IsNullOperator,
             )
-        if isinstance(comparison_value, self._available_comparison_types):
+
+        available_types = (
+            *self._available_comparison_types,
+            Field,
+            OperatorTypes.__args__,  # type: ignore[attr-defined]
+        )
+        available_comparison_condition = isinstance(
+            comparison_value,
+            available_types,
+        )
+        if available_comparison_condition:
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
