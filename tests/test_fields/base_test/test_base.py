@@ -26,7 +26,7 @@ from qaspen.statements.combinable_statements.filter_statement import (
 from qaspen.table.base_table import BaseTable
 from tests.test_fields.base_test.conftest import (
     ForTestField,
-    ForTestTable,
+    _ForTestTable,
     calculate_default_field_value,
 )
 
@@ -152,7 +152,7 @@ def test_field_field_data(
     assert field._field_data.field_name == db_field_name
 
 
-def test_field_in_method_with_values(for_test_table: ForTestTable) -> None:
+def test_field_in_method_with_values(for_test_table: _ForTestTable) -> None:
     """Test `in_` method with comparison_values.
 
     ### Parameters:
@@ -176,7 +176,7 @@ def test_field_in_method_with_values(for_test_table: ForTestTable) -> None:
     assert querystring == ("fortesttable.name IN ('search', 'this', 'string')")
 
 
-def test_field_in_method_with_subquery(for_test_table: ForTestTable) -> None:
+def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
     """Test `in_` method with subquery.
 
     ### Parameters:
@@ -200,7 +200,7 @@ def test_field_in_method_with_subquery(for_test_table: ForTestTable) -> None:
 
 
 def test_field_in_method_with_subquery_and_values(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `in_` method.
 
@@ -230,7 +230,7 @@ def test_field_in_method_wrong_parameter_type() -> None:
 
 
 def test_field_not_in_method_with_values(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `not_in` field method.
 
@@ -257,7 +257,7 @@ def test_field_not_in_method_with_values(
 
 
 def test_field_not_in_method_with_subquery(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `not_in` method with subquery.
 
@@ -282,7 +282,7 @@ def test_field_not_in_method_with_subquery(
 
 
 def test_field_not_in_method_with_subquery_and_values(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `not_in` method.
 
@@ -311,7 +311,7 @@ def test_field_not_in_method_wrong_parameter_type() -> None:
         )
 
 
-def test_field_between_method(for_test_table: ForTestTable) -> None:
+def test_field_between_method(for_test_table: _ForTestTable) -> None:
     """Test `between` method."""
     left_value: Final = "left"
     right_value: Final = "right"
@@ -340,7 +340,7 @@ def test_field_between_method(for_test_table: ForTestTable) -> None:
     ],
 )
 def test_field_between_method_incorrect_type(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
     left_value: Any,
     right_value: Any,
 ) -> None:
@@ -356,7 +356,7 @@ def test_field_between_method_incorrect_type(
 
 
 def test_field_overloaded_eq_method_with_field(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `__eq__` method.
 
@@ -385,7 +385,7 @@ def test_field_overloaded_eq_method_with_field(
     ],
 )
 def test_field_overloaded_eq_method_with_operator(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
     operator_class: OperatorTypes,
     operator_string: str,
 ) -> None:
@@ -414,7 +414,7 @@ def test_field_overloaded_eq_method_with_operator(
 
 
 def test_field_overloaded_eq_method_with_value(
-    for_test_table: ForTestTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `__eq__` method.
 

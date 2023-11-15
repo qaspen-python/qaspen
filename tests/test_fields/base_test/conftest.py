@@ -69,7 +69,7 @@ class ForTestFieldInt(Field[int]):
         )
 
 
-class ForTestTable(BaseTable):
+class _ForTestTable(BaseTable):
     """Class for test purposes."""
 
     name: ForTestField = ForTestField()
@@ -77,10 +77,13 @@ class ForTestTable(BaseTable):
 
 
 @pytest.fixture()
-def for_test_table() -> type[ForTestTable]:
+def for_test_table() -> type[_ForTestTable]:
     """Return table class for testing."""
 
-    class _ForTestTable(ForTestTable):
+    class ForTestTable(_ForTestTable):
         """Class for test purposes."""
 
-    return _ForTestTable
+        name: ForTestField = ForTestField()
+        count: ForTestFieldInt = ForTestFieldInt()
+
+    return ForTestTable
