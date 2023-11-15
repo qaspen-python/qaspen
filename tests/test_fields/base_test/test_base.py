@@ -5,22 +5,33 @@ from typing import TYPE_CHECKING, Any, Callable, Final
 
 import pytest
 
+from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import (
+    FieldComparisonError,
     FieldDeclarationError,
     FieldValueValidationError,
     FilterComparisonError,
 )
 from qaspen.fields.base import Field
+from qaspen.fields.operators import (
+    BetweenOperator,
+    EqualOperator,
+    InOperator,
+    NotInOperator,
+)
 from qaspen.statements.combinable_statements.filter_statement import (
     EMPTY_VALUE,
+    FilterBetween,
 )
 from qaspen.table.base_table import BaseTable
 from tests.test_fields.base_test.conftest import (
     ForTestField,
+    _ForTestTable,
     calculate_default_field_value,
 )
 
 if TYPE_CHECKING:
+    from qaspen.qaspen_types import OperatorTypes
     from qaspen.statements.combinable_statements.filter_statement import Filter
 
 
@@ -141,7 +152,7 @@ def test_field_field_data(
     assert field._field_data.field_name == db_field_name
 
 
-def test_field_in_method_with_values(test_for_test_table: BaseTable) -> None:
+def test_field_in_method_with_values(for_test_table: _ForTestTable) -> None:
     """Test `in_` method with comparison_values.
 
     ### Parameters:
@@ -152,30 +163,34 @@ def test_field_in_method_with_values(test_for_test_table: BaseTable) -> None:
         "this",
         "string",
     )
-    filter_statement: Final[Filter] = test_for_test_table.name.in_(
+    filter_statement: Final[Filter] = for_test_table.name.in_(
         *comparison_values,
     )
 
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
+    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.operator == InOperator
 
     querystring = str(filter_statement.querystring())
     assert querystring == ("fortesttable.name IN ('search', 'this', 'string')")
 
 
-def test_field_in_method_with_subquery(test_for_test_table: BaseTable) -> None:
+def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
     """Test `in_` method with subquery.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
-    subquery = test_for_test_table.select(test_for_test_table.name)
-    filter_statement: Final[Filter] = test_for_test_table.name.in_(
+    subquery = for_test_table.select(for_test_table.name)
+    filter_statement: Final[Filter] = for_test_table.name.in_(
         subquery=subquery,
     )
 
     assert filter_statement.comparison_value == subquery
     assert filter_statement.comparison_values == EMPTY_VALUE
+    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.operator == InOperator
 
     querystring = str(filter_statement.querystring())
     assert querystring == (
@@ -185,16 +200,16 @@ def test_field_in_method_with_subquery(test_for_test_table: BaseTable) -> None:
 
 
 def test_field_in_method_with_subquery_and_values(
-    test_for_test_table: BaseTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `in_` method.
 
     Check that it is raising an error if there are both
     subquery and values.
     """
-    subquery = test_for_test_table.select(test_for_test_table.name)
+    subquery = for_test_table.select(for_test_table.name)
     with pytest.raises(expected_exception=FilterComparisonError):
-        test_for_test_table.name.in_(
+        for_test_table.name.in_(
             "search",
             "this",
             "string",
@@ -202,8 +217,20 @@ def test_field_in_method_with_subquery_and_values(
         )
 
 
+def test_field_in_method_wrong_parameter_type() -> None:
+    """Test `in_` method.
+
+    Check that method is failing if comparison types are wrong.
+    """
+    with pytest.raises(expected_exception=FieldComparisonError):
+        ForTestField().in_(
+            "normal_param",
+            {"not": "correct", "type": 0},  # type: ignore[arg-type]
+        )
+
+
 def test_field_not_in_method_with_values(
-    test_for_test_table: BaseTable,
+    for_test_table: _ForTestTable,
 ) -> None:
     """Test `not_in` field method.
 
@@ -215,13 +242,216 @@ def test_field_not_in_method_with_values(
         "this",
         "string",
     )
-    filter_statement: Final[Filter] = test_for_test_table.name.not_in(
+    filter_statement: Final[Filter] = for_test_table.name.not_in(
         *comparison_values,
     )
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
+    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.operator == NotInOperator
 
     querystring = str(filter_statement.querystring())
     assert querystring == (
         "fortesttable.name NOT IN ('search', 'this', 'string')"
     )
+
+
+def test_field_not_in_method_with_subquery(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `not_in` method with subquery.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    subquery = for_test_table.select(for_test_table.name)
+    filter_statement: Final[Filter] = for_test_table.name.not_in(
+        subquery=subquery,
+    )
+
+    assert filter_statement.comparison_value == subquery
+    assert filter_statement.comparison_values == EMPTY_VALUE
+    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.operator == NotInOperator
+
+    querystring = str(filter_statement.querystring())
+    assert querystring == (
+        "fortesttable.name NOT IN "
+        "(SELECT fortesttable.name FROM public.fortesttable)"
+    )
+
+
+def test_field_not_in_method_with_subquery_and_values(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `not_in` method.
+
+    Check that it is raising an error if there are both
+    subquery and values.
+    """
+    subquery = for_test_table.select(for_test_table.name)
+    with pytest.raises(expected_exception=FilterComparisonError):
+        for_test_table.name.not_in(
+            "search",
+            "this",
+            "string",
+            subquery=subquery,
+        )
+
+
+def test_field_not_in_method_wrong_parameter_type() -> None:
+    """Test `not_in` method.
+
+    Check that method is failing if comparison types are wrong.
+    """
+    with pytest.raises(expected_exception=FieldComparisonError):
+        ForTestField().in_(
+            "normal_param",
+            {"not": "correct", "type": 0},  # type: ignore[arg-type]
+        )
+
+
+def test_field_between_method(for_test_table: _ForTestTable) -> None:
+    """Test `between` method."""
+    left_value: Final = "left"
+    right_value: Final = "right"
+    filter_between: Final[FilterBetween] = for_test_table.name.between(
+        left_value=left_value,
+        right_value=right_value,
+    )
+
+    assert filter_between.left_comparison_value == left_value
+    assert filter_between.right_comparison_value == right_value
+    assert filter_between.field in [for_test_table.name]
+    assert filter_between.operator == BetweenOperator
+
+    querystring: Final = str(filter_between.querystring())
+    assert querystring == ("fortesttable.name BETWEEN 'left' AND 'right'")
+
+
+@pytest.mark.parametrize(
+    ("left_value", "right_value"),
+    [
+        ("correct", 12),
+        (12, "correct"),
+        ({"incorrect": 0}, 12),
+        ({"incorrect": 0}, [1, 2, 3]),
+        ({1, 2, 3}, ("incorrect", "types")),
+    ],
+)
+def test_field_between_method_incorrect_type(
+    for_test_table: _ForTestTable,
+    left_value: Any,
+    right_value: Any,
+) -> None:
+    """Test `between` method.
+
+    Check that method is failing if comparison types are wrong.
+    """
+    with pytest.raises(expected_exception=FieldComparisonError):
+        for_test_table.name.between(
+            left_value=left_value,
+            right_value=right_value,
+        )
+
+
+def test_field_overloaded_eq_method_with_field(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__eq__` method.
+
+    Check that method works correct with field as a comparison value.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    filter_with_field: Final[Filter] = (
+        for_test_table.name == for_test_table.name
+    )
+
+    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.comparison_value == for_test_table.name
+    assert filter_with_field.operator == EqualOperator
+
+    querystring: Final = str(filter_with_field.querystring())
+    assert querystring == "fortesttable.name = fortesttable.name"
+
+
+@pytest.mark.parametrize(
+    ("operator_class", "operator_string"),
+    [
+        (AnyOperator, "ANY"),
+        (AllOperator, "ALL"),
+    ],
+)
+def test_field_overloaded_eq_method_with_operator(
+    for_test_table: _ForTestTable,
+    operator_class: OperatorTypes,
+    operator_string: str,
+) -> None:
+    """Test `__eq__` method.
+
+    Check that method works correct with operator as a comparison value.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    operator: OperatorTypes = operator_class(  # type: ignore[operator]
+        subquery=for_test_table.select(for_test_table.name),
+    )
+    filter_with_operator: Final[Filter] = for_test_table.name == operator
+
+    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.comparison_value == operator
+    assert filter_with_operator.operator == EqualOperator
+
+    querystring: Final = str(filter_with_operator.querystring())
+    assert querystring == (
+        "fortesttable.name = "
+        f"{operator_string} "
+        f"(SELECT fortesttable.name FROM public.fortesttable)"
+    )
+
+
+def test_field_overloaded_eq_method_with_value(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__eq__` method.
+
+    Check that method works correct with value as a comparison value.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    value: Final = "valid_value"
+    filter_with_value: Final[Filter] = for_test_table.name == value
+
+    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.comparison_value == value
+    assert filter_with_value.operator == EqualOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"fortesttable.name = '{value}'"
+
+
+def test_field_eq_method(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `eq` method.
+
+    Check that method works.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    value: Final = "valid_value"
+    filter_with_value: Final[Filter] = for_test_table.name.eq(
+        comparison_value=value,
+    )
+
+    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.comparison_value == value
+    assert filter_with_value.operator == EqualOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"fortesttable.name = '{value}'"
