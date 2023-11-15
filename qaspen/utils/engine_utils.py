@@ -1,18 +1,20 @@
 import typing
+from urllib.parse import urlparse
 
-from qaspen.exceptions import DatabaseUrlError
+from qaspen.exceptions import DatabaseUrlParseError
 
 
 def parse_database(database_url: str) -> str:
     """Parse database from connection url.
 
     ### Returns:
-    Connection from connection url.
+    Database name from connection url.
     """
-    try:
-        return database_url.split("/")[-1]
-    except LookupError as exc:
+    database_name: typing.Final = urlparse(database_url).path[1:]
+    if not database_name:
         parsing_error_message: typing.Final = (
-            "Database url cannot be parsed, it's empty"
+            "Database name cannot be parsed, it's empty"
         )
-        raise DatabaseUrlError(parsing_error_message) from exc
+        raise DatabaseUrlParseError(parsing_error_message)
+
+    return database_name

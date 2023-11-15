@@ -2,7 +2,7 @@ class QaspenBaseError(Exception):
     """Base error for all errors."""
 
 
-class DatabaseUrlError(QaspenBaseError):
+class DatabaseUrlParseError(QaspenBaseError):
     """If database from connection url cannot be parsed."""
 
 

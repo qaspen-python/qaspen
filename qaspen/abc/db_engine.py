@@ -3,13 +3,13 @@ from __future__ import annotations
 import contextvars
 import typing
 from abc import ABC, abstractmethod
-from urllib.parse import urlparse
 
 from qaspen.abc.abc_types import (
     DBConnection,
     EngineConnectionPool,
     EngineTransaction,
 )
+from qaspen.utils.engine_utils import parse_database
 
 if typing.TYPE_CHECKING:
     from typing_extensions import Self
@@ -155,4 +155,4 @@ class BaseEngine(
         ### Returns:
         Connection from connection url.
         """
-        return urlparse(self.connection_url).path[1:]
+        return parse_database(self.connection_url)
