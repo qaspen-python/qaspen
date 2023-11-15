@@ -10,7 +10,6 @@ from qaspen.abc.abc_types import (
     EngineConnectionPool,
     EngineTransaction,
 )
-from qaspen.exceptions import DatabaseUrlError
 
 if typing.TYPE_CHECKING:
     from typing_extensions import Self
@@ -156,11 +155,4 @@ class BaseEngine(
         ### Returns:
         Connection from connection url.
         """
-        database: typing.Final = urlparse(self.connection_url).path[1:]
-        if not database:
-            parsing_error_message: typing.Final = (
-                "Database url cannot be parsed, it's empty"
-            )
-            raise DatabaseUrlError(parsing_error_message)
-
-        return database
+        return urlparse(self.connection_url).path[1:]
