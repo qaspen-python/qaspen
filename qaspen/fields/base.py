@@ -698,7 +698,7 @@ class Field(BaseField[FieldType]):
 
     def neq(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: FieldType | Field[Any] | OperatorTypes,
     ) -> Filter:
         """Analog for `!=` (`__ne__` method) operation.
 
@@ -715,7 +715,7 @@ class Field(BaseField[FieldType]):
 
     def __gt__(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: FieldType | Field[Any] | OperatorTypes,
     ) -> Filter:
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
@@ -733,7 +733,7 @@ class Field(BaseField[FieldType]):
 
     def gt(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: FieldType | Field[Any] | OperatorTypes,
     ) -> Filter:
         """Analog for `>` (`__gt__` method) operation.
 

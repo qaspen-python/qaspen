@@ -432,3 +432,26 @@ def test_field_overloaded_eq_method_with_value(
 
     querystring: Final = str(filter_with_value.querystring())
     assert querystring == f"fortesttable.name = '{value}'"
+
+
+def test_field_eq_method(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `eq` method.
+
+    Check that method works.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    value: Final = "valid_value"
+    filter_with_value: Final[Filter] = for_test_table.name.eq(
+        comparison_value=value,
+    )
+
+    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.comparison_value == value
+    assert filter_with_value.operator == EqualOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"fortesttable.name = '{value}'"
