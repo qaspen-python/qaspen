@@ -1121,3 +1121,18 @@ def test_field__correct_method_value_types(
     )
 
     assert for_test_table.name._correct_method_value_types == expected_types
+
+
+def test_is_the_same_field(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test method `_is_the_same_field`.
+
+    Check that it returns True if fields are the same.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    assert for_test_table.name == for_test_table.name
+
+    assert for_test_table.count != for_test_table.name
