@@ -24,6 +24,7 @@ from qaspen.fields.operators import (
     NotEqualOperator,
     NotInOperator,
 )
+from qaspen.qaspen_types import OperatorTypes
 from qaspen.statements.combinable_statements.filter_statement import (
     EMPTY_VALUE,
     FilterBetween,
@@ -36,7 +37,6 @@ from tests.test_fields.base_test.conftest import (
 )
 
 if TYPE_CHECKING:
-    from qaspen.qaspen_types import OperatorTypes
     from qaspen.statements.combinable_statements.filter_statement import Filter
 
 
@@ -1104,3 +1104,20 @@ def test_field_with_alias_method(
     assert querystring == (
         "SELECT fortesttable.name AS good_alias FROM public.fortesttable"
     )
+
+
+def test_field__correct_method_value_types(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test that `_correct_method_value_types` returns correct types.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    expected_types = (
+        *for_test_table.name._available_comparison_types,
+        Field,
+        OperatorTypes.__args__,  # type: ignore[attr-defined]
+    )
+
+    assert for_test_table.name._correct_method_value_types == expected_types
