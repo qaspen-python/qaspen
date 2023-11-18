@@ -17,6 +17,7 @@ from qaspen.fields.operators import (
     BetweenOperator,
     EqualOperator,
     InOperator,
+    NotEqualOperator,
     NotInOperator,
 )
 from qaspen.statements.combinable_statements.filter_statement import (
@@ -455,3 +456,123 @@ def test_field_eq_method(
 
     querystring: Final = str(filter_with_value.querystring())
     assert querystring == f"fortesttable.name = '{value}'"
+
+
+def test_overloaded_ne_method_with_field(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__ne__` method.
+
+    Check that method works correct with field as a comparison value.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    filter_with_field: Final[Filter] = (
+        for_test_table.name != for_test_table.name
+    )
+
+    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.comparison_value == for_test_table.name
+    assert filter_with_field.operator == NotEqualOperator
+
+    querystring: Final = str(filter_with_field.querystring())
+    assert querystring == "fortesttable.name != fortesttable.name"
+
+
+@pytest.mark.parametrize(
+    ("operator_class", "operator_string"),
+    [
+        (AnyOperator, "ANY"),
+        (AllOperator, "ALL"),
+    ],
+)
+def test_field_overloaded_ne_method_with_operator(
+    for_test_table: _ForTestTable,
+    operator_class: OperatorTypes,
+    operator_string: str,
+) -> None:
+    """Test `__ne__` method.
+
+    Check that method works correct with operator as a comparison value.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    operator: OperatorTypes = operator_class(  # type: ignore[operator]
+        subquery=for_test_table.select(for_test_table.name),
+    )
+    filter_with_operator: Final[Filter] = for_test_table.name != operator
+
+    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.comparison_value == operator
+    assert filter_with_operator.operator == NotEqualOperator
+
+    querystring: Final = str(filter_with_operator.querystring())
+    assert querystring == (
+        "fortesttable.name != "
+        f"{operator_string} "
+        f"(SELECT fortesttable.name FROM public.fortesttable)"
+    )
+
+
+def test_field_overloaded_ne_method_with_value(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__ne__` method.
+
+    Check that method works correct with value as a comparison value.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    value: Final = "valid_value"
+    filter_with_value: Final[Filter] = for_test_table.name != value
+
+    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.comparison_value == value
+    assert filter_with_value.operator == NotEqualOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"fortesttable.name != '{value}'"
+
+
+def test_field_overloaded_ne_method_wrong_value(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__ne__` method.
+
+    Check that method fails if comparison value is wrong.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+
+    class WrongCompValue:
+        pass
+
+    with pytest.raises(expected_exception=FieldComparisonError):
+        for_test_table.name != WrongCompValue()  # noqa: B015
+
+
+def test_field_ne_method(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `ne` method.
+
+    Check that method works.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    value: Final = "valid_value"
+    filter_with_value: Final[Filter] = for_test_table.name.neq(
+        comparison_value=value,
+    )
+
+    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.comparison_value == value
+    assert filter_with_value.operator == NotEqualOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"fortesttable.name != '{value}'"
