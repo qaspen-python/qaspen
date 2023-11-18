@@ -747,7 +747,7 @@ class Field(BaseField[FieldType]):
         self: Self,
         comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
-        if isinstance(comparison_value, self._available_comparison_types):
+        if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
