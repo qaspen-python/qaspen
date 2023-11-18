@@ -435,6 +435,24 @@ def test_field_overloaded_eq_method_with_value(
     assert querystring == f"fortesttable.name = '{value}'"
 
 
+def test_field_overloaded_eq_method_wrong_value(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__eq__` method.
+
+    Check that method fails if comparison value is wrong.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+
+    class WrongCompValue:
+        pass
+
+    with pytest.raises(expected_exception=FieldComparisonError):
+        for_test_table.name == WrongCompValue()  # noqa: B015
+
+
 def test_field_eq_method(
     for_test_table: _ForTestTable,
 ) -> None:
