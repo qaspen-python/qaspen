@@ -1106,7 +1106,7 @@ def test_field_with_alias_method(
     )
 
 
-def test_field__correct_method_value_types(
+def test_field_correct_method_value_types(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test that `_correct_method_value_types` returns correct types.
@@ -1123,7 +1123,7 @@ def test_field__correct_method_value_types(
     assert for_test_table.name._correct_method_value_types == expected_types
 
 
-def test_is_the_same_field(
+def test_field_is_the_same_field_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test method `_is_the_same_field`.
@@ -1136,3 +1136,21 @@ def test_is_the_same_field(
     assert for_test_table.name == for_test_table.name
 
     assert for_test_table.count != for_test_table.name
+
+
+def test_field_with_prefix_method(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test method `_with_prefix`.
+
+    Check that field have prefix after method use.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    prefix_name: Final = "good_prefix"
+    prefixed_field = for_test_table.name._with_prefix(
+        prefix=prefix_name,
+    )
+
+    assert prefixed_field._field_data.prefix == prefix_name
