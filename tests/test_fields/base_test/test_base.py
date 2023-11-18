@@ -1154,3 +1154,65 @@ def test_field_with_prefix_method(
     )
 
     assert prefixed_field._field_data.prefix == prefix_name
+
+
+@pytest.mark.parametrize(
+    ("value", "excepted_exception"),
+    [
+        (None, None),
+        (calculate_default_field_value, None),
+        (12, FieldValueValidationError),
+        ({"not": "correct"}, FieldValueValidationError),
+    ],
+)
+def test_field_validate_default_value(
+    value: Any,
+    excepted_exception: None | type[Exception],
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test method `_validate_default_value`.
+
+    Check that method works correctly.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    if excepted_exception:
+        with pytest.raises(expected_exception=excepted_exception):
+            for_test_table.name._validate_default_value(
+                default_value=value,
+            )
+    else:
+        for_test_table.name._validate_default_value(
+            default_value=value,
+        )
+
+
+@pytest.mark.parametrize(
+    ("value", "excepted_default_value"),
+    [
+        (None, None),
+        ("string", "string"),
+        (12, "12"),
+        ({"not": "correct"}, "{'not': 'correct'}"),
+        (["1", 2, 3], "['1', 2, 3]"),
+    ],
+)
+def test_field_prepare_default_value(
+    value: Any,
+    excepted_default_value: str | None,
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test method `_prepare_default_value`.
+
+    Check that method works correctly.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    assert (
+        for_test_table.name._prepare_default_value(
+            default_value=value,
+        )
+        == excepted_default_value
+    )
