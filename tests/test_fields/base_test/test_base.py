@@ -1078,3 +1078,29 @@ def test_field_lte_method(
 
     querystring: Final = str(filter_with_value.querystring())
     assert querystring == f"fortesttable.name <= '{value}'"
+
+
+def test_field_with_alias_method(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `with_alias` method.
+
+    ### Parameters:
+    - `test_for_test_table`: table for test purposes.
+    """
+    alias_name: Final = "good_alias"
+    aliased_field: Final = for_test_table.name.with_alias(
+        alias_name="good_alias",
+    )
+
+    assert aliased_field.alias == alias_name
+
+    statement_with_aliased = for_test_table.select(
+        for_test_table.name.with_alias(alias_name=alias_name),
+    )
+
+    querystring: Final = str(statement_with_aliased.querystring())
+
+    assert querystring == (
+        "SELECT fortesttable.name AS good_alias FROM public.fortesttable"
+    )
