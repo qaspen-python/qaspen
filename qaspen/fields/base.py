@@ -4,7 +4,7 @@ import abc
 import copy
 import dataclasses
 import types
-from typing import TYPE_CHECKING, Any, Callable, Final, Generic, cast
+from typing import TYPE_CHECKING, Any, Callable, Final, Generic, Union, cast
 
 from qaspen.exceptions import (
     FieldComparisonError,
@@ -31,6 +31,9 @@ if TYPE_CHECKING:
     from qaspen.base.sql_base import SQLSelectable
     from qaspen.sql_type.base import SQLType
     from qaspen.table.base_table import BaseTable
+
+
+DefaultFieldComparisonValue = Union[FieldType, "Field[Any]", OperatorTypes]
 
 
 class EmptyFieldValue:
@@ -625,7 +628,7 @@ class Field(BaseField[FieldType]):
 
     def __eq__(  # type: ignore[override]
         self: Self,
-        comparison_value: FieldType | Field[Any] | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         if comparison_value is None:
             return Filter(
@@ -633,16 +636,7 @@ class Field(BaseField[FieldType]):
                 operator=operators.IsNullOperator,
             )
 
-        available_types = (
-            *self._available_comparison_types,
-            Field,
-            OperatorTypes.__args__,  # type: ignore[attr-defined]
-        )
-        available_comparison_condition = isinstance(
-            comparison_value,
-            available_types,
-        )
-        if available_comparison_condition:
+        if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
@@ -658,7 +652,7 @@ class Field(BaseField[FieldType]):
 
     def eq(
         self: Self,
-        comparison_value: FieldType | Field[Any] | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         """Analog for `==` (`__eq__` method) operation.
 
@@ -675,14 +669,15 @@ class Field(BaseField[FieldType]):
 
     def __ne__(  # type: ignore[override]
         self: Self,
-        comparison_value: FieldType | Field[Any] | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         if comparison_value is None:
             return Filter(
                 field=self,
                 operator=operators.IsNotNullOperator,
             )
-        if isinstance(comparison_value, self._available_comparison_types):
+
+        if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
@@ -698,7 +693,7 @@ class Field(BaseField[FieldType]):
 
     def neq(
         self: Self,
-        comparison_value: FieldType | Field[Any] | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         """Analog for `!=` (`__ne__` method) operation.
 
@@ -715,9 +710,9 @@ class Field(BaseField[FieldType]):
 
     def __gt__(
         self: Self,
-        comparison_value: FieldType | Field[Any] | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
-        if isinstance(comparison_value, self._available_comparison_types):
+        if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
@@ -733,7 +728,7 @@ class Field(BaseField[FieldType]):
 
     def gt(
         self: Self,
-        comparison_value: FieldType | Field[Any] | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         """Analog for `>` (`__gt__` method) operation.
 
@@ -750,9 +745,9 @@ class Field(BaseField[FieldType]):
 
     def __ge__(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
-        if isinstance(comparison_value, self._available_comparison_types):
+        if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
@@ -767,7 +762,7 @@ class Field(BaseField[FieldType]):
 
     def gte(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         """Analog for `>=` (`__ge__` method) operation.
 
@@ -784,9 +779,9 @@ class Field(BaseField[FieldType]):
 
     def __lt__(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
-        if isinstance(comparison_value, self._available_comparison_types):
+        if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
@@ -801,7 +796,7 @@ class Field(BaseField[FieldType]):
 
     def lt(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         """Analog for `<` (`__lt__` method) operation.
 
@@ -818,9 +813,9 @@ class Field(BaseField[FieldType]):
 
     def __le__(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
-        if isinstance(comparison_value, self._available_comparison_types):
+        if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
                 field=self,
                 comparison_value=comparison_value,
@@ -835,7 +830,7 @@ class Field(BaseField[FieldType]):
 
     def lte(
         self: Self,
-        comparison_value: FieldType | OperatorTypes,
+        comparison_value: DefaultFieldComparisonValue[Any],
     ) -> Filter:
         """Analog for `<=` (`__le__` method) operation.
 
@@ -864,6 +859,19 @@ class Field(BaseField[FieldType]):
         """
         return self._with_alias(
             alias=alias_name,
+        )
+
+    @property
+    def _correct_method_value_types(self: Self) -> tuple[type, ...]:
+        """Return types that can be used in most comparison methods.
+
+        ### Returns:
+        tuple of types.
+        """
+        return (
+            *self._available_comparison_types,
+            Field,
+            OperatorTypes.__args__,  # type: ignore[attr-defined]
         )
 
     def _is_the_same_field(
