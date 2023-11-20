@@ -70,6 +70,15 @@ def test_table_name_method() -> None:
     assert TestTable.wow_field._table_name == "tname"
 
 
+def test_schemed_table_name_method() -> None:
+    """Test `_schemed_table_name` method."""
+
+    class TestTable(BaseTable, table_name="tname"):
+        wow_field = Field[str]()
+
+    assert TestTable.wow_field._schemed_table_name == "public.tname"
+
+
 def test_no_args_in_parameters() -> None:
     """Test that it's impossible to pass not keyword parameters into Field."""
     with pytest.raises(expected_exception=FieldDeclarationError):
