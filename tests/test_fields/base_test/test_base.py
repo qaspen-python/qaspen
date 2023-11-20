@@ -25,6 +25,7 @@ from qaspen.fields.operators import (
     NotInOperator,
 )
 from qaspen.qaspen_types import OperatorTypes
+from qaspen.sql_type.primitive_types import VarChar
 from qaspen.statements.combinable_statements.filter_statement import (
     EMPTY_VALUE,
     FilterBetween,
@@ -61,8 +62,8 @@ def test_field_value_property(for_test_table: _ForTestTable) -> None:
     assert ttable.name == "123"
 
 
-def test_table_name_method() -> None:
-    """Test `_table_name` method."""
+def test_table_name_property() -> None:
+    """Test `_table_name` property."""
 
     class TestTable(BaseTable, table_name="tname"):
         wow_field = Field[str]()
@@ -70,13 +71,39 @@ def test_table_name_method() -> None:
     assert TestTable.wow_field._table_name == "tname"
 
 
-def test_schemed_table_name_method() -> None:
-    """Test `_schemed_table_name` method."""
+def test_schemed_table_name_property() -> None:
+    """Test `_schemed_table_name` property."""
 
     class TestTable(BaseTable, table_name="tname"):
         wow_field = Field[str]()
 
     assert TestTable.wow_field._schemed_table_name == "public.tname"
+
+
+def test_field_field_name_property() -> None:
+    """Test `field_name` property."""
+
+    class TestTable(BaseTable, table_name="tname"):
+        wow_field = Field[str]()
+
+    assert TestTable.wow_field.field_name == "tname.wow_field"
+
+    aliased_table = TestTable.aliased(alias="wow_table")
+
+    assert aliased_table.wow_field.field_name == "wow_table.wow_field"
+
+
+def test_field_field_type_property() -> None:
+    """Test `_field_type` property."""
+
+    class TestField(Field[str]):
+        _sql_type = VarChar
+
+    class TestTable(BaseTable, table_name="tname"):
+        wow_field = TestField()
+
+    assert TestTable.wow_field._field_type == "VARCHAR"
+    assert TestTable.wow_field._field_type == str(VarChar.querystring())
 
 
 def test_no_args_in_parameters() -> None:
