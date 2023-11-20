@@ -40,6 +40,45 @@ if TYPE_CHECKING:
     from qaspen.statements.combinable_statements.filter_statement import Filter
 
 
+def test_set_name_magic_method() -> None:
+    """Test `__set_name__` method.
+
+    Check that field get name from its variable.
+    """
+
+    class TestTable(BaseTable):
+        wow_field = Field[str]()
+
+    assert TestTable.wow_field._original_field_name == "wow_field"
+
+
+def test_field_value_property(for_test_table: _ForTestTable) -> None:
+    """Test `value` property."""
+    ttable: Final = for_test_table(  # type: ignore[operator]
+        name="123",
+        count=1,
+    )
+    assert ttable.name == "123"
+
+
+def test_table_name_method() -> None:
+    """Test `_table_name` method."""
+
+    class TestTable(BaseTable, table_name="tname"):
+        wow_field = Field[str]()
+
+    assert TestTable.wow_field._table_name == "tname"
+
+
+def test_schemed_table_name_method() -> None:
+    """Test `_schemed_table_name` method."""
+
+    class TestTable(BaseTable, table_name="tname"):
+        wow_field = Field[str]()
+
+    assert TestTable.wow_field._schemed_table_name == "public.tname"
+
+
 def test_no_args_in_parameters() -> None:
     """Test that it's impossible to pass not keyword parameters into Field."""
     with pytest.raises(expected_exception=FieldDeclarationError):
