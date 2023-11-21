@@ -19,17 +19,15 @@ from qaspen.fields.operators import (
     GreaterEqualOperator,
     GreaterOperator,
     InOperator,
+    IsNotNullOperator,
+    IsNullOperator,
     LessEqualOperator,
     LessOperator,
     NotEqualOperator,
     NotInOperator,
 )
-from qaspen.qaspen_types import OperatorTypes
+from qaspen.qaspen_types import EMPTY_FIELD_VALUE, EMPTY_VALUE, OperatorTypes
 from qaspen.sql_type.primitive_types import VarChar
-from qaspen.statements.combinable_statements.filter_statement import (
-    EMPTY_VALUE,
-    FilterBetween,
-)
 from qaspen.table.base_table import BaseTable
 from tests.test_fields.base_test.conftest import (
     ForTestField,
@@ -38,7 +36,10 @@ from tests.test_fields.base_test.conftest import (
 )
 
 if TYPE_CHECKING:
-    from qaspen.statements.combinable_statements.filter_statement import Filter
+    from qaspen.statements.combinable_statements.filter_statement import (
+        Filter,
+        FilterBetween,
+    )
 
 
 def test_set_name_magic_method() -> None:
@@ -93,6 +94,23 @@ def test_field_field_name_property() -> None:
     assert aliased_table.wow_field.field_name == "wow_table.wow_field"
 
 
+def test_field_field_null_property() -> None:
+    """Test `_field_null` property."""
+    field = Field[str]()
+
+    assert field._field_null == "NOT NULL"
+
+    second_field = Field[str](is_null=True)
+
+    assert second_field._field_null == ""
+
+
+def test_field_field_default_property(for_test_table: _ForTestTable) -> None:
+    """Test `_field_default` property."""
+    assert not for_test_table.name._field_default
+    assert for_test_table.count._field_default == "DEFAULT 100"
+
+
 def test_field_field_type_property() -> None:
     """Test `_field_type` property."""
 
@@ -136,6 +154,32 @@ def test_automate_field_name() -> None:
 
 
 @pytest.mark.parametrize(
+    ("set_value", "expected_set_value", "expected_exception"),
+    [
+        (EMPTY_FIELD_VALUE, EMPTY_FIELD_VALUE, None),
+        (None, None, None),
+        ("correct_string", "correct_string", None),
+        ({"not": "correct", "type": 2}, EMPTY_FIELD_VALUE, TypeError),
+    ],
+)
+def test_field_set_method(
+    for_test_table: _ForTestTable,
+    set_value: Any,
+    expected_set_value: Any,
+    expected_exception: type[Exception] | None,
+) -> None:
+    """Test `__set__` method."""
+    table = for_test_table()  # type: ignore[operator]
+    if expected_exception:
+        with pytest.raises(expected_exception=expected_exception):
+            table.name = set_value
+    else:
+        table.name = set_value
+
+    assert table.name in [expected_set_value]
+
+
+@pytest.mark.parametrize(
     "default_value",
     [
         12,
@@ -174,8 +218,7 @@ def test_default_value_validation_success() -> None:
     field_with_callable = ForTestField(default=calculate_default_field_value)
     assert not field_with_callable._default
     assert (
-        field_with_callable._field_data.callable_default
-        == calculate_default_field_value
+        field_with_callable._callable_default == calculate_default_field_value
     )
 
 
@@ -376,7 +419,7 @@ def test_field_not_in_method_wrong_parameter_type() -> None:
     Check that method is failing if comparison types are wrong.
     """
     with pytest.raises(expected_exception=FieldComparisonError):
-        ForTestField().in_(
+        ForTestField().not_in(
             "normal_param",
             {"not": "correct", "type": 0},  # type: ignore[arg-type]
         )
@@ -523,6 +566,25 @@ def test_field_overloaded_eq_method_wrong_value(
         for_test_table.name == WrongCompValue()  # noqa: B015
 
 
+def test_field_eq_method_with_none_value(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__eq__` method.
+
+    Check that it works normally with None value.
+    """
+    filter_with_value: Final[Filter] = (
+        for_test_table.name == None  # noqa: E711
+    )
+
+    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.comparison_value == EMPTY_VALUE
+    assert filter_with_value.operator == IsNullOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == "fortesttable.name IS NULL"
+
+
 def test_field_eq_method(
     for_test_table: _ForTestTable,
 ) -> None:
@@ -641,6 +703,25 @@ def test_field_overloaded_ne_method_wrong_value(
 
     with pytest.raises(expected_exception=FieldComparisonError):
         for_test_table.name != WrongCompValue()  # noqa: B015
+
+
+def test_field_ne_method_with_none_value(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `__eq__` method.
+
+    Check that it works normally with None value.
+    """
+    filter_with_value: Final[Filter] = (
+        for_test_table.name != None  # noqa: E711
+    )
+
+    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.comparison_value == EMPTY_VALUE
+    assert filter_with_value.operator == IsNotNullOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == "fortesttable.name IS NOT NULL"
 
 
 def test_field_ne_method(
@@ -880,7 +961,7 @@ def test_field_overloaded_ge_method_wrong_value(
         pass
 
     with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name > WrongCompValue()  # noqa: B015
+        for_test_table.name >= WrongCompValue()  # noqa: B015
 
 
 def test_field_gte_method(

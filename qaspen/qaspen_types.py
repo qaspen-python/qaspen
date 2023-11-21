@@ -2,12 +2,31 @@ import typing
 
 from msgspec import Struct
 from pydantic import BaseModel
+from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 
 if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
+
+class EmptyFieldValue:
+    """Indicates that field wasn't queried from the database."""
+
+    def __str__(self: Self) -> str:
+        return self.__class__.__name__
+
+
+class EmptyValue:
+    """Class represents that value isn't passed.
+
+    It's necessary because `None` is valid value.
+    """
+
+
+EMPTY_VALUE = EmptyValue()
+
+EMPTY_FIELD_VALUE = EmptyFieldValue()
 
 FromTable = typing.TypeVar(
     "FromTable",

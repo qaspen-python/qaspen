@@ -14,7 +14,9 @@ from qaspen.exceptions import (
 )
 from qaspen.fields import operators
 from qaspen.qaspen_types import (
+    EMPTY_FIELD_VALUE,
     CallableDefaultType,
+    EmptyFieldValue,
     FieldDefaultType,
     FieldType,
     OperatorTypes,
@@ -25,7 +27,7 @@ from qaspen.statements.combinable_statements.filter_statement import (
     FilterBetween,
 )
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
     from qaspen.base.sql_base import SQLSelectable
@@ -34,16 +36,6 @@ if TYPE_CHECKING:
 
 
 DefaultFieldComparisonValue = Union[FieldType, "Field[Any]", OperatorTypes]
-
-
-class EmptyFieldValue:
-    """Indicates that field wasn't queried from the database."""
-
-    def __str__(self: Self) -> str:
-        return self.__class__.__name__
-
-
-EMPTY_FIELD_VALUE = EmptyFieldValue()
 
 
 @dataclasses.dataclass
@@ -109,12 +101,6 @@ class BaseField(Generic[FieldType], abc.ABC):
         self._field_data.field_name = field_name
 
     @abc.abstractmethod
-    def _make_field_create_statement(
-        self: Self,
-    ) -> str:
-        ...
-
-    @abc.abstractmethod
     def _validate_field_value(
         self: Self,
         field_value: FieldType | None,
@@ -124,7 +110,7 @@ class BaseField(Generic[FieldType], abc.ABC):
         It must raise an error if something goes wrong
         or not return anything.
         """
-        ...
+        ...  # pragma: no cover
 
     @abc.abstractmethod
     def _validate_default_value(
@@ -135,7 +121,7 @@ class BaseField(Generic[FieldType], abc.ABC):
 
         It must raise an error in validation failed.
         """
-        ...
+        ...  # pragma: no cover
 
     @abc.abstractmethod
     def _prepare_default_value(
@@ -963,14 +949,6 @@ class Field(BaseField[FieldType]):
                 f"{self.__class__.__name__}",
             )
             raise FieldValueValidationError(type_err_msg)
-
-    def _make_field_create_statement(
-        self: Self,
-    ) -> str:
-        return (
-            f"{self._original_field_name} {self._sql_type.sql_type()} "
-            f"{self._field_null} {self._field_default}"
-        )
 
     def _prepare_default_value(
         self: Self,

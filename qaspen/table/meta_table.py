@@ -4,7 +4,8 @@ import copy
 import dataclasses
 from typing import TYPE_CHECKING, Any, ClassVar, Final
 
-from qaspen.fields.base import EmptyFieldValue, Field
+from qaspen.fields.base import Field
+from qaspen.qaspen_types import EMPTY_FIELD_VALUE
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -64,7 +65,7 @@ class MetaTable:
             )
             new_field_value: Any = fields_values.get(
                 table_field._original_field_name,
-                EmptyFieldValue(),
+                EMPTY_FIELD_VALUE,
             )
             setattr(
                 self,
