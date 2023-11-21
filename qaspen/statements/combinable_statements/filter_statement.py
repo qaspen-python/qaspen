@@ -6,6 +6,7 @@ import operator
 from typing import TYPE_CHECKING, Any, Final, Iterable
 
 from qaspen.base.sql_base import SQLSelectable
+from qaspen.qaspen_types import EMPTY_VALUE, EmptyValue
 from qaspen.querystring.querystring import FilterQueryString, QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
@@ -18,16 +19,6 @@ if TYPE_CHECKING:
 
     from qaspen.fields.base import Field
     from qaspen.fields.operators import BaseOperator
-
-
-class EmptyValue:
-    """Class represents that value isn't passed.
-
-    It's necessary because `None` is valid value.
-    """
-
-
-EMPTY_VALUE = EmptyValue()
 
 
 class Filter(CombinableExpression):
@@ -48,7 +39,7 @@ class Filter(CombinableExpression):
         self.field: Field[Any] = field  # type: ignore[arg-type]
         self.operator: type[BaseOperator] = operator
 
-        self.comparison_value: EmptyValue | Any = comparison_value
+        self.comparison_value: Final = comparison_value
         self.comparison_values: Final = comparison_values
 
     def querystring(self: Self) -> FilterQueryString:

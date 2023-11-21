@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Callable, Union
 import pytest
 
 from qaspen.fields.base import Field
+from qaspen.sql_type.primitive_types import VarChar
 from qaspen.table.base_table import BaseTable
 
 if TYPE_CHECKING:
@@ -31,6 +32,7 @@ class ForTestField(Field[Union[str, float]]):
         str,
         float,
     )
+    _sql_type = VarChar
 
     def __init__(
         self: Self,
@@ -84,6 +86,8 @@ def for_test_table() -> type[_ForTestTable]:
         """Class for test purposes."""
 
         name: ForTestField = ForTestField()
-        count: ForTestFieldInt = ForTestFieldInt()
+        count: ForTestFieldInt = ForTestFieldInt(
+            default=100,
+        )
 
     return ForTestTable
