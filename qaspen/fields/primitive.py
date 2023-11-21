@@ -16,7 +16,7 @@ from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import primitive_types
 from qaspen.statements.combinable_statements.filter_statement import Filter
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
 
@@ -39,11 +39,11 @@ class BaseIntegerField(Field[int]):
         is_null: bool = False,
         default: int | None = None,
         db_field_name: str | None = None,
-        maximum: int | None = None,
-        minimum: int | None = None,
+        maximum: float | None = None,
+        minimum: float | None = None,
     ) -> None:
-        self._maximum: int | None = maximum
-        self._minimum: int | None = minimum
+        self._maximum: Final = maximum
+        self._minimum: Final = minimum
 
         super().__init__(
             *pos_arguments,
@@ -136,6 +136,8 @@ class NumericField(BaseIntegerField):
     """NUMERIC field."""
 
     _sql_type = primitive_types.Numeric
+    _available_max_value = None
+    _available_min_value = None
 
     def __init__(
         self: Self,
@@ -145,8 +147,8 @@ class NumericField(BaseIntegerField):
         is_null: bool = False,
         default: int | None = None,
         db_field_name: str | None = None,
-        maximum: int | None = None,
-        minimum: int | None = None,
+        maximum: float | None = None,
+        minimum: float | None = None,
     ) -> None:
         if not precision and scale:
             declaration_err_msg: Final = (
