@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 import pytest
 
@@ -11,8 +11,15 @@ from qaspen.exceptions import (
     FieldDeclarationError,
     FieldValueValidationError,
 )
+from qaspen.fields.operators import (
+    ILikeOperator,
+    LikeOperator,
+    NotILikeOperator,
+    NotLikeOperator,
+)
 from qaspen.fields.primitive import (
     BaseIntegerField,
+    BaseStringField,
     BigIntField,
     BigSerialField,
     BooleanField,
@@ -486,3 +493,155 @@ def test_primitive_field_set_available_types_failure(
     table = TestTable()
     with pytest.raises(expected_exception=FieldValueValidationError):
         table.qaspen = incorrect_set_value
+
+
+@pytest.mark.parametrize(
+    ("field", "max_length_value"),
+    [
+        (VarCharField, 100),
+        (VarCharField, 1000),
+        (VarCharField, 9999999999999),
+    ],
+)
+def test_str_field_max_length(
+    field: type[VarCharField],
+    max_length_value: int,
+) -> None:
+    """Test `max_length` param."""
+
+    class TestTable(BaseTable):
+        qaspen: VarCharField = field(max_length=max_length_value)
+
+    assert TestTable.qaspen._max_length == max_length_value
+
+
+@pytest.mark.parametrize(
+    ("field", "comparison_value"),
+    [
+        (VarCharField, "string"),
+        (VarCharField, "%string"),
+        (VarCharField, "%string%"),
+        (VarCharField, "%string."),
+        (TextField, "string"),
+        (TextField, "%string"),
+        (TextField, "%string%"),
+        (TextField, "%string."),
+    ],
+)
+def test_str_field_like_method(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `like` method."""
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    filter_with_value = TestTable.qaspen.like(
+        comparison_value=comparison_value,
+    )
+    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.comparison_value == TestTable.qaspen
+    assert filter_with_value.operator == LikeOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"testtable.qaspen LIKE '{comparison_value}'"
+
+
+@pytest.mark.parametrize(
+    ("field", "comparison_value"),
+    [
+        (VarCharField, "string"),
+        (VarCharField, "%string"),
+        (VarCharField, "%string%"),
+        (VarCharField, "%string."),
+        (TextField, "string"),
+        (TextField, "%string"),
+        (TextField, "%string%"),
+        (TextField, "%string."),
+    ],
+)
+def test_str_field_not_like_method(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `not_like` method."""
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    filter_with_value = TestTable.qaspen.not_like(
+        comparison_value=comparison_value,
+    )
+    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.comparison_value == TestTable.qaspen
+    assert filter_with_value.operator == NotLikeOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"testtable.qaspen NOT LIKE '{comparison_value}'"
+
+
+@pytest.mark.parametrize(
+    ("field", "comparison_value"),
+    [
+        (VarCharField, "string"),
+        (VarCharField, "%string"),
+        (VarCharField, "%string%"),
+        (VarCharField, "%string."),
+        (TextField, "string"),
+        (TextField, "%string"),
+        (TextField, "%string%"),
+        (TextField, "%string."),
+    ],
+)
+def test_str_field_ilike_method(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `ilike` method."""
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    filter_with_value = TestTable.qaspen.ilike(
+        comparison_value=comparison_value,
+    )
+    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.comparison_value == TestTable.qaspen
+    assert filter_with_value.operator == ILikeOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"testtable.qaspen ILIKE '{comparison_value}'"
+
+
+@pytest.mark.parametrize(
+    ("field", "comparison_value"),
+    [
+        (VarCharField, "string"),
+        (VarCharField, "%string"),
+        (VarCharField, "%string%"),
+        (VarCharField, "%string."),
+        (TextField, "string"),
+        (TextField, "%string"),
+        (TextField, "%string%"),
+        (TextField, "%string."),
+    ],
+)
+def test_str_field_not_ilike_method(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `not_ilike` method."""
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    filter_with_value = TestTable.qaspen.not_ilike(
+        comparison_value=comparison_value,
+    )
+    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.comparison_value == TestTable.qaspen
+    assert filter_with_value.operator == NotILikeOperator
+
+    querystring: Final = str(filter_with_value.querystring())
+    assert querystring == f"testtable.qaspen NOT ILIKE '{comparison_value}'"

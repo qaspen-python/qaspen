@@ -168,21 +168,3 @@ class BaseTable(MetaTable, abstract=True):
         :returns: original table name with corresponding schema.
         """
         return f"{cls._table_meta.table_schema}.{cls.original_table_name()}"
-
-    @classmethod
-    def _retrieve_field(
-        cls: type[T_],
-        field_name: str,
-    ) -> Field[typing.Any]:
-        try:
-            return typing.cast(
-                Field[typing.Any],
-                cls.__dict__[field_name],
-            )
-        except LookupError as lookup_err:
-            lookup_err_msg: typing.Final = (
-                f"Table `{cls.__name__}` doesn't have `{field_name}` field"
-            )
-            raise AttributeError(
-                lookup_err_msg,
-            ) from lookup_err

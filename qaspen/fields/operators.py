@@ -51,7 +51,7 @@ class NotLikeOperator(BaseOperator):
 
 
 class ILikeOperator(BaseOperator):
-    operation_template: str = "{} NOT ILIKE {}"
+    operation_template: str = "{} ILIKE {}"
 
 
 class NotILikeOperator(BaseOperator):

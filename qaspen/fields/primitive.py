@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Any, Final, Union, overload
+from typing import TYPE_CHECKING, Any, Final, Union
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import (
@@ -11,7 +11,6 @@ from qaspen.exceptions import (
 )
 from qaspen.fields import operators
 from qaspen.fields.base import Field
-from qaspen.fields.utils import MAX_STRING_FIELD_LENGTH, validate_max_length
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import primitive_types
 from qaspen.statements.combinable_statements.filter_statement import Filter
@@ -331,53 +330,13 @@ AvailableComparisonTypes = (
 
 
 class BaseStringField(Field[str]):
-    """Base Field for all string-related Fields."""
+    """Base Field for all string-related Fields.
+
+    It adds LIKE, NOT LIKE, ILIKE and NOT ILIKE methods.
+    """
 
     _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: tuple[type, ...] = (str,)
-
-    @overload
-    def __init__(
-        self: Self,
-        max_length: int = 255,
-        is_null: bool = False,
-        default: str | None = None,
-        db_field_name: str | None = None,
-    ) -> None:
-        ...  # pragma: no cover
-
-    @overload
-    def __init__(
-        self: Self,
-        is_null: bool = False,
-        default: str | None = None,
-        db_field_name: str | None = None,
-    ) -> None:
-        ...  # pragma: no cover
-
-    def __init__(
-        self: Self,
-        *args: Any,
-        max_length: int = 255,
-        is_null: bool = False,
-        default: str | None = None,
-        db_field_name: str | None = None,
-    ) -> None:
-        if max_length and validate_max_length(max_length=max_length):
-            declaration_err_msg: Final = (
-                f"`max_length` parameter must be less "
-                f"or equal to {MAX_STRING_FIELD_LENGTH}",
-            )
-            raise FieldDeclarationError(declaration_err_msg)
-
-        self._max_length: int = max_length
-
-        super().__init__(
-            *args,
-            is_null=is_null,
-            default=default,
-            db_field_name=db_field_name,
-        )
 
     def like(
         self: Self,
@@ -490,6 +449,32 @@ class BaseStringField(Field[str]):
         )
         raise FieldComparisonError(comparison_err_msg)
 
+
+class VarCharField(BaseStringField):
+    """Varchar Field.
+
+    Behave like normal PostgreSQL VARCHAR field.
+    """
+
+    _sql_type = primitive_types.VarChar
+
+    def __init__(
+        self: Self,
+        *args: Any,
+        max_length: int = 255,
+        is_null: bool = False,
+        default: str | None = None,
+        db_field_name: str | None = None,
+    ) -> None:
+        self._max_length: int = max_length
+
+        super().__init__(
+            *args,
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )
+
     def _validate_field_value(
         self: Self,
         field_value: str | None,
@@ -521,24 +506,27 @@ class BaseStringField(Field[str]):
         return f"{self._sql_type.sql_type()}({self._max_length})"
 
 
-class VarCharField(BaseStringField):
-    """Varchar Field.
-
-    Behave like normal PostgreSQL VARCHAR field.
-    """
-
-    _sql_type = primitive_types.VarChar
-
-
-class TextField(Field[str]):
+class TextField(BaseStringField):
     """Text field.
 
     Behave like normal PostgreSQL TEXT field.
     """
 
-    _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
-    _set_available_types: tuple[type, ...] = (str,)
     _sql_type = primitive_types.Text
+
+    def __init__(
+        self: Self,
+        *args: Any,
+        is_null: bool = False,
+        default: str | None = None,
+        db_field_name: str | None = None,
+    ) -> None:
+        super().__init__(
+            *args,
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )
 
 
 class CharField(Field[str]):

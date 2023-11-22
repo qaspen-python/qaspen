@@ -6,6 +6,8 @@ import dataclasses
 import types
 from typing import TYPE_CHECKING, Any, Callable, Final, Generic, Union, cast
 
+from typing_extensions import Self
+
 from qaspen.exceptions import (
     FieldComparisonError,
     FieldDeclarationError,
@@ -28,8 +30,6 @@ from qaspen.statements.combinable_statements.filter_statement import (
 )
 
 if TYPE_CHECKING:  # pragma: no cover
-    from typing_extensions import Self
-
     from qaspen.base.sql_base import SQLSelectable
     from qaspen.sql_type.base import SQLType
     from qaspen.table.base_table import BaseTable
@@ -348,15 +348,15 @@ class Field(BaseField[FieldType]):
         self: Self,
         instance: BaseTable | None,
         owner: type[BaseTable] | None,
-    ) -> Field[FieldType]:
+    ) -> Self:
         try:
             return cast(
-                Field[FieldType],
+                Self,
                 instance.__dict__[self._original_field_name],
             )
         except (AttributeError, KeyError):
             return cast(
-                Field[FieldType],
+                Self,
                 owner.__dict__[self._original_field_name],
             )
 
