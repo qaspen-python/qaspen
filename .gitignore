@@ -163,3 +163,4 @@ cython_debug/
 # Some testing
 __test.py
 _test.py
+htmlcov
