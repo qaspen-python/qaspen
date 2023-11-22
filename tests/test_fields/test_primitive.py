@@ -314,7 +314,7 @@ def test_primitive_field_available_comparison_types_operator(
 ) -> None:
     """Test `_available_comparison_types` with operators.
 
-    Check that there is no exception.
+    Check that there is no exception while compare.
     """
 
     class TestTable(BaseTable):
