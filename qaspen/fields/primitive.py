@@ -208,7 +208,7 @@ class RealField(Field[Union[int, str]]):
         default: int | str | None = None,
         db_field_name: str | None = None,
     ) -> None:
-        super().__init__(
+        super().__init__(  # pragma: no cover
             *pos_arguments,
             is_null=is_null,
             default=default,
@@ -236,7 +236,7 @@ class DoublePrecisionField(Field[Union[int, str]]):
         default: int | str | None = None,
         db_field_name: str | None = None,
     ) -> None:
-        super().__init__(
+        super().__init__(  # pragma: no cover
             *pos_arguments,
             is_null=is_null,
             default=default,
@@ -315,15 +315,6 @@ class SerialBaseField(BaseIntegerField):
 
         self.next_val_seq_name: str | None = next_val_seq_name
 
-    def _make_field_create_statement(self: Self) -> str:
-        if self.next_val_seq_name:
-            return (
-                f"{self._original_field_name} "
-                f"{self._sql_type.querystring()} NOT NULL "
-                f"DEFAULT nextval('{self.next_val_seq_name}')"
-            )
-        return f"{self._original_field_name} {self._sql_type.querystring()}"
-
 
 class SmallSerialField(SerialBaseField, SmallIntField):
     """SMALLSERIAL field.
@@ -375,7 +366,7 @@ class BaseStringField(Field[str]):
         default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def __init__(
@@ -384,7 +375,7 @@ class BaseStringField(Field[str]):
         default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
-        ...
+        ...  # pragma: no cover
 
     def __init__(
         self: Self,
@@ -592,7 +583,7 @@ class CharField(Field[str]):
         default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
-        super().__init__(
+        super().__init__(  # pragma: no cover
             *pos_arguments,
             is_null=is_null,
             default=default,

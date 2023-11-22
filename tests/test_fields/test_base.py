@@ -29,7 +29,7 @@ from qaspen.fields.operators import (
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE, EMPTY_VALUE, OperatorTypes
 from qaspen.sql_type.primitive_types import VarChar
 from qaspen.table.base_table import BaseTable
-from tests.test_fields.base_test.conftest import (
+from tests.test_fields.conftest import (
     ForTestField,
     _ForTestTable,
     calculate_default_field_value,
@@ -159,7 +159,11 @@ def test_automate_field_name() -> None:
         (EMPTY_FIELD_VALUE, EMPTY_FIELD_VALUE, None),
         (None, None, None),
         ("correct_string", "correct_string", None),
-        ({"not": "correct", "type": 2}, EMPTY_FIELD_VALUE, TypeError),
+        (
+            {"not": "correct", "type": 2},
+            EMPTY_FIELD_VALUE,
+            FieldValueValidationError,
+        ),
     ],
 )
 def test_field_set_method(

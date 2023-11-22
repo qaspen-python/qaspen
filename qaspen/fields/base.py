@@ -375,18 +375,11 @@ class Field(BaseField[FieldType]):
             instance.__dict__[self._original_field_name] = value
             return
 
-        if not isinstance(value, self._set_available_types):
-            err_msg: Final = (
-                f"Can't assign not {self._sql_type.querystring()} "
-                f"type to {self.__class__.__name__}",
-            )
-            raise TypeError(err_msg)
-
         self._validate_field_value(
-            field_value=value,  # type: ignore[arg-type]
+            field_value=value,
         )
         field = instance.__dict__[self._original_field_name]
-        field._field_data.field_value = value  # type: ignore[assignment]
+        field._field_data.field_value = value
 
     def querystring(self: Self) -> QueryString:
         """Build QueryString class.
@@ -922,6 +915,13 @@ class Field(BaseField[FieldType]):
         """
         if field_value is None and self._is_null:
             return
+
+        if not isinstance(field_value, self._set_available_types):
+            err_msg: Final = (
+                f"Can't assign not {self._sql_type.querystring()} "
+                f"type to {self.__class__.__name__}",
+            )
+            raise FieldValueValidationError(err_msg)
 
     def _validate_default_value(
         self: Self,
