@@ -215,12 +215,15 @@ def test_numeric_field_type(
         (BooleanField, _ForTestTable.name),
         # ------ SmallSerialField ------
         (SmallSerialField, 12),
+        (SmallSerialField, 12.0),
         (SmallSerialField, _ForTestTable.name),
         # ------ SerialField ------
         (SerialField, 12),
+        (SerialField, 12.0),
         (SerialField, _ForTestTable.name),
         # ------ BigSerialField ------
         (BigSerialField, 12),
+        (BigSerialField, 12.0),
         (BigSerialField, _ForTestTable.name),
         # ------ VarCharField ------
         (VarCharField, "string"),
@@ -389,6 +392,35 @@ def test_primitive_field_available_comparison_types_operator(
         (BooleanField, True),
         (BooleanField, False),
         (BooleanField, None),
+        # ------ SmallSerialField ------
+        (SmallSerialField, 12),
+        (SmallSerialField, 12.0),
+        (SmallSerialField, None),
+        # ------ BigSerialField ------
+        (BigSerialField, 12),
+        (BigSerialField, 12.0),
+        (BigSerialField, None),
+        # ------ VarCharField ------
+        (VarCharField, "string"),
+        (VarCharField, None),
+        # ------ TextField ------
+        (TextField, "string"),
+        (TextField, None),
+        # ------ CharField ------
+        (CharField, "a"),
+        (CharField, None),
+        # ------ DateField ------
+        (DateField, datetime.now().date()),  # noqa: DTZ005
+        (DateField, None),
+        # ------ TimeField ------
+        (TimeField, datetime.now().time()),  # noqa: DTZ005
+        (TimeField, None),
+        # ------ TimestampField ------
+        (TimestampField, datetime.now()),  # noqa: DTZ005
+        (TimestampField, None),
+        # ------ IntervalField ------
+        (IntervalField, timedelta(days=1)),
+        (IntervalField, None),
     ],
 )
 def test_primitive_field_set_available_types_success(
