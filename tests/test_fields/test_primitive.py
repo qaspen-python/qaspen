@@ -528,11 +528,14 @@ def test_str_field_max_length(
         (TextField, "%string."),
     ],
 )
-def test_str_field_like_method(
+def test_str_field_like_method_success(
     field: type[BaseStringField],
     comparison_value: str,
 ) -> None:
-    """Test string fields `like` method."""
+    """Test string fields `like` method.
+
+    Check that method works fine with correct types.
+    """
 
     class TestTable(BaseTable):
         qaspen = field()
@@ -549,6 +552,40 @@ def test_str_field_like_method(
 
 
 @pytest.mark.parametrize(
+    "field",
+    [VarCharField, TextField],
+)
+@pytest.mark.parametrize(
+    "comparison_value",
+    [
+        12,
+        12.0,
+        {"dict": "is not correct"},
+        {"set", "is", "incorrect"},
+        ["list", "isn't", "correct"],
+        ("tuple", "isn't", "correct"),
+        frozenset(("frozenset", "isn't", "correct")),
+    ],
+)
+def test_str_field_like_method_failure(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `like` method.
+
+    Check that method raises an exception with wrong types.
+    """
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    with pytest.raises(expected_exception=FieldComparisonError):
+        TestTable.qaspen.like(
+            comparison_value=comparison_value,
+        )
+
+
+@pytest.mark.parametrize(
     ("field", "comparison_value"),
     [
         (VarCharField, "string"),
@@ -561,7 +598,7 @@ def test_str_field_like_method(
         (TextField, "%string."),
     ],
 )
-def test_str_field_not_like_method(
+def test_str_field_not_like_method_success(
     field: type[BaseStringField],
     comparison_value: str,
 ) -> None:
@@ -582,6 +619,40 @@ def test_str_field_not_like_method(
 
 
 @pytest.mark.parametrize(
+    "field",
+    [VarCharField, TextField],
+)
+@pytest.mark.parametrize(
+    "comparison_value",
+    [
+        12,
+        12.0,
+        {"dict": "is not correct"},
+        {"set", "is", "incorrect"},
+        ["list", "isn't", "correct"],
+        ("tuple", "isn't", "correct"),
+        frozenset(("frozenset", "isn't", "correct")),
+    ],
+)
+def test_str_field_not_like_method_failure(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `not_like` method.
+
+    Check that method raises an exception with wrong types.
+    """
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    with pytest.raises(expected_exception=FieldComparisonError):
+        TestTable.qaspen.not_like(
+            comparison_value=comparison_value,
+        )
+
+
+@pytest.mark.parametrize(
     ("field", "comparison_value"),
     [
         (VarCharField, "string"),
@@ -594,7 +665,7 @@ def test_str_field_not_like_method(
         (TextField, "%string."),
     ],
 )
-def test_str_field_ilike_method(
+def test_str_field_ilike_method_success(
     field: type[BaseStringField],
     comparison_value: str,
 ) -> None:
@@ -615,6 +686,40 @@ def test_str_field_ilike_method(
 
 
 @pytest.mark.parametrize(
+    "field",
+    [VarCharField, TextField],
+)
+@pytest.mark.parametrize(
+    "comparison_value",
+    [
+        12,
+        12.0,
+        {"dict": "is not correct"},
+        {"set", "is", "incorrect"},
+        ["list", "isn't", "correct"],
+        ("tuple", "isn't", "correct"),
+        frozenset(("frozenset", "isn't", "correct")),
+    ],
+)
+def test_str_field_ilike_method_failure(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `ilike` method.
+
+    Check that method raises an exception with wrong types.
+    """
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    with pytest.raises(expected_exception=FieldComparisonError):
+        TestTable.qaspen.ilike(
+            comparison_value=comparison_value,
+        )
+
+
+@pytest.mark.parametrize(
     ("field", "comparison_value"),
     [
         (VarCharField, "string"),
@@ -627,7 +732,7 @@ def test_str_field_ilike_method(
         (TextField, "%string."),
     ],
 )
-def test_str_field_not_ilike_method(
+def test_str_field_not_ilike_method_success(
     field: type[BaseStringField],
     comparison_value: str,
 ) -> None:
@@ -645,3 +750,37 @@ def test_str_field_not_ilike_method(
 
     querystring: Final = str(filter_with_value.querystring())
     assert querystring == f"testtable.qaspen NOT ILIKE '{comparison_value}'"
+
+
+@pytest.mark.parametrize(
+    "field",
+    [VarCharField, TextField],
+)
+@pytest.mark.parametrize(
+    "comparison_value",
+    [
+        12,
+        12.0,
+        {"dict": "is not correct"},
+        {"set", "is", "incorrect"},
+        ["list", "isn't", "correct"],
+        ("tuple", "isn't", "correct"),
+        frozenset(("frozenset", "isn't", "correct")),
+    ],
+)
+def test_str_field_not_ilike_method_failure(
+    field: type[BaseStringField],
+    comparison_value: str,
+) -> None:
+    """Test string fields `not_ilike` method.
+
+    Check that method raises an exception with wrong types.
+    """
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    with pytest.raises(expected_exception=FieldComparisonError):
+        TestTable.qaspen.not_ilike(
+            comparison_value=comparison_value,
+        )
