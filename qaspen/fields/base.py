@@ -918,8 +918,8 @@ class Field(BaseField[FieldType]):
 
         if not isinstance(field_value, self._set_available_types):
             err_msg: Final = (
-                f"Can't assign not {self._sql_type.querystring()} "
-                f"type to {self.__class__.__name__}",
+                f"Value of this field must be one of these - "
+                f"{self._set_available_types}"
             )
             raise FieldValueValidationError(err_msg)
 
@@ -936,8 +936,8 @@ class Field(BaseField[FieldType]):
             )
         except FieldValueValidationError as exc:
             validation_err_msg: Final = (
-                f"Wrong default value in the field "
-                f"{self.__class__.__name__}",
+                f"Default value of this field must be one of these - "
+                f"{self._set_available_types}"
             )
             raise FieldValueValidationError(
                 validation_err_msg,

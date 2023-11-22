@@ -178,100 +178,129 @@ def test_numeric_field_type(
 
 
 @pytest.mark.parametrize(
-    ("field", "comparison_value", "expected_exception"),
+    ("field", "comparison_value"),
     [
         # ------ SmallIntField ------
-        (SmallIntField, 12, None),
-        (SmallIntField, _ForTestTable.name, None),
-        (SmallIntField, {"incorrect": "type"}, FieldComparisonError),
+        (SmallIntField, 12),
+        (SmallIntField, 12.0),
+        (SmallIntField, _ForTestTable.name),
         # ------ IntegerField ------
-        (IntegerField, 12, None),
-        (IntegerField, _ForTestTable.name, None),
-        (IntegerField, {"incorrect": "type"}, FieldComparisonError),
+        (IntegerField, 12),
+        (IntegerField, 12.0),
+        (IntegerField, _ForTestTable.name),
         # ------ BigIntField ------
-        (BigIntField, 12, None),
-        (BigIntField, _ForTestTable.name, None),
-        (BigIntField, {"incorrect": "type"}, FieldComparisonError),
+        (BigIntField, 12),
+        (BigIntField, 12.0),
+        (BigIntField, _ForTestTable.name),
         # ------ NumericField ------
-        (NumericField, 12, None),
-        (NumericField, _ForTestTable.name, None),
-        (NumericField, {"incorrect": "type"}, FieldComparisonError),
+        (NumericField, 12),
+        (NumericField, 12.0),
+        (NumericField, _ForTestTable.name),
         # ------ DecimalField ------
-        (DecimalField, 12, None),
-        (DecimalField, _ForTestTable.name, None),
-        (DecimalField, {"incorrect": "type"}, FieldComparisonError),
+        (DecimalField, 12),
+        (DecimalField, 12.0),
+        (DecimalField, _ForTestTable.name),
         # ------ RealField ------
-        (RealField, "12", None),
-        (RealField, 12.0, None),
-        (RealField, _ForTestTable.name, None),
-        (RealField, {"incorrect": "type"}, FieldComparisonError),
+        (RealField, "12"),
+        (RealField, 12.0),
+        (RealField, 12),
+        (RealField, _ForTestTable.name),
         # ------ DoublePrecisionField ------
-        (DoublePrecisionField, "12", None),
-        (DoublePrecisionField, 12.0, None),
-        (DoublePrecisionField, _ForTestTable.name, None),
-        (DoublePrecisionField, {"incorrect": "type"}, FieldComparisonError),
+        (DoublePrecisionField, "12"),
+        (DoublePrecisionField, 12.0),
+        (DoublePrecisionField, _ForTestTable.name),
         # ------ BooleanField ------
-        (BooleanField, True, None),
-        (BooleanField, False, None),
-        (BooleanField, _ForTestTable.name, None),
-        (BooleanField, {"incorrect": "type"}, FieldComparisonError),
+        (BooleanField, True),
+        (BooleanField, False),
+        (BooleanField, _ForTestTable.name),
         # ------ SmallSerialField ------
-        (SmallSerialField, 12, None),
-        (SmallSerialField, _ForTestTable.name, None),
-        (SmallSerialField, {"incorrect": "type"}, FieldComparisonError),
+        (SmallSerialField, 12),
+        (SmallSerialField, _ForTestTable.name),
         # ------ SerialField ------
-        (SerialField, 12, None),
-        (SerialField, _ForTestTable.name, None),
-        (SerialField, {"incorrect": "type"}, FieldComparisonError),
+        (SerialField, 12),
+        (SerialField, _ForTestTable.name),
         # ------ BigSerialField ------
-        (BigSerialField, 12, None),
-        (BigSerialField, _ForTestTable.name, None),
-        (BigSerialField, {"incorrect": "type"}, FieldComparisonError),
+        (BigSerialField, 12),
+        (BigSerialField, _ForTestTable.name),
         # ------ VarCharField ------
-        (VarCharField, "string", None),
-        (VarCharField, _ForTestTable.name, None),
-        (VarCharField, {"incorrect": "type"}, FieldComparisonError),
+        (VarCharField, "string"),
+        (VarCharField, _ForTestTable.name),
         # ------ TextField ------
-        (TextField, "string", None),
-        (TextField, _ForTestTable.name, None),
-        (TextField, {"incorrect": "type"}, FieldComparisonError),
+        (TextField, "string"),
+        (TextField, _ForTestTable.name),
         # ------ CharField ------
-        (CharField, "string", None),
-        (CharField, _ForTestTable.name, None),
-        (CharField, {"incorrect": "type"}, FieldComparisonError),
+        (CharField, "string"),
+        (CharField, _ForTestTable.name),
         # ------ DateField ------
-        (DateField, datetime.now().date(), None),  # noqa: DTZ005
-        (DateField, _ForTestTable.name, None),
-        (DateField, {"incorrect": "type"}, FieldComparisonError),
+        (DateField, datetime.now().date()),  # noqa: DTZ005
+        (DateField, _ForTestTable.name),
         # ------ TimeField ------
-        (TimeField, datetime.now().time(), None),  # noqa: DTZ005
-        (TimeField, _ForTestTable.name, None),
-        (TimeField, {"incorrect": "type"}, FieldComparisonError),
+        (TimeField, datetime.now().time()),  # noqa: DTZ005
+        (TimeField, _ForTestTable.name),
         # ------ TimestampField ------
-        (TimestampField, datetime.now(), None),  # noqa: DTZ005
-        (TimestampField, _ForTestTable.name, None),
-        (TimestampField, {"incorrect": "type"}, FieldComparisonError),
+        (TimestampField, datetime.now()),  # noqa: DTZ005
+        (TimestampField, _ForTestTable.name),
         # ------ IntervalField ------
-        (IntervalField, timedelta(days=1), None),
-        (IntervalField, _ForTestTable.name, None),
-        (IntervalField, {"incorrect": "type"}, FieldComparisonError),
+        (IntervalField, timedelta(days=1)),
+        (IntervalField, _ForTestTable.name),
     ],
 )
-def test_primitive_field_available_comparison_types(
+def test_primitive_field_available_comparison_types_success(
     field: type[Field[Any]],
     comparison_value: Any,
-    expected_exception: type[Exception] | None,
 ) -> None:
     """Test `_available_comparison_types` with base types."""
 
     class TestTable(BaseTable):
         qaspen = field()
 
-    if expected_exception:
-        with pytest.raises(expected_exception=expected_exception):
-            TestTable.qaspen == comparison_value  # noqa: B015
-    else:
-        TestTable.qaspen == comparison_value  # noqa: B015
+    TestTable.qaspen == comparison_value  # noqa: B015
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        SmallIntField,
+        IntegerField,
+        BigIntField,
+        NumericField,
+        DecimalField,
+        RealField,
+        DoublePrecisionField,
+        BooleanField,
+        SmallSerialField,
+        SerialField,
+        BigSerialField,
+        VarCharField,
+        TextField,
+        CharField,
+        DateField,
+        TimeField,
+        TimestampField,
+        IntervalField,
+    ],
+)
+@pytest.mark.parametrize(
+    "incorrect_comparison_value",
+    [
+        {"incorrect": "type"},
+        {1, 2, 3},
+        (1, 2, 3),
+        [1, 2, 3],
+        frozenset([1, 2, 3]),
+    ],
+)
+def test_primitive_field_available_comparison_types_failure(
+    field: type[Field[Any]],
+    incorrect_comparison_value: Any,
+) -> None:
+    """Test `_available_comparison_types` with base types."""
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    with pytest.raises(expected_exception=FieldComparisonError):
+        TestTable.qaspen == incorrect_comparison_value  # noqa: B015
 
 
 @pytest.mark.parametrize(
@@ -321,3 +350,107 @@ def test_primitive_field_available_comparison_types_operator(
         qaspen = field()
 
     TestTable.qaspen == comparison_value  # noqa: B015
+
+
+@pytest.mark.parametrize(
+    ("field", "set_value"),
+    [
+        # ------ SmallIntField ------
+        (SmallIntField, 12),
+        (SmallIntField, 12.0),
+        (SmallIntField, None),
+        # ------ IntegerField ------
+        (IntegerField, 12),
+        (IntegerField, 12.0),
+        (IntegerField, None),
+        # ------ BigIntField ------
+        (BigIntField, 12),
+        (BigIntField, 12.0),
+        (BigIntField, None),
+        # ------ NumericField ------
+        (NumericField, 12),
+        (NumericField, 12.0),
+        (NumericField, None),
+        # ------ DecimalField ------
+        (DecimalField, 12),
+        (DecimalField, 12.0),
+        (DecimalField, None),
+        # ------ RealField ------
+        (RealField, "12"),
+        (RealField, 12.0),
+        (RealField, 12),
+        (RealField, None),
+        # ------ DoublePrecisionField ------
+        (DoublePrecisionField, "12"),
+        (DoublePrecisionField, 12.0),
+        (DoublePrecisionField, 12),
+        (DoublePrecisionField, None),
+        # ------ BooleanField ------
+        (BooleanField, True),
+        (BooleanField, False),
+        (BooleanField, None),
+    ],
+)
+def test_primitive_field_set_available_types_success(
+    field: type[Field[Any]],
+    set_value: Any,
+) -> None:
+    """Test `_set_available_types` parameter.
+
+    Check that set value types validate correctly.
+    """
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    table = TestTable()
+
+    # Mustn't raise an exception.
+    table.qaspen = set_value
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        SmallIntField,
+        IntegerField,
+        BigIntField,
+        NumericField,
+        DecimalField,
+        RealField,
+        DoublePrecisionField,
+        BooleanField,
+        SmallSerialField,
+        SerialField,
+        BigSerialField,
+        VarCharField,
+        TextField,
+        CharField,
+        DateField,
+        TimeField,
+        TimestampField,
+        IntervalField,
+    ],
+)
+@pytest.mark.parametrize(
+    "incorrect_set_value",
+    [
+        {"incorrect": "type"},
+        {1, 2, 3},
+        (1, 2, 3),
+        [1, 2, 3],
+        frozenset([1, 2, 3]),
+    ],
+)
+def test_primitive_field_set_available_types_failure(
+    field: type[Field[Any]],
+    incorrect_set_value: Any,
+) -> None:
+    """Test `_set_available_types` with incorrect types."""
+
+    class TestTable(BaseTable):
+        qaspen = field()
+
+    table = TestTable()
+    with pytest.raises(expected_exception=FieldValueValidationError):
+        table.qaspen = incorrect_set_value

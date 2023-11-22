@@ -25,11 +25,12 @@ class BaseIntegerField(Field[int]):
 
     _available_comparison_types: tuple[type, ...] = (
         int,
+        float,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: tuple[type, ...] = (int,)
+    _set_available_types: tuple[type, ...] = (int, float)
     _available_max_value: int | None
     _available_min_value: int | None
 
@@ -188,17 +189,18 @@ class DecimalField(NumericField):
     _sql_type = primitive_types.Decimal  # type: ignore[assignment]
 
 
-class RealField(Field[Union[int, str]]):
+class RealField(Field[Union[float, int, str]]):
     """REAL field."""
 
     _available_comparison_types: tuple[type, ...] = (
         str,
+        int,
         float,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: tuple[type, ...] = (str, float)
+    _set_available_types: tuple[type, ...] = (str, float, int)
     _sql_type = primitive_types.Real
 
     def __init__(
@@ -216,17 +218,18 @@ class RealField(Field[Union[int, str]]):
         )
 
 
-class DoublePrecisionField(Field[Union[int, str]]):
+class DoublePrecisionField(Field[Union[int, float, str]]):
     """DOUBLE PRECISION field."""
 
     _available_comparison_types: tuple[type, ...] = (
         str,
+        int,
         float,
         Field,
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: tuple[type, ...] = (str, float)
+    _set_available_types: tuple[type, ...] = (str, int, float)
     _sql_type = primitive_types.DoublePrecision
 
     def __init__(
@@ -255,31 +258,6 @@ class BooleanField(Field[bool]):
     )
     _set_available_types: tuple[type, ...] = (bool,)
     _sql_type = primitive_types.Boolean
-
-    def _validate_field_value(
-        self: Self,
-        field_value: bool | None,
-    ) -> None:
-        """Validate field value.
-
-        Check all possible BOOLEAN field values.
-
-        ### Parameters
-        - field_value: field to validate
-
-        ### Returns
-        - `None`
-        """
-        super()._validate_field_value(
-            field_value=field_value,
-        )
-
-        if field_value not in (True, False):
-            validation_err_msg: Final = (
-                f"Field value - `{field_value}` must be one of the following: "
-                "True or False",
-            )
-            raise FieldValueValidationError(validation_err_msg)
 
 
 class SerialBaseField(BaseIntegerField):
@@ -602,6 +580,10 @@ class CharField(Field[str]):
 
         :raises FieldValueValidationError: if value length not equal 1.
         """
+        super()._validate_field_value(
+            field_value=field_value,
+        )
+
         if not field_value or len(field_value) == 1:
             return
 
