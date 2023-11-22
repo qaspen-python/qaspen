@@ -784,3 +784,104 @@ def test_str_field_not_ilike_method_failure(
         TestTable.qaspen.not_ilike(
             comparison_value=comparison_value,
         )
+
+
+@pytest.mark.parametrize(
+    ("max_length", "value", "expected_exception"),
+    [
+        (255, "string", None),
+        (3, "string", FieldValueValidationError),
+    ],
+)
+def test_varchar_field_validate_field_value_method(
+    max_length: int,
+    value: str,
+    expected_exception: type[Exception] | None,
+) -> None:
+    """Test `_validate_field_value` method."""
+
+    class TestTable(BaseTable):
+        qaspen = VarCharField(max_length=max_length)
+
+    if expected_exception:
+        with pytest.raises(expected_exception=expected_exception):
+            TestTable.qaspen._validate_field_value(
+                field_value=value,
+            )
+    else:
+        TestTable.qaspen._validate_field_value(
+            field_value=value,
+        )
+
+
+def test_varchar_field_field_type_property() -> None:
+    """Test `_field_type` property."""
+
+    class TestTable(BaseTable):
+        qaspen = VarCharField(max_length=200)
+
+    assert TestTable.qaspen._field_type == "VARCHAR(200)"
+
+
+def test_char_field_validate_field_value_method() -> None:
+    """Test exception in `_validate_field_value` CharField method."""
+
+    class TestTable(BaseTable):
+        qaspen = CharField()
+
+    with pytest.raises(expected_exception=FieldValueValidationError):
+        TestTable.qaspen._validate_field_value(
+            field_value="more_than_one_symbol",
+        )
+
+
+def test_date_field_init_method() -> None:
+    """Test `__init__` method.
+
+    Check that it's impossible to declare field
+    with `default` and `database_default`.
+    """
+    with pytest.raises(expected_exception=FieldDeclarationError):
+        DateField(
+            default=datetime.now().date(),  # noqa: DTZ005
+            database_default=True,
+        )
+
+
+def test_date_field_field_default_method() -> None:
+    """Test `_field_default`.
+
+    Check that return string changes if field has
+    `database_default` param.
+    """
+    field_without_database_default = DateField()
+    assert field_without_database_default._field_default == ""
+
+    field_with_database_default = DateField(database_default=True)
+    assert field_with_database_default._field_default == "DEFAULT CURRENT_DATE"
+
+
+def test_timestamp_field_init_method() -> None:
+    """Test `__init__` method in `TimestampField`.
+
+    Check that it's impossible to declare field
+    with `default` and `database_default`.
+    """
+    with pytest.raises(expected_exception=FieldDeclarationError):
+        TimestampField(
+            default=datetime.now(),  # noqa: DTZ005
+            database_default=True,
+        )
+
+
+def test_timestamp_field_field_type_method() -> None:
+    """Test `_field_type` in `TimestampField`.
+
+    Check that return string changes if field has
+    `with_timezone` param.
+    """
+    field_without_with_timezone = TimestampField()
+    assert field_without_with_timezone._field_type == "TIMESTAMP"
+
+    field_with_timezone = TimestampField(with_timezone=True)
+    assert field_with_timezone._field_type == "TIMESTAMP WITH TIME ZONE"

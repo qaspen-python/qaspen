@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import TYPE_CHECKING, Any, Final, Union
+from typing import TYPE_CHECKING, Any, Callable, Final, Union
 
 from qaspen.base.operators import AllOperator, AnyOperator
 from qaspen.exceptions import (
@@ -19,7 +19,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
 
-class BaseIntegerField(Field[int]):
+class BaseIntegerField(Field[Union[int, float]]):
     """Base field for all integer fields."""
 
     _available_comparison_types: tuple[type, ...] = (
@@ -54,7 +54,7 @@ class BaseIntegerField(Field[int]):
 
     def _validate_field_value(
         self: Self,
-        field_value: int | None,
+        field_value: float | None,
     ) -> None:
         """Validate field value.
 
@@ -188,7 +188,7 @@ class DecimalField(NumericField):
     _sql_type = primitive_types.Decimal  # type: ignore[assignment]
 
 
-class RealField(Field[Union[float, int, str]]):
+class RealField(Field[Union[str, int, float]]):
     """REAL field."""
 
     _available_comparison_types: tuple[type, ...] = (
@@ -199,7 +199,7 @@ class RealField(Field[Union[float, int, str]]):
         AnyOperator,
         AllOperator,
     )
-    _set_available_types: tuple[type, ...] = (str, float, int)
+    _set_available_types: tuple[type, ...] = (str, int, float)
     _sql_type = primitive_types.Real
 
     def __init__(
@@ -674,6 +674,22 @@ class DateField(BaseDatetimeField[datetime.date]):
     _set_available_types: tuple[type, ...] = (datetime.date,)
     _sql_type = primitive_types.Date
 
+    def __init__(
+        self: Self,
+        *args: Any,
+        is_null: bool = False,
+        db_field_name: str | None = None,
+        default: datetime.date | Callable[[], datetime.date] | None = None,
+        database_default: bool = False,
+    ) -> None:
+        super().__init__(
+            *args,
+            is_null=is_null,
+            db_field_name=db_field_name,
+            default=default,
+            database_default=database_default,
+        )
+
 
 class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
     """PostgreSQL type for `datetime.time` python type."""
@@ -692,9 +708,29 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
     _set_available_types: tuple[type, ...] = (datetime.time,)
     _sql_type = primitive_types.Time
 
+    def __init__(
+        self: Self,
+        *args: Any,
+        is_null: bool = False,
+        db_field_name: str | None = None,
+        default: datetime.time | Callable[[], datetime.time] | None = None,
+        database_default: bool = False,
+        with_timezone: bool = False,
+    ) -> None:
+        super().__init__(
+            *args,
+            is_null=is_null,
+            db_field_name=db_field_name,
+            default=default,
+            database_default=database_default,
+            with_timezone=with_timezone,
+        )
+
 
 class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     """PostgreSQL type for `datetime.datetime` python type."""
+
+    _database_default = "CURRENT_TIMESTAMP"
 
     _available_comparison_types: tuple[
         type,
@@ -707,6 +743,26 @@ class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     )
     _set_available_types: tuple[type, ...] = (datetime.datetime,)
     _sql_type = primitive_types.Timestamp
+
+    def __init__(
+        self: Self,
+        *args: Any,
+        is_null: bool = False,
+        db_field_name: str | None = None,
+        default: (
+            datetime.datetime | Callable[[], datetime.datetime] | None
+        ) = None,
+        database_default: bool = False,
+        with_timezone: bool = False,
+    ) -> None:
+        super().__init__(
+            *args,
+            is_null=is_null,
+            db_field_name=db_field_name,
+            default=default,
+            database_default=database_default,
+            with_timezone=with_timezone,
+        )
 
 
 class IntervalField(Field[datetime.timedelta]):
