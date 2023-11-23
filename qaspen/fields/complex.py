@@ -10,7 +10,7 @@ from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import complex_types
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
     from qaspen.sql_type.base import SQLType
@@ -102,6 +102,20 @@ class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
     _set_available_types: tuple[type, ...] = (dict, list, str)
     _sql_type = complex_types.Json
 
+    def __init__(
+        self: Self,
+        *args: Any,
+        is_null: bool = False,
+        db_field_name: str | None = None,
+        default: FieldDefaultType[dict[Any, Any] | str] = None,
+    ) -> None:
+        super().__init__(
+            *args,
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )
+
 
 class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
     """Field for JSON PostgreSQL type."""
@@ -120,6 +134,20 @@ class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
     )
     _set_available_types: tuple[type, ...] = (dict, str, bytes, list)
     _sql_type = complex_types.Jsonb
+
+    def __init__(
+        self: Self,
+        *args: Any,
+        is_null: bool = False,
+        db_field_name: str | None = None,
+        default: FieldDefaultType[dict[Any, Any] | str | bytes] = None,
+    ) -> None:
+        super().__init__(
+            *args,
+            is_null=is_null,
+            default=default,
+            db_field_name=db_field_name,
+        )
 
 
 class ArrayField(Field[List[Any]]):
@@ -164,7 +192,8 @@ class ArrayField(Field[List[Any]]):
             default_value,
             default=str,
         )
-        return dumped_value.replace("[", "{").replace("]", "}")
+        dumped_value = dumped_value.replace("[", "{").replace("]", "}")
+        return f"'{dumped_value}'"
 
     @property
     def _field_type(self: Self) -> str:
