@@ -140,3 +140,17 @@ def test_array_field_prepare_default_value_method(
         default=raw_default_value,
     )
     assert created_field._default == prepared_default_value
+
+
+def test_array_field_field_type_method() -> None:
+    """Test `_field_type` method."""
+    field_without_dimension = ArrayField(
+        base_type=VarChar,
+    )
+    assert field_without_dimension._field_type == "VARCHAR ARRAY"
+
+    field_with_dimension = ArrayField(
+        base_type=VarChar,
+        dimension=10,
+    )
+    assert field_with_dimension._field_type == "VARCHAR ARRAY[10]"
