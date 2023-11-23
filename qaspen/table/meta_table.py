@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
     from qaspen.abc.db_engine import BaseEngine
