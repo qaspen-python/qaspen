@@ -69,15 +69,15 @@ class Coalesce(AggFunction):
         )
 
 
-class Agg(AggFunction):
-    """Count function.
+class Avg(AggFunction):
+    """Avg function.
 
-    The `COUNT()` function is an aggregate function
+    The `AVG()` function is an aggregate function
     that allows you to get the number of rows
     that match a specific condition of a query.
     """
 
-    function_name = "COUNT"
+    function_name = "AVG"
 
     def __init__(
         self: Self,
