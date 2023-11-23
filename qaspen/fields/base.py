@@ -97,8 +97,9 @@ class BaseField(Generic[FieldType], abc.ABC):
             meme_lord: VarCharField = VarCharField()
         ```
         """
+        if not self._field_data.field_name:
+            self._field_data.field_name = field_name
         self._field_data.from_table = owner
-        self._field_data.field_name = field_name
 
     @abc.abstractmethod
     def _validate_field_value(
@@ -357,7 +358,9 @@ class Field(BaseField[FieldType]):
         except (AttributeError, KeyError):
             return cast(
                 Self,
-                owner.__dict__[self._original_field_name],
+                owner._retrieve_field(  # type: ignore[union-attr]
+                    self._original_field_name,
+                ),
             )
 
     def __set__(

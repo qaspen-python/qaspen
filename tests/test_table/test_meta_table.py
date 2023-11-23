@@ -19,11 +19,17 @@ def test_meta_table_init_subclass() -> None:
         table_schema=table_schema,
         abstract=True,
     ):
-        pass
+        field1: VarCharField = VarCharField()
+        field2: VarCharField = VarCharField(db_field_name="non_field2")
 
     assert InheritanceMetaTable._table_meta.table_name == table_name
     assert InheritanceMetaTable._table_meta.table_schema == table_schema
     assert InheritanceMetaTable._table_meta.abstract
+    assert InheritanceMetaTable in InheritanceMetaTable._subclasses
+    assert InheritanceMetaTable._table_meta.table_fields == {
+        "field1": InheritanceMetaTable.field1,  # type: ignore[arg-type]
+        "non_field2": InheritanceMetaTable.field2,  # type: ignore[arg-type]
+    }
 
 
 def test_meta_table_init_method() -> None:
