@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Final
 
 from qaspen.querystring.querystring import OrderByQueryString
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
     from qaspen.fields.base import Field
