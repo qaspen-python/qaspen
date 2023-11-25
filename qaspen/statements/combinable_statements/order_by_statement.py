@@ -33,7 +33,7 @@ class OrderByStatement(BaseStatement):
         field: Field[Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
-        order_by_statements: Iterable[OrderBy] | None = None,
+        order_by_expressions: Iterable[OrderBy] | None = None,
     ) -> None:
         """Create new `OrderBy`.
 
@@ -41,7 +41,7 @@ class OrderByStatement(BaseStatement):
         - `field`: field to order by.
         - `ascending`: `ASC` or `DESC` order.
         - `nulls_first`: `NULL` first or not.
-        - `order_by_statements`: already initialized OrderBys.
+        - `order_by_expressions`: already initialized OrderBys.
         """
         if field:
             self.order_by_expressions.append(
@@ -52,9 +52,9 @@ class OrderByStatement(BaseStatement):
                 ),
             )
 
-        if order_by_statements:
+        if order_by_expressions:
             self.order_by_expressions.extend(
-                order_by_statements,
+                order_by_expressions,
             )
 
     def querystring(self: Self) -> QueryString:

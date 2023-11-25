@@ -10,7 +10,7 @@ from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import complex_types
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.sql_type.base import SQLType

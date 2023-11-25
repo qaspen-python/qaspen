@@ -326,7 +326,7 @@ class SelectStatement(
             )
         if order_bys:
             self._order_by_statement.order_by(
-                order_by_statements=order_bys,
+                order_by_expressions=order_bys,
             )
         return self
 

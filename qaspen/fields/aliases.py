@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import UserDict
 from typing import TYPE_CHECKING, Any, Final
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.fields.base import Field

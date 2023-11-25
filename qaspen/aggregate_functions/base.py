@@ -7,7 +7,7 @@ from qaspen.base.sql_base import SQLSelectable
 from qaspen.querystring.querystring import QueryString
 from qaspen.utils.fields_utils import transform_value_to_sql
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
 

@@ -15,7 +15,7 @@ from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import primitive_types
 from qaspen.statements.combinable_statements.filter_statement import Filter
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
 

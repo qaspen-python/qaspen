@@ -14,7 +14,7 @@ from qaspen.statements.combinable_statements.combinations import (
 from qaspen.statements.statement import BaseStatement
 from qaspen.utils.fields_utils import transform_value_to_sql
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.fields.base import Field
