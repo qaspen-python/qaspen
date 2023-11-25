@@ -7,6 +7,7 @@ import pytest
 from qaspen.aggregate_functions.general_purpose import (
     ArrayAgg,
     Avg,
+    Coalesce,
     Count,
     Greatest,
     Least,
@@ -42,6 +43,31 @@ def test_count_agg_function(
     """Test `Count` agg function."""
     agg_statement = TableForTest.select(
         Count(func_argument=func_argument),
+    )
+
+    assert str(agg_statement.querystring()) == expected_query
+
+
+@pytest.mark.parametrize(
+    ("func_arguments", "expected_query"),
+    [
+        (
+            [TableForTest.name, "something"],
+            "SELECT COALESCE(ttest.name, 'something') FROM public.ttest",
+        ),
+        (
+            [TableForTest.name],
+            "SELECT COALESCE(ttest.name) FROM public.ttest",
+        ),
+    ],
+)
+def test_coalesce_agg_function(
+    func_arguments: Any,
+    expected_query: str,
+) -> None:
+    """Test `COALESCE` agg function."""
+    agg_statement = TableForTest.select(
+        Coalesce(*func_arguments),
     )
 
     assert str(agg_statement.querystring()) == expected_query

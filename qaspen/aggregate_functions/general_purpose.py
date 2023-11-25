@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Final
 from qaspen.aggregate_functions.base import AggFunction
 from qaspen.utils.fields_utils import transform_value_to_sql
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
     from qaspen.base.sql_base import SQLSelectable
@@ -64,7 +64,7 @@ class Coalesce(AggFunction):
         - `alias`: alias for the function result.
         """
         super().__init__(
-            func_argument,
+            *func_argument,
             alias=alias,
         )
 
