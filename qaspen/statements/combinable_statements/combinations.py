@@ -12,7 +12,7 @@ from qaspen.fields.operators import (
 )
 from qaspen.querystring.querystring import QueryString
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
 
@@ -28,7 +28,7 @@ class CombinableExpression(abc.ABC):
     @abc.abstractmethod
     def querystring(self: Self) -> QueryString:
         """Build new querystring for this expression."""
-        ...
+        ...  # pragma: no cover
 
     def __and__(
         self: Self,
