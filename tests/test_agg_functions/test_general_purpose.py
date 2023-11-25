@@ -7,6 +7,7 @@ import pytest
 from qaspen.aggregate_functions.general_purpose import (
     ArrayAgg,
     Avg,
+    Coalesce,
     Count,
     Greatest,
     Least,
@@ -42,6 +43,31 @@ def test_count_agg_function(
     """Test `Count` agg function."""
     agg_statement = TableForTest.select(
         Count(func_argument=func_argument),
+    )
+
+    assert str(agg_statement.querystring()) == expected_query
+
+
+@pytest.mark.parametrize(
+    ("func_arguments", "expected_query"),
+    [
+        (
+            [TableForTest.name, "something"],
+            "SELECT COALESCE(ttest.name, 'something') FROM public.ttest",
+        ),
+        (
+            [TableForTest.name],
+            "SELECT COALESCE(ttest.name) FROM public.ttest",
+        ),
+    ],
+)
+def test_coalesce_agg_function(
+    func_arguments: Any,
+    expected_query: str,
+) -> None:
+    """Test `COALESCE` agg function."""
+    agg_statement = TableForTest.select(
+        Coalesce(*func_arguments),
     )
 
     assert str(agg_statement.querystring()) == expected_query
@@ -257,6 +283,34 @@ def test_sum_agg_function(
     """Test `Count` sum function."""
     agg_statement = TableForTest.select(
         Sum(func_argument=func_argument),
+    )
+
+    assert str(agg_statement.querystring()) == expected_query
+
+
+@pytest.mark.parametrize(
+    ("func_argument", "expected_query"),
+    [
+        (
+            TableForTest.name,
+            "SELECT STRING_AGG(ttest.name, ',') FROM public.ttest",
+        ),
+        (
+            "something",
+            "SELECT STRING_AGG('something', ',') FROM public.ttest",
+        ),
+    ],
+)
+def test_string_agg_function_simple(
+    func_argument: Any,
+    expected_query: str,
+) -> None:
+    """Test `StringAgg` agg function."""
+    agg_statement = TableForTest.select(
+        StringAgg(
+            func_argument=func_argument,
+            separator=",",
+        ),
     )
 
     assert str(agg_statement.querystring()) == expected_query

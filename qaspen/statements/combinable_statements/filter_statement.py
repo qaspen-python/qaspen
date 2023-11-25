@@ -14,7 +14,7 @@ from qaspen.statements.combinable_statements.combinations import (
 from qaspen.statements.statement import BaseStatement
 from qaspen.utils.fields_utils import transform_value_to_sql
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from typing_extensions import Self
 
     from qaspen.fields.base import Field
@@ -36,8 +36,8 @@ class Filter(CombinableExpression):
         comparison_value: EmptyValue | Field[Any] | Any = EMPTY_VALUE,
         comparison_values: EmptyValue | Iterable[Any] = EMPTY_VALUE,
     ) -> None:
-        self.field: Field[Any] = field  # type: ignore[arg-type]
-        self.operator: type[BaseOperator] = operator
+        self.field: Final = field
+        self.operator: Final = operator
 
         self.comparison_value: Final = comparison_value
         self.comparison_values: Final = comparison_values
@@ -80,11 +80,11 @@ class FilterBetween(CombinableExpression):
         left_comparison_value: Any,
         right_comparison_value: Any,
     ) -> None:
-        self.field: Field[Any] = field  # type: ignore[arg-type]
-        self.operator: type[BaseOperator] = operator
+        self.field: Final = field
+        self.operator: Final = operator
 
-        self.left_comparison_value: Any = left_comparison_value
-        self.right_comparison_value: Any = right_comparison_value
+        self.left_comparison_value: Final = left_comparison_value
+        self.right_comparison_value: Final = right_comparison_value
 
     def querystring(self: Self) -> FilterQueryString:
         """Build new `FilterQueryString`."""
@@ -122,7 +122,7 @@ class FilterExclusive(CombinableExpression):
         This class isolates expressions, so you can build
         more complex queries.
         """
-        self.comparison: CombinableExpression = comparison
+        self.comparison: Final = comparison
 
     def querystring(self: Self) -> FilterQueryString:
         """Build new `FilterQueryString`."""
@@ -175,6 +175,7 @@ class FilterStatement(BaseStatement):
         """
         if not self.filter_expressions:
             return QueryString.empty()
+
         final_where: QueryString = functools.reduce(
             operator.add,
             [

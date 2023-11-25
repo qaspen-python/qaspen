@@ -1367,3 +1367,38 @@ def test_field_prepare_default_value(
         )
         == excepted_default_value
     )
+
+
+@pytest.mark.parametrize(
+    ("value_to_validate", "expected_exception"),
+    [
+        (None, None),
+        ("123", None),
+        (12.0, None),
+        (["incorrect", "type"], FieldValueValidationError),
+    ],
+)
+def test_field_validate_field_method(
+    value_to_validate: Any,
+    expected_exception: type[Exception],
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `_validate_field_value` `Field` method."""
+    if expected_exception:
+        with pytest.raises(expected_exception=expected_exception):
+            for_test_table.name._validate_field_value(
+                field_value=value_to_validate,
+            )
+    else:
+        for_test_table.name._validate_field_value(
+            field_value=value_to_validate,
+        )
+
+
+def test_field_is_the_same_field(
+    for_test_table: _ForTestTable,
+) -> None:
+    """Test `_is_the_same_field` `Field` method."""
+    assert for_test_table.name._is_the_same_field(
+        for_test_table.name,
+    )
