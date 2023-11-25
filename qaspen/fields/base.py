@@ -29,7 +29,7 @@ from qaspen.statements.combinable_statements.filter_statement import (
     FilterBetween,
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from qaspen.base.sql_base import SQLSelectable
     from qaspen.sql_type.base import SQLType
     from qaspen.table.base_table import BaseTable

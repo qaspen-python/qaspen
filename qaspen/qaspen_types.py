@@ -6,7 +6,7 @@ from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 
-if typing.TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
 

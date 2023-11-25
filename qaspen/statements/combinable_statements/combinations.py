@@ -12,7 +12,7 @@ from qaspen.fields.operators import (
 )
 from qaspen.querystring.querystring import QueryString
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from typing_extensions import Self
 
 
