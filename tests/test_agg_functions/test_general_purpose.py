@@ -289,6 +289,34 @@ def test_sum_agg_function(
 
 
 @pytest.mark.parametrize(
+    ("func_argument", "expected_query"),
+    [
+        (
+            TableForTest.name,
+            "SELECT STRING_AGG(ttest.name, ',') FROM public.ttest",
+        ),
+        (
+            "something",
+            "SELECT STRING_AGG('something', ',') FROM public.ttest",
+        ),
+    ],
+)
+def test_string_agg_function_simple(
+    func_argument: Any,
+    expected_query: str,
+) -> None:
+    """Test `StringAgg` agg function."""
+    agg_statement = TableForTest.select(
+        StringAgg(
+            func_argument=func_argument,
+            separator=",",
+        ),
+    )
+
+    assert str(agg_statement.querystring()) == expected_query
+
+
+@pytest.mark.parametrize(
     ("func_argument", "order_by", "expected_query"),
     [
         (

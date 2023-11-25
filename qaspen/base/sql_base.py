@@ -20,4 +20,4 @@ class SQLSelectable(Protocol):
         ### Returns
         `QueryString` or it's subclass.
         """
-        ...
+        ...  # pragma: no cover

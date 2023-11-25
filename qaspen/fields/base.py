@@ -909,14 +909,11 @@ class Field(BaseField[FieldType]):
     ) -> None:
         """Validate field value.
 
-        If `field_value` is None but field declared as NOT NULL,
-        throw an error.
-
         :param field_value: new value for the field.
 
         :raises FieldValueValidationError: if the `max_length` is exceeded.
         """
-        if field_value is None and self._is_null:
+        if field_value is None:
             return
 
         if not isinstance(field_value, self._set_available_types):
@@ -945,13 +942,6 @@ class Field(BaseField[FieldType]):
             raise FieldValueValidationError(
                 validation_err_msg,
             ) from exc
-
-        if not isinstance(default_value, self._set_available_types):
-            type_err_msg: Final = (
-                f"Wrong default value in the field "
-                f"{self.__class__.__name__}",
-            )
-            raise FieldValueValidationError(type_err_msg)
 
     def _prepare_default_value(
         self: Self,

@@ -6,7 +6,7 @@ from typing_extensions import Self
 
 from qaspen.base.operators import AllOperator, AnyOperator
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from qaspen.table.base_table import BaseTable
 
 
@@ -14,7 +14,7 @@ class EmptyFieldValue:
     """Indicates that field wasn't queried from the database."""
 
     def __str__(self: Self) -> str:
-        return self.__class__.__name__
+        return self.__class__.__name__  # pragma: no cover
 
 
 class EmptyValue:

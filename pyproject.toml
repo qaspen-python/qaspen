@@ -47,4 +47,4 @@ multi_line_output = 3
 line_length = 79
 
 [tool.coverage.run]
-omit = ["qaspen/abc/*"]
+omit = ["qaspen/abc/*", "qaspen/_test.py"]
