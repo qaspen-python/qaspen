@@ -5,9 +5,12 @@ from typing import Any
 import pytest
 
 from qaspen.fields.operators import BetweenOperator, EqualOperator
+from qaspen.querystring.querystring import EmptyQueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
     FilterBetween,
+    FilterExclusive,
+    FilterStatement,
 )
 from tests.test_statements.conftest import ForTestTable
 
@@ -73,3 +76,60 @@ def test_filter_between_querystring_method(
         str(filter_instance.querystring())
         == f"fortesttable.name BETWEEN {expected_compare_query}"
     )
+
+
+def test_filter_exclusive_querystring_method() -> None:
+    """Test `FilterExclusive` `querystring` method."""
+    filter_between_instance = FilterBetween(
+        field=ForTestTable.name,
+        operator=BetweenOperator,
+        left_comparison_value="test",
+        right_comparison_value="s_test",
+    )
+
+    filter_instance = Filter(
+        field=ForTestTable.name,
+        operator=EqualOperator,
+        comparison_value="default_filter",
+    )
+
+    final_filter = FilterExclusive(
+        filter_between_instance & filter_instance,
+    )
+
+    assert (
+        str(final_filter.querystring())
+        == "(fortesttable.name BETWEEN 'test' AND 's_test' AND fortesttable.name = 'default_filter')"  # noqa: E501
+    )
+
+
+def test_filter_statement() -> None:
+    """Test `FilterStatement` statement."""
+    filter_stmt = FilterStatement()
+
+    filter_instance = Filter(
+        field=ForTestTable.name,
+        operator=EqualOperator,
+        comparison_value="default_filter",
+    )
+    filter_between_instance = FilterBetween(
+        field=ForTestTable.name,
+        operator=BetweenOperator,
+        left_comparison_value="test",
+        right_comparison_value="s_test",
+    )
+
+    filter_stmt.add_filter(filter_between_instance)
+    filter_stmt.add_filter(filter_instance)
+
+    assert (
+        str(filter_stmt.querystring())
+        == "WHERE fortesttable.name BETWEEN 'test' AND 's_test' AND fortesttable.name = 'default_filter'"  # noqa: E501
+    )
+
+
+def test_filter_statement_empty() -> None:
+    """Test empty `FilterStatement` statement."""
+    filter_stmt = FilterStatement()
+
+    assert isinstance(filter_stmt.querystring(), EmptyQueryString)
