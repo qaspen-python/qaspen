@@ -7,7 +7,6 @@ from typing import (
     Generator,
     Generic,
     Iterable,
-    Literal,
     Optional,
     overload,
 )
@@ -102,7 +101,7 @@ class SelectStatement(
 
     def __await__(
         self: Self,
-    ) -> Generator[None, None, SelectStatementResult | None]:
+    ) -> Generator[None, None, SelectStatementResult]:
         """SelectStatement can be awaited.
 
         Example:
@@ -127,27 +126,10 @@ class SelectStatement(
 
         return self.execute(engine=engine).__await__()
 
-    @overload
-    async def execute(  # type: ignore[misc]
+    async def execute(
         self: Self,
         engine: BaseEngine[Any, Any, Any],
-        fetch_results: Literal[True] = True,
     ) -> SelectStatementResult:
-        ...
-
-    @overload
-    async def execute(
-        self: Self,
-        engine: BaseEngine[Any, Any, Any],
-        fetch_results: Literal[False] = False,
-    ) -> None:
-        ...
-
-    async def execute(
-        self: Self,
-        engine: BaseEngine[Any, Any, Any],
-        fetch_results: bool = True,
-    ) -> SelectStatementResult | None:
         """Execute select statement.
 
         This is manual execution.
@@ -161,39 +143,19 @@ class SelectStatement(
         ### Returns
         `SelectStatementResult`
         """
-        raw_query_result: list[dict[str, Any]] | None = await engine.execute(
+        raw_query_result: list[dict[str, Any]] = await engine.execute(
             querystring=self.querystring().build(),
-            fetch_results=fetch_results,
+            fetch_results=True,
         )
-
-        if not raw_query_result:
-            return None
 
         return SelectStatementResult(
             engine_result=raw_query_result,
         )
 
-    @overload
-    async def transaction_execute(  # type: ignore[misc]
+    async def transaction_execute(
         self: Self,
         transaction: BaseTransaction[Any, Any],
-        fetch_results: Literal[True] = True,
     ) -> SelectStatementResult:
-        ...
-
-    @overload
-    async def transaction_execute(
-        self: Self,
-        transaction: BaseTransaction[Any, Any],
-        fetch_results: Literal[False] = False,
-    ) -> None:
-        ...
-
-    async def transaction_execute(
-        self: Self,
-        transaction: BaseTransaction[Any, Any],
-        fetch_results: bool = True,
-    ) -> SelectStatementResult | None:
         """Execute statement inside a transaction context.
 
         This is manual execution.
@@ -209,15 +171,10 @@ class SelectStatement(
         ### Returns
         `SelectStatementResult`
         """
-        raw_query_result: list[
-            dict[str, Any]
-        ] | None = await transaction.execute(
+        raw_query_result: list[dict[str, Any]] = await transaction.execute(
             querystring=self.querystring().build(),
-            fetch_results=fetch_results,
+            fetch_results=True,
         )
-
-        if not raw_query_result:
-            return None
 
         return SelectStatementResult(
             engine_result=raw_query_result,
