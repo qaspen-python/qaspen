@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import os
+import sys
 from typing import AsyncGenerator
 
 import pytest
@@ -20,6 +22,11 @@ def anyio_backend() -> str:
 @pytest.fixture()
 async def test_engine() -> AsyncGenerator[PsycopgEngine, None]:
     """Create engine and startup it."""
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(
+            asyncio.WindowsSelectorEventLoopPolicy(),
+        )
+
     db_name = os.getenv("POSTGRES_DB", "qaspendb")
     db_url = URL.build(
         scheme="postgresql",
