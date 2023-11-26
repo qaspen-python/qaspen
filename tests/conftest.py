@@ -29,11 +29,9 @@ async def test_engine() -> PsycopgEngine:
         password=os.getenv("POSTGRES_PASSWORD", "postgres"),
         path=f"/{db_name}",
     )
-    engine = PsycopgEngine(
+    return PsycopgEngine(
         connection_url=str(db_url),
     )
-
-    return engine
 
 
 @pytest.fixture()
