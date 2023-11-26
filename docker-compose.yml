@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  postgresql:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=qaspendb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=12345
+    ports:
+       - '5432:5432'

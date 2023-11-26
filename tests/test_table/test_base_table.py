@@ -16,7 +16,7 @@ def test_base_table_select() -> None:
     )
 
     assert (
-        str(select_stmt_with_fields.querystring())
+        select_stmt_with_fields.querystring().build()
         == "SELECT btable.field1, btable.field2 FROM public.btable"
     )
 
@@ -25,7 +25,7 @@ def test_base_table_select() -> None:
     )
 
     assert (
-        str(select_stmt_with_agg.querystring())
+        select_stmt_with_agg.querystring().build()
         == "SELECT COUNT(btable.field1) FROM public.btable"
     )
 
@@ -35,7 +35,7 @@ def test_base_table_select() -> None:
     )
 
     assert (
-        str(select_stmt_with_fields_and_agg.querystring())
+        select_stmt_with_fields_and_agg.querystring().build()
         == "SELECT btable.field2, COUNT(btable.field1) FROM public.btable"
     )
 

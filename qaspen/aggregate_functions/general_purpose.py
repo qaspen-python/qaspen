@@ -166,12 +166,12 @@ class ArrayAgg(AggFunction):
         if self.order_by:
             for single_order_by in self.order_by:
                 querystring_args.append(
-                    str(single_order_by.querystring()),
+                    single_order_by.querystring().build(),
                 )
         if self.order_by_objs:
             for order_by_obj in self.order_by_objs:
                 querystring_args.append(
-                    str(order_by_obj.querystring()),
+                    order_by_obj.querystring().build(),
                 )
 
         return querystring_args
@@ -278,12 +278,12 @@ class StringAgg(AggFunction):
         if self.order_by:
             for single_order_by in self.order_by:
                 querystring_args.append(
-                    str(single_order_by.querystring()),
+                    single_order_by.querystring().build(),
                 )
         if self.order_by_objs:
             for order_by_obj in self.order_by_objs:
                 querystring_args.append(
-                    str(order_by_obj.querystring()),
+                    order_by_obj.querystring().build(),
                 )
 
         return querystring_args

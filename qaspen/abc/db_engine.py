@@ -78,8 +78,7 @@ class BaseEngine(
     ) -> list[dict[str, typing.Any]] | None:
         """Execute a querystring.
 
-        Run querystring and return raw result as in
-        database driver.
+        Run querystring and return list with dict results.
 
         ### Parameters:
         - `querystring`: `QueryString` or it's subclasses.

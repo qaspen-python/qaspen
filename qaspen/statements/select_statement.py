@@ -820,7 +820,7 @@ class SelectStatement(
         )
         to_select_agg_funcs = ", ".join(
             [
-                str(agg_func.querystring())
+                agg_func.querystring().build()
                 for agg_func in self._select_agg_functions
             ],
         )

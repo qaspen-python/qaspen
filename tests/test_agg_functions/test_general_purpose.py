@@ -45,7 +45,7 @@ def test_count_agg_function(
         Count(func_argument=func_argument),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -70,7 +70,7 @@ def test_coalesce_agg_function(
         Coalesce(*func_arguments),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -95,7 +95,7 @@ def test_avg_agg_function(
         Avg(func_argument=func_argument),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -120,7 +120,7 @@ def test_array_agg_function_simple(
         ArrayAgg(func_argument=func_argument),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -166,7 +166,7 @@ def test_array_agg_function_with_order_by(
         ),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -217,7 +217,7 @@ def test_array_agg_function_with_order_by_objs(
         ),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -260,7 +260,7 @@ def test_array_agg_function_with_order_by_objs_and_order_by(
         ),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -285,7 +285,7 @@ def test_sum_agg_function(
         Sum(func_argument=func_argument),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -313,7 +313,7 @@ def test_string_agg_function_simple(
         ),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -352,7 +352,7 @@ def test_string_agg_function_with_order_by(
         ),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -397,7 +397,7 @@ def test_string_agg_function_with_order_by_objs(
         ),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -441,7 +441,7 @@ def test_string_agg_function_with_order_by_objs_and_order_by(
         ),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -466,7 +466,7 @@ def test_max_agg_function(
         Max(func_argument=func_argument),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -491,7 +491,7 @@ def test_min_agg_function(
         Min(func_argument=func_argument),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -516,7 +516,7 @@ def test_greatest_agg_function(
         Greatest(*func_arguments),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query
 
 
 @pytest.mark.parametrize(
@@ -541,4 +541,4 @@ def test_least_agg_function(
         Least(*func_arguments),
     )
 
-    assert str(agg_statement.querystring()) == expected_query
+    assert agg_statement.querystring().build() == expected_query

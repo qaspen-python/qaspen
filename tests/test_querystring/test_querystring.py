@@ -28,7 +28,7 @@ def test_querystring_build(querystring: type[QueryString]) -> None:
         "table",
         sql_template="SELECT {} FROM {}",
     )
-    assert str(qs) == "SELECT field FROM table"
+    assert qs.build() == "SELECT field FROM table"
 
 
 def test_querystring_add() -> None:
@@ -46,6 +46,4 @@ def test_querystring_add() -> None:
     )
 
     final_qs = qs1 + qs2
-    assert (
-        final_qs.querystring()
-    ) == "SELECT field FROM table WHERE field = 'wow'"
+    assert (final_qs.build()) == "SELECT field FROM table WHERE field = 'wow'"

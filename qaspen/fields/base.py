@@ -276,7 +276,7 @@ class BaseField(Generic[FieldType], abc.ABC):
         ### Return
         SQL `string`.
         """
-        return str(self._sql_type.querystring())
+        return self._sql_type.querystring().build()
 
 
 class Field(BaseField[FieldType]):

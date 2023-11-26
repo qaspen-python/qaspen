@@ -33,23 +33,24 @@ class QueryString:
         """
         return EmptyQueryString(sql_template="")
 
-    def querystring(self: Self) -> str:
-        """Format QueryString template with arguments.
+    def build(self: Self) -> str:
+        """Build string from querystring.
 
-        ### Returns
-        :returns: QueryString as a string.
+        Return full SQL querystring with all parameters
+        in it.
 
-        Example:
-        -------
-        ```python
-        qs1 = QueryString(
-            "good_field",
-            "good_table",
-            sql_template="SELECT {} FROM {}",
-        )
-        print(qs1)  # SELECT good_field FROM good_table
-        ```
+        ### Returns:
+        str
         """
+        template_args = []
+        for template_argument in self.template_arguments:
+            if isinstance(template_argument, QueryString):
+                template_args.append(
+                    template_argument.build(),
+                )
+            else:
+                template_args.append(template_argument)
+
         return self.sql_template.format(
             *self.template_arguments,
         )
@@ -95,12 +96,12 @@ class QueryString:
         return self
 
     def __str__(self: Self) -> str:
-        """Return `QueryString` as a string.
+        """Return `QueryString` as a sql template without data.
 
         ### Returns
         :returns: string
         """
-        return self.querystring()
+        return self.sql_template
 
 
 class EmptyQueryString(QueryString):
