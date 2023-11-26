@@ -33,7 +33,11 @@ class LimitStatement(BaseStatement):
         self.limit_number = limit_number
 
     def querystring(self: Self) -> QueryString:
-        """Build `QueryString`."""
+        """Build `QueryString`.
+
+        ### Returns:
+        `QueryString`
+        """
         if not self.limit_number:
             return QueryString.empty()
         return QueryString(
