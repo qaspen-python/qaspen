@@ -39,6 +39,8 @@ def test_querystring_add() -> None:
         sql_template="SELECT {} FROM {}",
     )
 
+    assert str(qs1) == qs1.sql_template
+
     qs2 = QueryString(
         "field",
         "'wow'",

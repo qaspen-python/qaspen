@@ -42,15 +42,6 @@ class QueryString:
         ### Returns:
         str
         """
-        template_args = []
-        for template_argument in self.template_arguments:
-            if isinstance(template_argument, QueryString):
-                template_args.append(
-                    template_argument.build(),
-                )
-            else:
-                template_args.append(template_argument)
-
         return self.sql_template.format(
             *self.template_arguments,
         )
