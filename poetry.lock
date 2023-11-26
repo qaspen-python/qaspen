@@ -981,20 +981,20 @@ files = [
 
 [[package]]
 name = "qaspen-psycopg"
-version = "0.0.5a0"
+version = "0.0.6a0"
 description = ""
 category = "dev"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "qaspen_psycopg-0.0.5a0-py3-none-any.whl", hash = "sha256:3b6af0807e93720b6353483dd4a985a01127d336d6823804c79a31f542548a92"},
-    {file = "qaspen_psycopg-0.0.5a0.tar.gz", hash = "sha256:31aee226b15e80b0851264e557ce2197c8b071b6063d9539b1702192937695e3"},
+    {file = "qaspen_psycopg-0.0.6a0-py3-none-any.whl", hash = "sha256:0f6baa43138f57e96ab7a89e6fdaa3a5a746efb7ea07d79fa6fbac048e2db52c"},
+    {file = "qaspen_psycopg-0.0.6a0.tar.gz", hash = "sha256:e9024a99e36e1fa311afe6bb229ad6087501ac63df4d26b33784df59bd6ef0d1"},
 ]
 
 [package.dependencies]
 psycopg = ">=3.1.12,<4.0.0"
 psycopg-pool = ">=3.1.8,<4.0.0"
-qaspen = ">=0.0.9a0,<0.0.10"
+qaspen = "*"
 
 [[package]]
 name = "ruff"
@@ -1244,4 +1244,4 @@ tokenize-rt = ">=2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "f0203cf41cb4cce747988d11ecf0b6f6164c0c68186c9ea162c43d56ae5b857c"
+content-hash = "5ba1052b69269b5ff9863dc1e5b94784762b598fe131cd1755784636c081e96b"
