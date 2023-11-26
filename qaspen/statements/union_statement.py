@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.abc.db_engine import BaseEngine
+    from qaspen.abc.db_transaction import BaseTransaction
     from qaspen.statements.select_statement import SelectStatement
 
 
@@ -107,7 +108,19 @@ class UnionStatement(
     ) -> list[dict[str, Any]]:
         """Execute SQL query and return result."""
         raw_query_result: list[dict[str, Any]] = await engine.execute(
-            querystring=self.querystring(),
+            querystring=self.querystring().build(),
+            fetch_results=True,
+        )
+        return raw_query_result
+
+    async def transaction_execute(
+        self: Self,
+        transaction: BaseTransaction[Any, Any],
+    ) -> list[dict[str, Any]]:
+        """Execute SQL query in a transaction and return result."""
+        raw_query_result: list[dict[str, Any]] = await transaction.execute(
+            querystring=self.querystring().build(),
+            fetch_results=True,
         )
         return raw_query_result
 

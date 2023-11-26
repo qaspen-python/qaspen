@@ -14,8 +14,6 @@ from qaspen.utils.engine_utils import parse_database
 if typing.TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.querystring.querystring import QueryString
-
 
 class BaseEngine(
     ABC,
@@ -51,7 +49,7 @@ class BaseEngine(
     @typing.overload
     async def execute(  # type: ignore[misc]
         self: Self,
-        querystring: QueryString,
+        querystring: str,
         in_pool: bool = True,
         fetch_results: typing.Literal[True] = True,
         **_kwargs: typing.Any,
@@ -61,17 +59,27 @@ class BaseEngine(
     @typing.overload
     async def execute(
         self: Self,
-        querystring: QueryString,
+        querystring: str,
         in_pool: bool = True,
         fetch_results: typing.Literal[False] = False,
         **_kwargs: typing.Any,
     ) -> None:
         ...
 
+    @typing.overload
+    async def execute(
+        self: Self,
+        querystring: str,
+        in_pool: bool = True,
+        fetch_results: bool = True,
+        **_kwargs: typing.Any,
+    ) -> list[dict[str, typing.Any]] | None:
+        ...
+
     @abstractmethod
     async def execute(
         self: Self,
-        querystring: QueryString,
+        querystring: str,
         in_pool: bool = True,
         fetch_results: bool = True,
         **_kwargs: typing.Any,

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.abc.db_engine import BaseEngine
+    from qaspen.abc.db_transaction import BaseTransaction
     from qaspen.qaspen_types import FromTable
     from qaspen.statements.select_statement import SelectStatement
 
@@ -76,10 +77,35 @@ class ExistsStatement(
         :param engine: subclass of BaseEngine.
         """
         raw_query_result: list[dict[str, Any]] = await engine.execute(
-            querystring=self.querystring_for_select(),
+            querystring=self.querystring_for_select().build(),
             fetch_results=True,
         )
 
+        return self._parse_database_response(
+            raw_query_result=raw_query_result,
+        )
+
+    async def transaction_execute(
+        self: Self,
+        transaction: BaseTransaction[Any, Any],
+    ) -> bool:
+        """Execute statement in a transaction.
+
+        :param engine: subclass of BaseEngine.
+        """
+        raw_query_result: list[dict[str, Any]] = await transaction.execute(
+            querystring=self.querystring_for_select().build(),
+            fetch_results=True,
+        )
+
+        return self._parse_database_response(
+            raw_query_result=raw_query_result,
+        )
+
+    def _parse_database_response(
+        self: Self,
+        raw_query_result: list[dict[str, Any]],
+    ) -> bool:
         try:
             return cast(
                 bool,
