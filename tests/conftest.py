@@ -36,7 +36,6 @@ async def test_engine() -> AsyncGenerator[PsycopgEngine, None]:
         password=os.getenv("POSTGRES_PASSWORD", "postgres"),
         path=f"/{db_name}",
     )
-    print(str(db_url))
     engine = PsycopgEngine(
         connection_url=str(db_url),
         open_connection_pool_wait=True,
