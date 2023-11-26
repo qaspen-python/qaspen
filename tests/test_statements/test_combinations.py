@@ -20,7 +20,7 @@ def test_combinable_expression_and_method() -> None:
 
     final_filter = filter1 & filter2
     assert (
-        str(final_filter.querystring())
+        final_filter.querystring().build()
         == "fortesttable.name = '123' AND fortesttable.name = '123'"
     )
 
@@ -40,7 +40,7 @@ def test_combinable_expression_or_method() -> None:
 
     final_filter = filter1 | filter2
     assert (
-        str(final_filter.querystring())
+        final_filter.querystring().build()
         == "fortesttable.name = '123' OR fortesttable.name = '123'"
     )
 
@@ -54,4 +54,6 @@ def test_combinable_expression_invert_method() -> None:
     )
 
     final_filter = ~filter1
-    assert str(final_filter.querystring()) == "NOT (fortesttable.name = '123')"
+    assert (
+        final_filter.querystring().build() == "NOT (fortesttable.name = '123')"
+    )

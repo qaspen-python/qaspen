@@ -68,7 +68,7 @@ def test_join_querystring_method(join_class: type[Join]) -> None:
     )
 
     assert (
-        str(inited_join.querystring())
+        inited_join.querystring().build()
         == f"{join_class.join_type} public.videotest AS {alias} ON videotest.user_id = usertest.id"  # noqa: E501
     )
 
@@ -214,7 +214,7 @@ def test_join_statement_querystring_method(
     join_stmt.add_join(join1)
     join_stmt.add_join(join2)
 
-    assert str(join_stmt.querystring()) == (
+    assert join_stmt.querystring().build() == (
         f"{join_class.join_type} public.videotest AS {alias} ON videotest.user_id = usertest.id "  # noqa: E501
         f"{join_class.join_type} public.videotest AS {alias} ON videotest.user_id = usertest.id"  # noqa: E501
     )

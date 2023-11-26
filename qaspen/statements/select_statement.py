@@ -7,6 +7,8 @@ from typing import (
     Generator,
     Generic,
     Iterable,
+    Literal,
+    Optional,
     overload,
 )
 
@@ -38,6 +40,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.abc.db_engine import BaseEngine
+    from qaspen.abc.db_transaction import BaseTransaction
     from qaspen.clauses.order_by import OrderBy
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,
@@ -50,7 +53,7 @@ if TYPE_CHECKING:
 
 class SelectStatement(
     BaseStatement,
-    Executable[SelectStatementResult],
+    Executable[Optional[SelectStatementResult]],
     Generic[FromTable],
 ):
     """Main entry point for all SELECT queries.
@@ -99,7 +102,7 @@ class SelectStatement(
 
     def __await__(
         self: Self,
-    ) -> Generator[None, None, SelectStatementResult]:
+    ) -> Generator[None, None, SelectStatementResult | None]:
         """SelectStatement can be awaited.
 
         Example:
@@ -124,26 +127,97 @@ class SelectStatement(
 
         return self.execute(engine=engine).__await__()
 
+    @overload
+    async def execute(  # type: ignore[misc]
+        self: Self,
+        engine: BaseEngine[Any, Any, Any],
+        fetch_results: Literal[True] = True,
+    ) -> SelectStatementResult:
+        ...
+
+    @overload
     async def execute(
         self: Self,
         engine: BaseEngine[Any, Any, Any],
-    ) -> SelectStatementResult:
+        fetch_results: Literal[False] = False,
+    ) -> None:
+        ...
+
+    async def execute(
+        self: Self,
+        engine: BaseEngine[Any, Any, Any],
+        fetch_results: bool = True,
+    ) -> SelectStatementResult | None:
         """Execute select statement.
 
         This is manual execution.
-        You can pass specific engine and set if you want
-        to retrieve table objects instead of list of dicts.
+        You can pass specific engine.
 
         ### Parameters
-        :param engine: subclass of BaseEngine.
+        - `engine`: subclass of BaseEngine.
+        - `fetch_results`: try to get results from the
+        database response or not.
 
         ### Returns
-        :returns: list of dicts or list of table instances.
+        `SelectStatementResult`
         """
-        raw_query_result: list[dict[str, Any]] = await engine.execute(
-            querystring=self.querystring(),
-            fetch_results=True,
+        raw_query_result: list[dict[str, Any]] | None = await engine.execute(
+            querystring=self.querystring().build(),
+            fetch_results=fetch_results,
         )
+
+        if not raw_query_result:
+            return None
+
+        return SelectStatementResult(
+            engine_result=raw_query_result,
+        )
+
+    @overload
+    async def transaction_execute(  # type: ignore[misc]
+        self: Self,
+        transaction: BaseTransaction[Any, Any],
+        fetch_results: Literal[True] = True,
+    ) -> SelectStatementResult:
+        ...
+
+    @overload
+    async def transaction_execute(
+        self: Self,
+        transaction: BaseTransaction[Any, Any],
+        fetch_results: Literal[False] = False,
+    ) -> None:
+        ...
+
+    async def transaction_execute(
+        self: Self,
+        transaction: BaseTransaction[Any, Any],
+        fetch_results: bool = True,
+    ) -> SelectStatementResult | None:
+        """Execute statement inside a transaction context.
+
+        This is manual execution.
+        You can pass specific transaction.
+        IMPORTANT: To commit the changes, with this way of execution
+        it's necessary to manually call `await transaction.commit()`.
+
+        ### Parameters:
+        - `transaction`: running transaction.
+        - `fetch_results`: try to get results from the
+        database response or not.
+
+        ### Returns
+        `SelectStatementResult`
+        """
+        raw_query_result: list[
+            dict[str, Any]
+        ] | None = await transaction.execute(
+            querystring=self.querystring().build(),
+            fetch_results=fetch_results,
+        )
+
+        if not raw_query_result:
+            return None
 
         return SelectStatementResult(
             engine_result=raw_query_result,
@@ -820,7 +894,7 @@ class SelectStatement(
         )
         to_select_agg_funcs = ", ".join(
             [
-                str(agg_func.querystring())
+                agg_func.querystring().build()
                 for agg_func in self._select_agg_functions
             ],
         )

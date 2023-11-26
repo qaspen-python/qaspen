@@ -65,7 +65,7 @@ class AggFunction(ABC):
         for func_argument in self.func_arguments:
             if isinstance(func_argument, SQLSelectable):
                 querystring_args.append(
-                    str(func_argument.querystring()),
+                    func_argument.querystring().build(),
                 )
             else:
                 querystring_args.append(

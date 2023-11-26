@@ -18,4 +18,4 @@ def test_offset_statement() -> None:
 
     assert offset_stmt.offset_number == new_offset_number
 
-    assert str(offset_stmt.querystring()) == f"OFFSET {new_offset_number}"
+    assert offset_stmt.querystring().build() == f"OFFSET {new_offset_number}"

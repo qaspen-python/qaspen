@@ -34,7 +34,7 @@ def test_filter_querystring_method(
     )
 
     assert (
-        str(filter_instance.querystring())
+        filter_instance.querystring().build()
         == f"fortesttable.name = {expected_compare_query}"
     )
 
@@ -73,7 +73,7 @@ def test_filter_between_querystring_method(
     )
 
     assert (
-        str(filter_instance.querystring())
+        filter_instance.querystring().build()
         == f"fortesttable.name BETWEEN {expected_compare_query}"
     )
 
@@ -98,7 +98,7 @@ def test_filter_exclusive_querystring_method() -> None:
     )
 
     assert (
-        str(final_filter.querystring())
+        final_filter.querystring().build()
         == "(fortesttable.name BETWEEN 'test' AND 's_test' AND fortesttable.name = 'default_filter')"  # noqa: E501
     )
 
@@ -123,7 +123,7 @@ def test_filter_statement() -> None:
     filter_stmt.add_filter(filter_instance)
 
     assert (
-        str(filter_stmt.querystring())
+        filter_stmt.querystring().build()
         == "WHERE fortesttable.name BETWEEN 'test' AND 's_test' AND fortesttable.name = 'default_filter'"  # noqa: E501
     )
 

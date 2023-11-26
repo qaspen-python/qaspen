@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Final, Generic
+from typing import TYPE_CHECKING, Any, Final, Generic, Literal, overload
 
 from qaspen.abc.abc_types import DBConnection, Engine
 
@@ -45,6 +45,44 @@ class BaseTransaction(ABC, Generic[Engine, DBConnection]):
         - `exception_type`: type of the exception.
         - `exception`: instance of the exception.
         - `traceback`: traceback of the exception.
+        """
+
+    @overload
+    async def execute(  # type: ignore[misc]
+        self: Self,
+        querystring: str,
+        fetch_results: Literal[True] = True,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @overload
+    async def execute(
+        self: Self,
+        querystring: str,
+        fetch_results: Literal[False] = False,
+    ) -> None:
+        ...
+
+    @overload
+    async def execute(
+        self: Self,
+        querystring: str,
+        fetch_results: bool,
+    ) -> list[dict[str, Any]] | None:
+        ...
+
+    @abstractmethod
+    async def execute(
+        self: Self,
+        querystring: str,
+        fetch_results: bool = True,
+    ) -> list[dict[str, Any]] | None:
+        """Execute querystring.
+
+        ### Parameters:
+        - `querystring`: sql querystring to execute.
+        - `fetch_results`: Get results or not,
+            Possible only for queries that return something.
         """
 
     @abstractmethod

@@ -547,7 +547,7 @@ def test_str_field_like_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == LikeOperator
 
-    querystring: Final = str(filter_with_value.querystring())
+    querystring: Final = filter_with_value.querystring().build()
     assert querystring == f"testtable.qaspen LIKE '{comparison_value}'"
 
 
@@ -614,7 +614,7 @@ def test_str_field_not_like_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotLikeOperator
 
-    querystring: Final = str(filter_with_value.querystring())
+    querystring: Final = filter_with_value.querystring().build()
     assert querystring == f"testtable.qaspen NOT LIKE '{comparison_value}'"
 
 
@@ -681,7 +681,7 @@ def test_str_field_ilike_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == ILikeOperator
 
-    querystring: Final = str(filter_with_value.querystring())
+    querystring: Final = filter_with_value.querystring().build()
     assert querystring == f"testtable.qaspen ILIKE '{comparison_value}'"
 
 
@@ -748,7 +748,7 @@ def test_str_field_not_ilike_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotILikeOperator
 
-    querystring: Final = str(filter_with_value.querystring())
+    querystring: Final = filter_with_value.querystring().build()
     assert querystring == f"testtable.qaspen NOT ILIKE '{comparison_value}'"
 
 
