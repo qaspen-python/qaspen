@@ -2,7 +2,7 @@ version: "3.7"
 
 services:
   postgresql:
-    image: postgres:15
+    image: postgres:latest
     environment:
       - POSTGRES_DB=qaspendb
       - POSTGRES_USER=postgres
