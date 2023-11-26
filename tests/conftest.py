@@ -18,7 +18,7 @@ def anyio_backend() -> str:
 
 
 @pytest.fixture()
-async def test_engine() -> AsyncGenerator[PsycopgEngine, None]:
+async def test_engine() -> PsycopgEngine:
     """Create engine and startup it."""
     db_name = os.getenv("POSTGRES_DB", "qaspendb")
     db_url = URL.build(
@@ -33,9 +33,7 @@ async def test_engine() -> AsyncGenerator[PsycopgEngine, None]:
         connection_url=str(db_url),
     )
 
-    await engine.create_connection_pool()
-    yield engine
-    await engine.stop_connection_pool()
+    return engine
 
 
 @pytest.fixture()
