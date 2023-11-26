@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
-from qaspen_psycopg.engine import PsycopgEngine, PsycopgTransaction
 
 from tests.test_statements.test_select_statement.conftest import UserTable
+
+if TYPE_CHECKING:
+    from qaspen_psycopg.engine import PsycopgEngine, PsycopgTransaction
 
 
 @pytest.mark.anyio()

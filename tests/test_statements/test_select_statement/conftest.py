@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
-from qaspen_psycopg.engine import PsycopgTransaction
 
 from qaspen.fields.primitive import IntegerField, VarCharField
 from qaspen.table.base_table import BaseTable
+
+if TYPE_CHECKING:
+    from qaspen_psycopg.engine import PsycopgTransaction
 
 
 class UserTable(BaseTable, table_name="main_users"):

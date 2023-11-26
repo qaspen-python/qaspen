@@ -41,8 +41,12 @@ jobs:
     runs-on: "${{ matrix.os }}"
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Redis instance and Redis cluster
-        run: docker-compose up -d
+      - uses: ikalnytskyi/action-setup-postgres@v4
+        with:
+          username: postgres
+          password: postgres
+          database: qaspendb
+        id: postgres
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python
