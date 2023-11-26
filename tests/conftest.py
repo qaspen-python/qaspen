@@ -9,6 +9,11 @@ import pytest
 from qaspen_psycopg.engine import PsycopgEngine, PsycopgTransaction
 from yarl import URL
 
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(
+        asyncio.WindowsSelectorEventLoopPolicy(),
+    )
+
 
 @pytest.fixture(scope="session")
 def anyio_backend() -> str:
@@ -22,11 +27,6 @@ def anyio_backend() -> str:
 @pytest.fixture()
 async def test_engine() -> AsyncGenerator[PsycopgEngine, None]:
     """Create engine and startup it."""
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(
-            asyncio.WindowsSelectorEventLoopPolicy(),
-        )
-
     db_name = os.getenv("POSTGRES_DB", "qaspendb")
     db_url = URL.build(
         scheme="postgresql",
