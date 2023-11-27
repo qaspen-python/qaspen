@@ -47,7 +47,7 @@ class BaseEngine(
         self.connection_url = connection_url
 
     @typing.overload
-    async def execute(  # type: ignore[misc]
+    async def execute(  # type: ignore[overload-overlap]
         self: Self,
         querystring: str,
         in_pool: bool = True,

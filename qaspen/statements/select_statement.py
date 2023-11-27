@@ -367,7 +367,7 @@ class SelectStatement(
         union_with: SelectStatement[FromTable],
         union_all: bool = False,
     ) -> UnionStatement[FromTable]:
-        ...
+        ...  # pragma: no cover
 
     @overload
     def union(
@@ -375,7 +375,7 @@ class SelectStatement(
         union_with: SelectStatement[Any],
         union_all: bool = False,
     ) -> UnionStatement[FromTable]:
-        ...
+        ...  # pragma: no cover
 
     def union(
         self: Self,

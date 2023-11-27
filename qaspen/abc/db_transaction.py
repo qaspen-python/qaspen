@@ -48,7 +48,7 @@ class BaseTransaction(ABC, Generic[Engine, DBConnection]):
         """
 
     @overload
-    async def execute(  # type: ignore[misc]
+    async def execute(  # type: ignore[overload-overlap]
         self: Self,
         querystring: str,
         fetch_results: Literal[True] = True,
