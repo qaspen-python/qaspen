@@ -1,3 +1,4 @@
+"""Main conftest for all tests."""
 from __future__ import annotations
 
 import asyncio
