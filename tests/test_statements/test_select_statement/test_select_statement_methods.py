@@ -172,7 +172,7 @@ async def test_select_limit_offset_method(
 
     assert (
         stmt.querystring().build()
-        == "SELECT main_users.fullname FROM public.main_users LIMIT 1 OFFSET 1"  # noqa: E501
+        == "SELECT main_users.fullname FROM public.main_users LIMIT 1 OFFSET 1"
     )
 
     stmt_result = await stmt.transaction_execute(
