@@ -39,11 +39,25 @@ class QueryString:
         Return full SQL querystring with all parameters
         in it.
 
+        In some cases `self.template_arguments` can contain
+        other `QueryString`, so we must build them too.
+
         ### Returns:
         str
         """
+        template_arguments = []
+        for template_argument in self.template_arguments:
+            if isinstance(template_argument, QueryString):
+                template_arguments.append(
+                    template_argument.build(),
+                )
+            else:
+                template_arguments.append(
+                    template_argument,
+                )
+
         return self.sql_template.format(
-            *self.template_arguments,
+            *template_arguments,
         )
 
     def __add__(
