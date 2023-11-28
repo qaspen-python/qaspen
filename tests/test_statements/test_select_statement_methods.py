@@ -5,11 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from qaspen.clauses.order_by import OrderBy
-from tests.test_statements.test_select_statement.conftest import (
-    ProfileTable,
-    UserTable,
-    VideoTable,
-)
+from tests.test_statements.conftest import ProfileTable, UserTable, VideoTable
 
 if TYPE_CHECKING:
     from qaspen_psycopg.engine import PsycopgEngine, PsycopgTransaction

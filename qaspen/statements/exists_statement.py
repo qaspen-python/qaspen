@@ -111,7 +111,7 @@ class ExistsStatement(
                 bool,
                 raw_query_result[0]["exists"],
             )
-        except LookupError as exc:
+        except LookupError as exc:  # pragma: no cover
             lookup_err_msg: Final = (
                 "Cannot get result for ExistsStatement. "
                 "Please check your statement.",
