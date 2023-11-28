@@ -5,7 +5,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from qaspen.clauses.order_by import OrderBy
-from tests.test_statements.test_select_statement.conftest import UserTable
+from tests.test_statements.test_select_statement.conftest import (
+    ProfileTable,
+    UserTable,
+    VideoTable,
+)
 
 if TYPE_CHECKING:
     from qaspen_psycopg.engine import PsycopgEngine, PsycopgTransaction
@@ -326,14 +330,14 @@ async def test_select_union_method(
     test_db_transaction: PsycopgTransaction,
 ) -> None:
     """Test `union` `SelectStatement` method."""
-    stmt1 = UserTable.select(
+    stmt = UserTable.select(
         UserTable.fullname,
     )
     stmt2 = UserTable.select(
         UserTable.fullname,
     )
 
-    union = stmt1.union(stmt2)
+    union = stmt.union(stmt2)
 
     assert (
         union.querystring().build()
@@ -348,7 +352,7 @@ async def test_select_union_method(
     assert len(stmt_result) == expected_number_of_results
     assert stmt_result == [{"fullname": "Python"}, {"fullname": "Qaspen"}]
 
-    union_all = stmt1.union(stmt2, union_all=True)
+    union_all = stmt.union(stmt2, union_all=True)
 
     assert (
         union_all.querystring().build()
@@ -366,3 +370,211 @@ async def test_select_union_method(
         {"fullname": "Qaspen"},
         {"fullname": "Python"},
     ]
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_intersect_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `intersect` `SelectStatement` method."""
+    stmt = UserTable.select(
+        UserTable.fullname,
+    )
+    stmt2 = UserTable.select(
+        UserTable.fullname,
+    )
+
+    intersect = stmt.intersect(stmt2)
+
+    assert (
+        intersect.querystring().build()
+        == "SELECT main_users.fullname FROM public.main_users INTERSECT SELECT main_users.fullname FROM public.main_users"  # noqa: E501
+    )
+
+    stmt_result = await intersect.transaction_execute(
+        transaction=test_db_transaction,
+    )
+
+    expected_number_of_results = 2
+    assert len(stmt_result) == expected_number_of_results
+    assert stmt_result == [{"fullname": "Python"}, {"fullname": "Qaspen"}]
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_exists_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `exists` `SelectStatement` method."""
+    stmt = (
+        UserTable.select(
+            UserTable.fullname,
+        )
+        .where(UserTable.fullname == "Qaspen")
+        .exists()
+    )
+
+    assert (
+        stmt.querystring_for_select().build()
+        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = 'Qaspen')"  # noqa: E501
+    )
+
+    stmt_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+
+    assert stmt_result
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_join_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `join` `SelectStatement` method."""
+    aliased_profile = ProfileTable.aliased(alias="palias")
+    aliased_video = VideoTable.aliased(alias="valias")
+
+    stmt = aliased_profile.select(
+        aliased_profile.nickname,
+        aliased_video.video_id,
+    ).join(
+        join_table=aliased_video,
+        based_on=aliased_video.profile_id == aliased_profile.profile_id,
+    )
+
+    assert (
+        stmt.querystring().build()
+        == "SELECT palias.nickname, valias.video_id FROM public.profiles AS palias JOIN public.videos AS valias ON valias.profile_id = palias.profile_id"  # noqa: E501
+    )
+
+    stmt_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    expected_result = [
+        {"nickname": "ORM", "video_id": 1},
+        {"nickname": "PL", "video_id": 2},
+    ]
+    raw_result = stmt_result.result()
+    assert raw_result == expected_result
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_inner_join_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `inner_join` `SelectStatement` method."""
+    stmt = UserTable.select(
+        UserTable.fullname,
+        ProfileTable.nickname,
+    ).inner_join(
+        join_table=ProfileTable,
+        based_on=UserTable.user_id == ProfileTable.user_id,
+    )
+
+    assert (
+        stmt.querystring().build()
+        == "SELECT main_users.fullname, profiles.nickname FROM public.main_users INNER JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
+    )
+
+    stmt_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    expected_result = [
+        {"fullname": "Qaspen", "nickname": "ORM"},
+        {"fullname": "Python", "nickname": "PL"},
+    ]
+    raw_result = stmt_result.result()
+    assert raw_result == expected_result
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_left_join_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `left_join` `SelectStatement` method."""
+    stmt = UserTable.select(
+        UserTable.fullname,
+        ProfileTable.nickname,
+    ).left_join(
+        join_table=ProfileTable,
+        based_on=UserTable.user_id == ProfileTable.user_id,
+    )
+
+    assert (
+        stmt.querystring().build()
+        == "SELECT main_users.fullname, profiles.nickname FROM public.main_users LEFT JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
+    )
+
+    stmt_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    expected_result = [
+        {"fullname": "Qaspen", "nickname": "ORM"},
+        {"fullname": "Python", "nickname": "PL"},
+    ]
+    raw_result = stmt_result.result()
+    assert raw_result == expected_result
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_right_join_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `right_join` `SelectStatement` method."""
+    stmt = UserTable.select(
+        UserTable.fullname,
+        ProfileTable.nickname,
+    ).right_join(
+        join_table=ProfileTable,
+        based_on=UserTable.user_id == ProfileTable.user_id,
+    )
+
+    assert (
+        stmt.querystring().build()
+        == "SELECT main_users.fullname, profiles.nickname FROM public.main_users RIGHT JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
+    )
+
+    stmt_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    expected_result = [
+        {"fullname": "Qaspen", "nickname": "ORM"},
+        {"fullname": "Python", "nickname": "PL"},
+    ]
+    raw_result = stmt_result.result()
+    assert raw_result == expected_result
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_full_outer_join_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `full_outer_join` `SelectStatement` method."""
+    stmt = UserTable.select(
+        UserTable.fullname,
+        ProfileTable.nickname,
+    ).full_outer_join(
+        join_table=ProfileTable,
+        based_on=UserTable.user_id == ProfileTable.user_id,
+    )
+
+    assert (
+        stmt.querystring().build()
+        == "SELECT main_users.fullname, profiles.nickname FROM public.main_users FULL OUTER JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
+    )
+
+    stmt_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    expected_result = [
+        {"fullname": "Qaspen", "nickname": "ORM"},
+        {"fullname": "Python", "nickname": "PL"},
+    ]
+    raw_result = stmt_result.result()
+    assert raw_result == expected_result

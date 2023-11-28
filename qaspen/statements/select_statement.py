@@ -21,7 +21,6 @@ from qaspen.statements.combinable_statements.filter_statement import (
     FilterStatement,
 )
 from qaspen.statements.combinable_statements.join_statement import (
-    Join,
     JoinStatement,
     JoinType,
 )
@@ -739,60 +738,6 @@ class SelectStatement(
             join_type=JoinType.FULLOUTERJOIN,
         )
 
-    def add_join(
-        self: Self,
-        *join: Join,
-    ) -> Self:
-        """Add one ore more joins to the SelectStatement.
-
-        You can create JOINs instances by yourself and pass here.
-
-        Example:
-        -------
-        ```
-        class Computer(BaseTable, table_name="computer"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
-
-
-        class Processor(BaseTable, table_name="processor"):
-            computer_name: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        class Architecture(BaseTable, table_name="Architecture")
-            title: VarCharField = VarCharField()
-            processor_name: VarCharField = VarCharField()
-
-
-        processor_join = Join(
-            fields=[Processor.processor_name],
-            from_table=Computer,
-            join_table=Processor,
-            on=Computer.name == Processor.computer_name,
-            # You must control join aliases.
-            join_alias="processor_join",
-        )
-
-        architecture_join = Join(
-            fields=[Architecture.title],
-            from_table=Computer,
-            join_table=Architecture,
-            on=processor_join.processor_name == Architecture.processor_name,
-            join_alias="architecture_join",
-        )
-
-        statement = Computer.select().add_join(
-            processor_join,
-            architecture_join,
-        )
-        ```
-        """
-        self._join_statement.add_join(
-            *join,
-        )
-        return self
-
     def querystring(self: Self) -> QueryString:
         """Build querystring.
 
@@ -856,6 +801,7 @@ class SelectStatement(
             ],
         )
 
+        final_select_objects = None
         if to_select_fields and to_select_agg_funcs:
             final_select_objects = f"{to_select_fields}, {to_select_agg_funcs}"
         elif to_select_fields and not to_select_agg_funcs:
@@ -868,7 +814,7 @@ class SelectStatement(
                 final_select_objects or "1",
                 self._from_table.schemed_original_table_name(),
                 self._from_table._table_meta.alias,
-                sql_template="SELECT {} FROM {} as {}",
+                sql_template="SELECT {} FROM {} AS {}",
             )
 
         return QueryString(
