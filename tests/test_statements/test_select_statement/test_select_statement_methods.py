@@ -347,3 +347,22 @@ async def test_select_union_method(
     expected_number_of_results = 2
     assert len(stmt_result) == expected_number_of_results
     assert stmt_result == [{"fullname": "Python"}, {"fullname": "Qaspen"}]
+
+    union_all = stmt1.union(stmt2, union_all=True)
+
+    assert (
+        union_all.querystring().build()
+        == "SELECT main_users.fullname FROM public.main_users UNION ALL SELECT main_users.fullname FROM public.main_users"  # noqa: E501
+    )
+
+    stmt_result = await union_all.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    expected_number_of_results = 4
+    assert len(stmt_result) == expected_number_of_results
+    assert stmt_result == [
+        {"fullname": "Qaspen"},
+        {"fullname": "Python"},
+        {"fullname": "Qaspen"},
+        {"fullname": "Python"},
+    ]
