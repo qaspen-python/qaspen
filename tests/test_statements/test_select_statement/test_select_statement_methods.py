@@ -318,3 +318,51 @@ async def test_select_order_by_method_with_order_bys(
     expected_number_of_results = 2
     assert len(raw_result) == expected_number_of_results
     assert raw_result == expected_result
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_union_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `union` `SelectStatement` method."""
+    stmt1 = UserTable.select(
+        UserTable.fullname,
+    )
+    stmt2 = UserTable.select(
+        UserTable.fullname,
+    )
+
+    union = stmt1.union(stmt2)
+
+    assert (
+        union.querystring().build()
+        == "SELECT main_users.fullname FROM public.main_users UNION SELECT main_users.fullname FROM public.main_users"  # noqa: E501
+    )
+
+    stmt_result = await union.transaction_execute(
+        transaction=test_db_transaction,
+    )
+
+    expected_number_of_results = 2
+    assert len(stmt_result) == expected_number_of_results
+    assert stmt_result == [{"fullname": "Python"}, {"fullname": "Qaspen"}]
+
+    union_all = stmt1.union(stmt2, union_all=True)
+
+    assert (
+        union_all.querystring().build()
+        == "SELECT main_users.fullname FROM public.main_users UNION ALL SELECT main_users.fullname FROM public.main_users"  # noqa: E501
+    )
+
+    stmt_result = await union_all.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    expected_number_of_results = 4
+    assert len(stmt_result) == expected_number_of_results
+    assert stmt_result == [
+        {"fullname": "Qaspen"},
+        {"fullname": "Python"},
+        {"fullname": "Qaspen"},
+        {"fullname": "Python"},
+    ]
