@@ -158,11 +158,21 @@ class InsertStatement(
 
     def querystring(self: Self) -> QueryString:
         """Build querystring for INSERT statement."""
+        returning_qs = (
+            QueryString(
+                self._returning_field._original_field_name,
+                sql_template="RETURNING {}",
+            )
+            if self._returning_field
+            else QueryString.empty()
+        )
+
         return QueryString(
             self._from_table.table_name(),
             self._make_fields_querystring(),
             self._make_values_querystring(),
-            sql_template="INSERT INTO {} {} VALUES {}",
+            returning_qs,
+            sql_template="INSERT INTO {} {} VALUES {} {}",
         )
 
     def _make_fields_querystring(
