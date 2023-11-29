@@ -77,7 +77,7 @@ class MetaTable:
         self: Self,
         attribute: str,
     ) -> Any:
-        return self.__dict__[attribute]
+        return self.__dict__[attribute]  # pragma: no cover
 
     def __getattribute__(self: Self, attribute: str) -> Any:
         """Return value of the value instead of the instance of the field.
