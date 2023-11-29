@@ -114,11 +114,7 @@ class SelectStatement(
             print(list_of_buns)
         ```
         """
-        engine: BaseEngine[
-            Any,
-            Any,
-            Any,
-        ] | None = self._from_table._table_meta.database_engine
+        engine: Final = self._from_table._table_meta.database_engine
         if not engine:
             engine_err_msg: Final = "There is no database engine."
             raise AttributeError(engine_err_msg)
@@ -136,7 +132,6 @@ class SelectStatement(
 
         ### Parameters
         - `engine`: subclass of BaseEngine.
-        - `fetch_results`: try to get results from the
         database response or not.
 
         ### Returns
@@ -164,7 +159,6 @@ class SelectStatement(
 
         ### Parameters:
         - `transaction`: running transaction.
-        - `fetch_results`: try to get results from the
         database response or not.
 
         ### Returns
