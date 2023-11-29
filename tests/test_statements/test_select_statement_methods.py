@@ -18,10 +18,16 @@ async def test_select_await_method(
     test_db_transaction: PsycopgTransaction,
 ) -> None:
     """Test `__await__` `SelectStatement` method."""
+    stmt = UserTable.select()
+
+    UserTable._table_meta.database_engine = None
+    with pytest.raises(expected_exception=AttributeError):
+        await stmt
+
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine
 
-    stmt_result = await UserTable.select()
+    stmt_result = await stmt
     expected_number_of_results = 2
     expected_result = [
         {"user_id": 1, "fullname": "Qaspen"},
