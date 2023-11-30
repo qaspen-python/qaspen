@@ -1,15 +1,6 @@
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Final,
-    Generator,
-    Generic,
-    Literal,
-    TypeVar,
-    overload,
-)
+from typing import TYPE_CHECKING, Any, Final, Generator, Generic, TypeVar
 
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FromTable
@@ -44,40 +35,43 @@ class InsertStatement(
     def __init__(
         self: Self,
         from_table: type[FromTable],
-        values_to_insert: list[list[Any]],
-        fields_to_insert: list[Field[Any]] | None = None,
+        fields_to_insert: list[Field[Any]],
+        values_to_insert: tuple[list[Any]],
     ) -> None:
         self._from_table: Final = from_table
-        self._fields_to_insert: Final = fields_to_insert
+
+        self._not_passed_fields_with_default = (
+            self._find_not_passed_field_with_default(
+                fields_to_insert=fields_to_insert,
+            )
+        )
+        self._fields_to_insert: Final = (
+            fields_to_insert + self._not_passed_fields_with_default
+        )
+
         self._values_to_insert: Final = values_to_insert
 
         self._returning_field: Field[Any] | None = None
-        self._returning_single: bool = False
 
-    @overload
-    def returning(  # type: ignore[overload-overlap]
+    def __await__(
+        self: Self,
+    ) -> Generator[None, None, ReturnResultType]:
+        """InsertStatement can be awaited.
+
+        ### Returns:
+        result from `execute` method.
+        """
+        engine: Final = self._from_table._table_meta.database_engine
+        if not engine:
+            engine_err_msg: Final = "There is no database engine."
+            raise AttributeError(engine_err_msg)
+
+        return self.execute(engine=engine).__await__()
+
+    def returning(
         self: Self,
         return_field: ReturningField,
-        single: Literal[False] = False,
     ) -> InsertStatement[FromTable, list[ReturningField]]:
-        ...
-
-    @overload
-    def returning(
-        self: Self,
-        return_field: ReturningField,
-        single: Literal[True] = True,
-    ) -> InsertStatement[FromTable, ReturningField]:
-        ...
-
-    def returning(
-        self: Self,
-        return_field: ReturningField,
-        single: bool = False,
-    ) -> (
-        InsertStatement[FromTable, list[ReturningField]]
-        | InsertStatement[FromTable, ReturningField]
-    ):
         """Add `RETURNING` to the query.
 
         ### Parameters:
@@ -87,19 +81,7 @@ class InsertStatement(
         `self` with new return type.
         """
         self._returning_field = return_field
-        self._returning_single = single
         return self  # type: ignore[return-value]
-
-    def __await__(
-        self: Self,
-    ) -> Generator[None, None, ReturnResultType]:
-        """InsertStatement can be awaited."""
-        engine: Final = self._from_table._table_meta.database_engine
-        if not engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-
-        return self.execute(engine=engine).__await__()
 
     async def execute(
         self: Self,
@@ -175,17 +157,70 @@ class InsertStatement(
             sql_template="INSERT INTO {} {} VALUES {} {}",
         )
 
-    def _make_fields_querystring(
+    def _find_not_passed_field_with_default(
         self: Self,
-    ) -> QueryString:
+        fields_to_insert: list[Field[Any]],
+    ) -> list[Field[Any]]:
+        """Find all not passed table fields with default values.
+
+        ### Parameters:
+        - `fields_to_insert`: user-passed fields.
+
+        ### Returns:
+        not passed into `InsertStatement` fields
+        with default values.
+        """
+        all_fields_with_default = (
+            self._from_table._fields_with_default().values()
+        )
+        set_fields_to_insert = {
+            field._original_field_name for field in fields_to_insert
+        }
+
+        return [
+            field
+            for field in all_fields_with_default
+            if field._original_field_name not in set_fields_to_insert
+        ]
+
+    def _prepare_insert_values(
+        self: Self,
+        values_to_insert: tuple[list[Any]],
+    ) -> tuple[list[Any]]:
+        """Prepare INSERT values.
+
+        We need to process `values_to_insert` and
+        add to them default value of the fields
+        with `default` or `callable_default`.
+
+        ### Parameters:
+        - `values_to_insert`: user-passed values to insert.
+
+        ### Returns:
+        tuple of lists with values to insert.
+        """
+        if not self._not_passed_fields_with_default:
+            return values_to_insert
+
+        for list_value in values_to_insert:
+            for field_with_default in self._not_passed_fields_with_default:
+                if field_with_default._default:
+                    list_value.append(
+                        field_with_default._default,
+                    )
+                elif field_with_default._callable_default:
+                    list_value.append(
+                        field_with_default._callable_default(),
+                    )
+
+        return values_to_insert
+
+    def _make_fields_querystring(self: Self) -> QueryString:
         """Create `QueryString` for fields that will be inserted.
 
         ### Returns:
         `Querystring` for fields in INSERT SQL.
         """
-        if not self._fields_to_insert:
-            return QueryString.empty()
-
         fields_sql_template = ", ".join(
             ["{}" for _ in self._fields_to_insert],
         )
@@ -200,21 +235,28 @@ class InsertStatement(
             sql_template="(" + fields_sql_template + ")",
         )
 
-    def _make_values_querystring(
-        self: Self,
-    ) -> QueryString:
+    def _make_values_querystring(self: Self) -> QueryString:
         """Create `QueryString` for VALUES that will be inserted.
+
+        Firstly we prepare `values_to_insert`, we can't do it
+        before this method because default values may contain
+        callable objects based on date, time, etc.
+        So we process them just before execution.
 
         ### Returns:
         `Querystring` for VALUES in INSERT SQL.
         """
+        all_values_to_insert = self._prepare_insert_values(
+            values_to_insert=self._values_to_insert,
+        )
+
         values_sql_template = ", ".join(
-            ["{}" for _ in self._values_to_insert],
+            ["{}" for _ in all_values_to_insert],
         )
 
         values_sql_template_args = []
         single_values_template = ", ".join(
-            ["{}" for _ in self._values_to_insert[0]],
+            ["{}" for _ in all_values_to_insert[0]],
         )
         values_sql_template_args = [
             QueryString(
@@ -224,7 +266,7 @@ class InsertStatement(
                 ],
                 sql_template="(" + single_values_template + ")",
             )
-            for values_record in self._values_to_insert
+            for values_record in all_values_to_insert
         ]
 
         return QueryString(
@@ -236,17 +278,10 @@ class InsertStatement(
         self: Self,
         raw_query_result: list[dict[str, Any]] | None,
     ) -> ReturnResultType:
-        if not self._returning_field:
+        if not self._returning_field or not raw_query_result:
             return None  # type: ignore[return-value]
-        if not raw_query_result:
-            return None  # type: ignore[return-value]
-
-        if self._returning_single:
-            return raw_query_result[0][  # type: ignore[no-any-return]
-                self._returning_field.field_name
-            ]
 
         return [  # type: ignore[return-value]
-            db_record[self._returning_field.field_name]
+            db_record[self._returning_field._original_field_name]
             for db_record in raw_query_result
         ]
