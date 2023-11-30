@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -13,7 +13,8 @@ if TYPE_CHECKING:
 
 def test_insert_stmt_init_method() -> None:
     """Test `InsertStatement` `__init__` method."""
-    values_to_insert = ([1000],)
+    some_id: Final = 1000
+    values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
@@ -28,7 +29,8 @@ def test_insert_stmt_init_method() -> None:
 
 def test_insert_stmt_returning_method() -> None:
     """Test `InsertStatement` `returning` method."""
-    values_to_insert = ([1000],)
+    some_id: Final = 1000
+    values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
@@ -45,7 +47,8 @@ async def test_insert_stmt_await_method(
     test_db_transaction: PsycopgTransaction,
 ) -> None:
     """Test `InsertStatement` `__await__` method."""
-    values_to_insert = ([1000],)
+    some_id: Final = 1000
+    values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
@@ -65,18 +68,21 @@ async def test_insert_stmt_await_method(
 
     assert len(db_results) == 1
 
-    assert db_results[0]["some_id"] == 1000
-    assert db_results[0]["some_name"] == "Qaspen"
-    assert db_results[0]["some_number"] == 100
+    expected_some_name: Final = "Qaspen"
+    expected_some_number: Final = 100
+
+    assert db_results[0]["some_id"] == some_id
+    assert db_results[0]["some_name"] == expected_some_name
+    assert db_results[0]["some_number"] == expected_some_number
 
     istmt2 = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
-        values_to_insert=([1000],),
+        values_to_insert=([some_id],),
     ).returning(TableTest.some_id)
 
     result = await istmt2
-    assert result[0] == 1000
+    assert result[0] == some_id
 
 
 @pytest.mark.anyio()
@@ -86,7 +92,8 @@ async def test_insert_stmt_execute_method(
     test_db_transaction: PsycopgTransaction,
 ) -> None:
     """Test `InsertStatement` `execute` method."""
-    values_to_insert = ([1000],)
+    some_id: Final = 1000
+    values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
@@ -104,18 +111,21 @@ async def test_insert_stmt_execute_method(
 
     assert len(db_results) == 1
 
-    assert db_results[0]["some_id"] == 1000
-    assert db_results[0]["some_name"] == "Qaspen"
-    assert db_results[0]["some_number"] == 100
+    expected_some_name: Final = "Qaspen"
+    expected_some_number: Final = 100
+
+    assert db_results[0]["some_id"] == some_id
+    assert db_results[0]["some_name"] == expected_some_name
+    assert db_results[0]["some_number"] == expected_some_number
 
     istmt2 = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
-        values_to_insert=([1000],),
+        values_to_insert=([some_id],),
     ).returning(TableTest.some_id)
 
     result = await istmt2.execute(engine=test_engine)
-    assert result[0] == 1000
+    assert result[0] == some_id
 
 
 @pytest.mark.anyio()
@@ -124,7 +134,8 @@ async def test_insert_stmt_transaction_execute_method(
     test_db_transaction: PsycopgTransaction,
 ) -> None:
     """Test `InsertStatement` `transaction_execute` method."""
-    values_to_insert = ([1000],)
+    some_id: Final = 1000
+    values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
@@ -143,20 +154,23 @@ async def test_insert_stmt_transaction_execute_method(
 
     assert len(db_results) == 1
 
-    assert db_results[0]["some_id"] == 1000
-    assert db_results[0]["some_name"] == "Qaspen"
-    assert db_results[0]["some_number"] == 100
+    expected_some_name: Final = "Qaspen"
+    expected_some_number: Final = 100
+
+    assert db_results[0]["some_id"] == some_id
+    assert db_results[0]["some_name"] == expected_some_name
+    assert db_results[0]["some_number"] == expected_some_number
 
     istmt2 = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[TableTest.some_id],
-        values_to_insert=([1000],),
+        values_to_insert=([some_id],),
     ).returning(TableTest.some_id)
 
     result = await istmt2.transaction_execute(
         transaction=test_db_transaction,
     )
-    assert result[0] == 1000
+    assert result[0] == some_id
 
 
 @pytest.mark.anyio()
@@ -168,7 +182,10 @@ async def test_insert_stmt_all_fields(
 
     Specify all fields.
     """
-    values_to_insert = ([999, "qaspen_wow", 10],)
+    some_id: Final = 999
+    some_name: Final = "qaspen_wow"
+    some_number: Final = 10
+    values_to_insert = ([some_id, some_name, some_number],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
         fields_to_insert=[
@@ -190,6 +207,6 @@ async def test_insert_stmt_all_fields(
 
     assert len(db_results) == 1
 
-    assert db_results[0]["some_id"] == 999
-    assert db_results[0]["some_name"] == "qaspen_wow"
-    assert db_results[0]["some_number"] == 10
+    assert db_results[0]["some_id"] == some_id
+    assert db_results[0]["some_name"] == some_name
+    assert db_results[0]["some_number"] == some_number
