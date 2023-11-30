@@ -40,6 +40,25 @@ def test_base_table_select() -> None:
     )
 
 
+def test_base_table_insert() -> None:
+    """Test `insert` method."""
+    insert_stmt = InheritanceBetaTable.insert(
+        fields=[
+            InheritanceBetaTable.field1,
+            InheritanceBetaTable.field2,
+        ],
+        values=(
+            ["Qaspen", "Cool"],
+            ["Python", "Nice"],
+        ),
+    )
+
+    assert (
+        insert_stmt.querystring().build()
+        == "INSERT INTO btable (field1, field2) VALUES ('Qaspen', 'Cool'), ('Python', 'Nice') "  # noqa: E501
+    )
+
+
 def test_base_table_all_fields() -> None:
     """Test `all_fields` method."""
 

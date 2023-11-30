@@ -84,15 +84,22 @@ class MetaTable:
 
     def __init__(self: Self, **fields_values: Any) -> None:
         for table_field in self._table_meta.table_fields.values():
+            new_field = copy.deepcopy(table_field)
             setattr(
                 self,
                 table_field._original_field_name,
-                copy.deepcopy(table_field),
+                new_field,
             )
+
+            self._table_meta.table_fields[
+                table_field._original_field_name
+            ] = new_field
+
             new_field_value: Any = fields_values.get(
                 table_field._original_field_name,
                 EMPTY_FIELD_VALUE,
             )
+
             setattr(
                 self,
                 table_field._original_field_name,

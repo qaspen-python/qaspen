@@ -5,6 +5,7 @@ import inspect
 import typing
 
 from qaspen.fields.base import Field
+from qaspen.statements.insert_statement import InsertStatement
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
 
@@ -41,6 +42,60 @@ class BaseTable(MetaTable, abstract=True):
             from_table=cls,
         )
         return select_statement
+
+    @classmethod
+    def insert(
+        cls: type[T_],
+        fields: list[Field[typing.Any]],
+        values: tuple[list[typing.Any], ...],
+    ) -> InsertStatement[T_, None]:
+        """Create `InsertStatement`.
+
+        This method copies SQL syntax.
+
+        Parameter `fields` is for fields that
+        you specify when you write INSERT query.
+
+        `INSERT INTO qaspen (<there is `fields`>)`.
+
+        Parameter `values` is for actual data that you
+        want to insert into the table.
+
+        `!IMPORTANT.`
+        You shouldn't specify any value for fields with
+        any default value.
+
+        Example:
+        -------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            nickname: VarCharField = VarCharField()
+
+
+        fields_to_insert = [
+            Buns.name,
+            Buns.nickname,
+        ]
+        values_to_insert = (
+            ["Qaspen", "Cool"],
+            ["Python", "Awesome"],
+            ["Try", "Rust"],
+        )
+        insert_statement = (
+            Buns
+            .insert(
+                fields=fields_to_insert,
+                values=values_to_insert,
+            )
+        )
+        ```
+        """
+        return InsertStatement[T_, None](
+            from_table=cls,
+            fields_to_insert=fields,
+            values_to_insert=values,
+        )
 
     @classmethod
     def all_fields(cls: type[T_]) -> list[Field[FieldType]]:

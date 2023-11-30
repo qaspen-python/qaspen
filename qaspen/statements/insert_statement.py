@@ -36,7 +36,7 @@ class InsertStatement(
         self: Self,
         from_table: type[FromTable],
         fields_to_insert: list[Field[Any]],
-        values_to_insert: tuple[list[Any]],
+        values_to_insert: tuple[list[Any], ...],
     ) -> None:
         self._from_table: Final = from_table
 
@@ -185,8 +185,8 @@ class InsertStatement(
 
     def _prepare_insert_values(
         self: Self,
-        values_to_insert: tuple[list[Any]],
-    ) -> tuple[list[Any]]:
+        values_to_insert: tuple[list[Any], ...],
+    ) -> tuple[list[Any], ...]:
         """Prepare INSERT values.
 
         We need to process `values_to_insert` and

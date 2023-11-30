@@ -324,6 +324,8 @@ class Field(BaseField[FieldType]):
             )
             raise FieldDeclarationError(err_msg)
 
+        self.is_null: Final = is_null
+
         self._validate_default_value(
             default_value=default,
         )
@@ -369,7 +371,7 @@ class Field(BaseField[FieldType]):
         value: FieldType | EmptyFieldValue | None,
     ) -> None:
         field: Field[FieldType]
-        if isinstance(value, EmptyFieldValue) or value is None:
+        if isinstance(value, EmptyFieldValue):
             field = instance.__dict__[self._original_field_name]
             field._field_data.field_value = value
             return
@@ -913,7 +915,7 @@ class Field(BaseField[FieldType]):
 
         :raises FieldValueValidationError: if the `max_length` is exceeded.
         """
-        if field_value is None:
+        if not self.is_null and field_value is None:
             return
 
         if not isinstance(field_value, self._set_available_types):
