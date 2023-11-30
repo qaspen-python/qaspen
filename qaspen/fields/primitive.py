@@ -37,7 +37,7 @@ class BaseIntegerField(Field[Union[int, float]]):
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: int | None = None,
+        default: int | Callable[[], int] | None = None,
         db_field_name: str | None = None,
         maximum: float | None = None,
         minimum: float | None = None,
@@ -145,7 +145,7 @@ class NumericField(BaseIntegerField):
         precision: int | None = None,
         scale: int | None = None,
         is_null: bool = False,
-        default: int | None = None,
+        default: int | Callable[[], int] | None = None,
         db_field_name: str | None = None,
         maximum: float | None = None,
         minimum: float | None = None,
@@ -206,7 +206,7 @@ class RealField(Field[Union[str, int, float]]):
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: int | str | None = None,
+        default: int | str | Callable[[], str | int] | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(  # pragma: no cover
@@ -235,7 +235,7 @@ class DoublePrecisionField(Field[Union[int, float, str]]):
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: int | str | None = None,
+        default: int | str | Callable[[], str | int] | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(  # pragma: no cover
@@ -463,7 +463,7 @@ class VarCharField(BaseStringField):
         *args: Any,
         max_length: int = 255,
         is_null: bool = False,
-        default: str | None = None,
+        default: str | Callable[[], str] | None = None,
         db_field_name: str | None = None,
     ) -> None:
         self._max_length: int = max_length
@@ -518,7 +518,7 @@ class TextField(BaseStringField):
         self: Self,
         *args: Any,
         is_null: bool = False,
-        default: str | None = None,
+        default: str | Callable[[], str] | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(
@@ -546,7 +546,7 @@ class CharField(Field[str]):
         self: Self,
         *pos_arguments: Any,
         is_null: bool = False,
-        default: str | None = None,
+        default: str | Callable[[], str] | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(  # pragma: no cover
