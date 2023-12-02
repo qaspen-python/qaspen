@@ -225,9 +225,11 @@ def test_default_value_validation_success() -> None:
     default types to ForTestField.
     """
     field_with_str = ForTestField(default="test_string")
-    assert field_with_str._default == "'test_string'"
+    assert field_with_str._default == "test_string"
+    assert field_with_str._prepared_default == "'test_string'"
     field_with_float = ForTestField(default=12.0)
-    assert field_with_float._default == "12.0"
+    assert field_with_float._default == 12.0  # noqa: PLR2004
+    assert field_with_float._prepared_default == "12.0"
 
     field_with_callable = ForTestField(default=calculate_default_field_value)
     assert not field_with_callable._default
@@ -247,8 +249,8 @@ def test_default_value_validation_success() -> None:
     [
         (True, None, "wow_name", None, None),
         (False, None, "wow_name", None, None),
-        (False, "string", "wow_name", "'string'", None),
-        (False, 12.0, "wow_name", "12.0", None),
+        (False, "string", "wow_name", "string", None),
+        (False, 12.0, "wow_name", 12.0, None),
         (
             False,
             calculate_default_field_value,

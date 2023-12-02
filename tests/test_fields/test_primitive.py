@@ -861,7 +861,7 @@ def test_date_field_init_method() -> None:
     with pytest.raises(expected_exception=FieldDeclarationError):
         DateField(
             default=datetime.now().date(),  # noqa: DTZ005
-            database_default=True,
+            database_default="CURRENT_DATE",
         )
 
 
@@ -874,7 +874,7 @@ def test_date_field_field_default_method() -> None:
     field_without_database_default = DateField()
     assert field_without_database_default._field_default == ""
 
-    field_with_database_default = DateField(database_default=True)
+    field_with_database_default = DateField(database_default="CURRENT_DATE")
     assert field_with_database_default._field_default == "DEFAULT CURRENT_DATE"
 
 
@@ -887,7 +887,7 @@ def test_timestamp_field_init_method() -> None:
     with pytest.raises(expected_exception=FieldDeclarationError):
         TimestampField(
             default=datetime.now(),  # noqa: DTZ005
-            database_default=True,
+            database_default="CURRENT_DATE",
         )
 
 

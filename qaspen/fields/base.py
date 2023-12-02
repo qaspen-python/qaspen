@@ -74,6 +74,7 @@ class FieldData(Generic[FieldType]):
     is_null: bool = False
     field_value: FieldType | EmptyFieldValue | None = EMPTY_FIELD_VALUE
     default: Any | None = None
+    prepared_default: str | None = None
     callable_default: Callable[[], FieldType] | None = None
     database_default: str | None = None
     prefix: str = ""
@@ -230,13 +231,22 @@ class BaseField(Generic[FieldType], abc.ABC):
     def _default(self: Self) -> Any | None:
         """Return default value of the field.
 
+        ### Return
+        default value.
+        """
+        return self._field_data.default
+
+    @property
+    def _prepared_default(self: Self) -> Any | None:
+        """Return default value of the field.
+
         This default is already converted into SQL string.
         Or None.
 
         ### Return
         default value.
         """
-        return self._field_data.default
+        return self._field_data.prepared_default
 
     @property
     def _callable_default(
@@ -339,36 +349,36 @@ class Field(BaseField[FieldType]):
             )
             raise FieldDeclarationError(err_msg)
 
-        self.python_is_null = is_null
         self.is_null: Final = is_null
+        self.default = default
+        self.database_default = database_default
+
+        self.prepared_default: Any | None = None
+        self.callable_default_value: CallableDefaultType[
+            FieldType
+        ] | None = None
+        self.not_callable_default: FieldType | None = None
+        if callable(default):
+            self.callable_default_value = default
+        elif default is not None:
+            self.not_callable_default = default
+            self.prepared_default = self._prepare_default_value(
+                default_value=default,
+            )
+
+        self.python_is_null = is_null
 
         self._validate_default_value(
             default_value=default,
         )
 
-        if database_default:
-            self._field_data: FieldData[FieldType] = FieldData(
-                field_name=db_field_name or "",
-                is_null=is_null,
-                database_default=database_default,
-            )
-            return
-
-        default_value: Any | None = None
-        callable_default_value: CallableDefaultType[FieldType] | None = None
-
-        if callable(default):
-            callable_default_value = default
-        elif default is not None:
-            default_value = default_value = self._prepare_default_value(
-                default_value=default,
-            )
-
-        self._field_data = FieldData(
+        self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name or "",
             is_null=is_null,
-            default=default_value,
-            callable_default=callable_default_value,
+            default=self.not_callable_default,
+            prepared_default=self.prepared_default,
+            callable_default=self.callable_default_value,
+            database_default=database_default,
         )
 
     def __get__(
@@ -395,6 +405,17 @@ class Field(BaseField[FieldType]):
         value: FieldType | EmptyFieldValue | None,
     ) -> None:
         field: Field[FieldType]
+        if value is None:
+            if self.not_callable_default:
+                field = instance.__dict__[self._original_field_name]
+                field._field_data.field_value = self.not_callable_default
+                return
+
+            if self.callable_default_value:
+                field = instance.__dict__[self._original_field_name]
+                field._field_data.field_value = self.callable_default_value()
+                return
+
         if isinstance(value, EmptyFieldValue):
             field = instance.__dict__[self._original_field_name]
             field._field_data.field_value = value

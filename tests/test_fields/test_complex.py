@@ -93,7 +93,7 @@ def test_json_field_default_value(
             field(default=raw_default_value)
     else:
         created_field = field(default=raw_default_value)
-        assert created_field._default == prepared_default_value
+        assert created_field._prepared_default == prepared_default_value
 
 
 @pytest.mark.parametrize(
@@ -139,7 +139,7 @@ def test_array_field_prepare_default_value_method(
         base_type=VarChar,
         default=raw_default_value,
     )
-    assert created_field._default == prepared_default_value
+    assert created_field._prepared_default == prepared_default_value
 
 
 def test_array_field_field_type_method() -> None:

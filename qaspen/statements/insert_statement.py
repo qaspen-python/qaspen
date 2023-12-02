@@ -245,7 +245,7 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
             for field_with_default in self._not_passed_fields_with_default:
                 if field_with_default._default:
                     list_value.append(
-                        field_with_default._default,
+                        field_with_default._prepared_default,
                     )
                 elif field_with_default._callable_default:
                     list_value.append(
@@ -324,7 +324,7 @@ class InsertObjectsStatement(
         insert_objects: Sequence[FromTable],
     ) -> None:
         super().__init__(from_table=from_table)
-        self.insert_objects: Final = insert_objects
+        self._insert_objects: Final = insert_objects
 
         self._returning_field: Field[Any] | None = None
 
@@ -332,7 +332,7 @@ class InsertObjectsStatement(
         """Build querystring for INSERT statement."""
         objects_insert_querystrings: list[FullStatementQueryString] = [
             self._build_object_querystring(table_object)
-            for table_object in self.insert_objects
+            for table_object in self._insert_objects
         ]
 
         final_querystring: QueryString = functools.reduce(
@@ -358,20 +358,24 @@ class InsertObjectsStatement(
             table_object,
         )
 
-        str_insert_fields: Final = ", ".join(
-            [field._original_field_name for field in fields_to_insert],
+        insert_fields_qs = QueryString(
+            *[field._original_field_name for field in fields_to_insert],
+            sql_template="("
+            + ", ".join(["{}" for _ in fields_to_insert])
+            + ")",
         )
 
-        values_to_insert = ", ".join(
-            [
+        values_to_insert_qs = QueryString(
+            *[
                 transform_value_to_sql(field_value)
                 for field_value in self._prepare_values_to_insert(
                     fields_to_insert,
                 )
             ],
+            sql_template="("
+            + ", ".join(["{}" for _ in fields_to_insert])
+            + ")",
         )
-
-        values_to_insert = "(" + values_to_insert + ")"
 
         returning_qs = (
             QueryString(
@@ -384,10 +388,10 @@ class InsertObjectsStatement(
 
         return FullStatementQueryString(
             table_object.original_table_name(),
-            str_insert_fields,
-            values_to_insert,
+            insert_fields_qs,
+            values_to_insert_qs,
             returning_qs,
-            sql_template="INSERT INTO {}({}) VALUES {} {}",
+            sql_template="INSERT INTO {}{} VALUES {} {}",
         )
 
     def _retrieve_object_fields_to_insert(
@@ -401,7 +405,7 @@ class InsertObjectsStatement(
         """
         result_fields: list[Field[Any]] = []
         field: Field[Any]
-        for field in table_object.all_fields():
+        for field in table_object._table_meta.table_fields.values():
             available_condition: bool = any(
                 (
                     field._field_data.field_value,
@@ -434,13 +438,5 @@ class InsertObjectsStatement(
             if field_value_condition:
                 final_values.append(
                     field._field_data.field_value,
-                )
-            elif field._field_data.default:
-                final_values.append(
-                    field._field_data.default,
-                )
-            elif field._field_data.callable_default:
-                final_values.append(
-                    field._field_data.callable_default(),
                 )
         return final_values

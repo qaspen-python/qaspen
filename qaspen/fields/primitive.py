@@ -588,15 +588,13 @@ class CharField(Field[str]):
 class BaseDatetimeField(Field[FieldType]):
     """Base Field for all Date/Time fields."""
 
-    _database_default: str = "CURRENT_DATE"
-
     def __init__(
         self: Self,
         *args: Any,
         is_null: bool = False,
         db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
-        database_default: bool = False,
+        database_default: str | None = None,
     ) -> None:
         if default and database_default:
             declaration_err_msg: Final = (
@@ -610,9 +608,8 @@ class BaseDatetimeField(Field[FieldType]):
             is_null=is_null,
             default=default,
             db_field_name=db_field_name,
+            database_default=database_default,
         )
-
-        self.database_default: Final = database_default
 
     @property
     def _field_default(self: Self) -> str:
@@ -622,7 +619,7 @@ class BaseDatetimeField(Field[FieldType]):
         """
         if not self.database_default:
             return super()._field_default
-        return f"DEFAULT {self._database_default}"
+        return f"DEFAULT {self.database_default}"
 
 
 class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
@@ -634,7 +631,7 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
         is_null: bool = False,
         db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
-        database_default: bool = False,
+        database_default: str | None = None,
         with_timezone: bool = False,
     ) -> None:
         if default and database_default:
@@ -682,7 +679,7 @@ class DateField(BaseDatetimeField[datetime.date]):
         is_null: bool = False,
         db_field_name: str | None = None,
         default: datetime.date | Callable[[], datetime.date] | None = None,
-        database_default: bool = False,
+        database_default: str | None = None,
     ) -> None:
         super().__init__(
             *args,
@@ -695,8 +692,6 @@ class DateField(BaseDatetimeField[datetime.date]):
 
 class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
     """PostgreSQL type for `datetime.time` python type."""
-
-    _database_default: str = "CURRENT_TIME"
 
     _available_comparison_types: tuple[
         type,
@@ -716,7 +711,7 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
         is_null: bool = False,
         db_field_name: str | None = None,
         default: datetime.time | Callable[[], datetime.time] | None = None,
-        database_default: bool = False,
+        database_default: str | None = None,
         with_timezone: bool = False,
     ) -> None:
         super().__init__(
@@ -731,8 +726,6 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
 
 class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     """PostgreSQL type for `datetime.datetime` python type."""
-
-    _database_default = "CURRENT_TIMESTAMP"
 
     _available_comparison_types: tuple[
         type,
@@ -754,7 +747,7 @@ class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
         default: (
             datetime.datetime | Callable[[], datetime.datetime] | None
         ) = None,
-        database_default: bool = False,
+        database_default: str | None = None,
         with_timezone: bool = False,
     ) -> None:
         super().__init__(

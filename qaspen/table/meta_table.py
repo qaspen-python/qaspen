@@ -86,17 +86,16 @@ class MetaTable:
 
         This method must be called only from user side.
         """
+        self._table_meta = copy.deepcopy(self._table_meta)
         for table_field in self._table_meta.table_fields.values():
-            new_field = copy.deepcopy(table_field)
+            self._table_meta.table_fields[
+                table_field._original_field_name
+            ] = table_field
             setattr(
                 self,
                 table_field._original_field_name,
-                new_field,
+                table_field,
             )
-
-            self._table_meta.table_fields[
-                table_field._original_field_name
-            ] = new_field
 
             new_field_value: Any = fields_values.get(
                 table_field._original_field_name,
