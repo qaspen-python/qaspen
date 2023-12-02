@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Final
 
 from qaspen.fields.primitive import VarCharField
-from qaspen.qaspen_types import EMPTY_FIELD_VALUE
 from qaspen.table.meta_table import MetaTable
 from tests.test_table.conftest import InheritanceMetaTable
 
@@ -58,7 +57,7 @@ def test_meta_table_init_method() -> None:
     )
 
     assert inited_table.field1 == "test"  # type: ignore[arg-type]
-    assert inited_table.field2 == EMPTY_FIELD_VALUE  # type: ignore[arg-type]
+    assert inited_table.field2 is None  # type: ignore[arg-type]
 
 
 def test_meta_table_getattribute_method() -> None:

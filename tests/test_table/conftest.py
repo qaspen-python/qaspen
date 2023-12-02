@@ -6,12 +6,12 @@ from qaspen.table.meta_table import MetaTable
 class InheritanceMetaTable(MetaTable):
     """Table for tests."""
 
-    field1: VarCharField = VarCharField()
-    field2: VarCharField = VarCharField()
+    field1: VarCharField = VarCharField(is_null=True)
+    field2: VarCharField = VarCharField(is_null=True)
 
 
 class InheritanceBetaTable(BaseTable, table_name="btable"):
     """Table for tests."""
 
-    field1: VarCharField = VarCharField()
-    field2: VarCharField = VarCharField()
+    field1: VarCharField = VarCharField(is_null=True)
+    field2: VarCharField = VarCharField(is_null=True)

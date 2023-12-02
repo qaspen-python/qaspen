@@ -290,6 +290,8 @@ class SerialBaseField(BaseIntegerField):
             minimum=minimum,
         )
 
+        self.python_is_null = True
+
         self.next_val_seq_name: str | None = next_val_seq_name
 
 

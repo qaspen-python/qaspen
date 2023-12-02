@@ -80,7 +80,7 @@ from qaspen.sql_type.primitive_types import VarChar
 def test_json_field_default_value(
     field: type[JsonBase[Any]],
     raw_default_value: Any,
-    prepared_default_value: str,
+    prepared_default_value: Any,
     expected_exception: type[Exception] | None,
 ) -> None:
     """Test `default` and `_prepare_default_value` method for json fields.

@@ -85,9 +85,9 @@ def for_test_table() -> type[_ForTestTable]:
     class ForTestTable(_ForTestTable):
         """Class for test purposes."""
 
-        name: ForTestField = ForTestField()
+        name: ForTestField = ForTestField(is_null=True)
         count: ForTestFieldInt = ForTestFieldInt(
-            default=100,
+            is_null=True,
         )
 
     return ForTestTable

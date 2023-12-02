@@ -5,7 +5,6 @@ import dataclasses
 from typing import TYPE_CHECKING, Any, ClassVar, Final
 
 from qaspen.fields.base import Field
-from qaspen.qaspen_types import EMPTY_FIELD_VALUE
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -83,6 +82,10 @@ class MetaTable:
         super().__init_subclass__(**kwargs)
 
     def __init__(self: Self, **fields_values: Any) -> None:
+        """Initialize Table instance.
+
+        This method must be called only from user side.
+        """
         for table_field in self._table_meta.table_fields.values():
             new_field = copy.deepcopy(table_field)
             setattr(
@@ -97,7 +100,7 @@ class MetaTable:
 
             new_field_value: Any = fields_values.get(
                 table_field._original_field_name,
-                EMPTY_FIELD_VALUE,
+                None,
             )
 
             setattr(

@@ -31,6 +31,7 @@ from qaspen.fields.primitive import (
     IntervalField,
     NumericField,
     RealField,
+    SerialBaseField,
     SerialField,
     SmallIntField,
     SmallSerialField,
@@ -403,6 +404,10 @@ def test_primitive_field_available_comparison_types_operator(
         (SmallSerialField, 12),
         (SmallSerialField, 12.0),
         (SmallSerialField, None),
+        # ------ SerialField ------
+        (SerialField, 12),
+        (SerialField, 12.0),
+        (SerialField, None),
         # ------ BigSerialField ------
         (BigSerialField, 12),
         (BigSerialField, 12.0),
@@ -438,9 +443,15 @@ def test_primitive_field_set_available_types_success(
 
     Check that set value types validate correctly.
     """
+    if issubclass(field, SerialBaseField):
 
-    class TestTable(BaseTable):
-        qaspen = field()
+        class TestTable(BaseTable):
+            qaspen = field()
+
+    else:
+
+        class TestTable(BaseTable):  # type: ignore[no-redef]
+            qaspen = field(is_null=True)
 
     table = TestTable()
 
@@ -486,9 +497,15 @@ def test_primitive_field_set_available_types_failure(
     incorrect_set_value: Any,
 ) -> None:
     """Test `_set_available_types` with incorrect types."""
+    if issubclass(field, SerialBaseField):
 
-    class TestTable(BaseTable):
-        qaspen = field()
+        class TestTable(BaseTable):
+            qaspen = field()
+
+    else:
+
+        class TestTable(BaseTable):  # type: ignore[no-redef]
+            qaspen = field(is_null=True)
 
     table = TestTable()
     with pytest.raises(expected_exception=FieldValueValidationError):

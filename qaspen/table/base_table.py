@@ -5,7 +5,10 @@ import inspect
 import typing
 
 from qaspen.fields.base import Field
-from qaspen.statements.insert_statement import InsertStatement
+from qaspen.statements.insert_statement import (
+    InsertObjectsStatement,
+    InsertStatement,
+)
 from qaspen.statements.select_statement import SelectStatement
 from qaspen.table.meta_table import MetaTable
 
@@ -95,6 +98,38 @@ class BaseTable(MetaTable, abstract=True):
             from_table=cls,
             fields_to_insert=fields,
             values_to_insert=values,
+        )
+
+    @classmethod
+    def insert_objects(
+        cls: type[T_],
+        *insert_objects: T_,
+    ) -> InsertObjectsStatement[T_, None]:
+        """Create `InsertObjectsStatement`.
+
+        This method allows create new records in database
+        based on table objects.
+
+        Example:
+        -------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            nickname: VarCharField = VarCharField()
+
+
+        insert_statement = (
+            Buns
+            .insert_objects(
+                Buns(name="Qaspen", nickname="ORM"),
+                Buns(name="Python", nickname="Cool"),
+            )
+        )
+        ```
+        """
+        return InsertObjectsStatement[T_, None](
+            insert_objects=insert_objects,
+            from_table=cls,
         )
 
     @classmethod
