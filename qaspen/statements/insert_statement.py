@@ -380,7 +380,7 @@ class InsertObjectsStatement(
         returning_qs = (
             QueryString(
                 self._returning_field._original_field_name,
-                sql_template="RETURNING {}",
+                sql_template=" RETURNING {}",
             )
             if self._returning_field
             else QueryString.empty()
@@ -391,7 +391,7 @@ class InsertObjectsStatement(
             insert_fields_qs,
             values_to_insert_qs,
             returning_qs,
-            sql_template="INSERT INTO {}{} VALUES {} {}",
+            sql_template="INSERT INTO {}{} VALUES {}{}",
         )
 
     def _retrieve_object_fields_to_insert(

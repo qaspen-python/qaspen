@@ -22,9 +22,11 @@ class TableTest(BaseTable, table_name="table_test"):
     some_id: IntegerField = IntegerField()
     some_name: VarCharField = VarCharField(
         default="Qaspen",
+        is_null=False,
     )
     some_number: IntegerField = IntegerField(
         default=default_some_number,
+        is_null=False,
     )
 
 

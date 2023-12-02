@@ -314,7 +314,7 @@ class Field(BaseField[FieldType]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         default: FieldDefaultType[FieldType] = None,
         database_default: str | None = None,
         db_field_name: str | None = None,
@@ -342,14 +342,7 @@ class Field(BaseField[FieldType]):
             args_err_msg: Final = "Use only keyword arguments."
             raise FieldDeclarationError(args_err_msg)
 
-        if is_null and default:
-            err_msg: Final = (
-                "It's not possible to specify is_null and default. "
-                "Specify either is_null or default"
-            )
-            raise FieldDeclarationError(err_msg)
-
-        self.is_null: Final = is_null
+        self.is_null: Final = is_null if not default else False
         self.default = default
         self.database_default = database_default
 
@@ -366,11 +359,21 @@ class Field(BaseField[FieldType]):
                 default_value=default,
             )
 
-        self.python_is_null = is_null
+        # python_is_null is a special flag for validations
+        # and __set__ method.
+        # In general, if there is is_null=False, we can't
+        # set None to the field.
+        # But for example in Serial fields, is_null is always False but
+        # we don't need to always specify value to them.
+        # Because value in this field will be calculated
+        # on database side.
+        if not hasattr(self, "python_is_null"):
+            self.python_is_null = is_null
 
-        self._validate_default_value(
-            default_value=default,
-        )
+        if default:
+            self._validate_default_value(
+                default_value=default,
+            )
 
         self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name or "",
@@ -983,13 +986,6 @@ class Field(BaseField[FieldType]):
     ) -> None:
         if default_value is None or types.FunctionType == type(default_value):
             return
-
-        if not self.python_is_null and default_value is None:
-            null_err_msg = (
-                f"Default value of the field {self.__class__.__name__} "
-                "can't be `None` because is_null=False"
-            )
-            raise FieldValueValidationError(null_err_msg)
 
         try:
             self._validate_field_value(

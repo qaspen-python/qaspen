@@ -36,7 +36,7 @@ class BaseIntegerField(Field[Union[int, float]]):
     def __init__(
         self: Self,
         *pos_arguments: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         default: int | Callable[[], int] | None = None,
         db_field_name: str | None = None,
         maximum: float | None = None,
@@ -144,7 +144,7 @@ class NumericField(BaseIntegerField):
         *pos_arguments: Any,
         precision: int | None = None,
         scale: int | None = None,
-        is_null: bool = False,
+        is_null: bool = True,
         default: int | Callable[[], int] | None = None,
         db_field_name: str | None = None,
         maximum: float | None = None,
@@ -205,7 +205,7 @@ class RealField(Field[Union[str, int, float]]):
     def __init__(
         self: Self,
         *pos_arguments: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         default: int | str | Callable[[], str | int] | None = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -234,7 +234,7 @@ class DoublePrecisionField(Field[Union[int, float, str]]):
     def __init__(
         self: Self,
         *pos_arguments: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         default: int | str | Callable[[], str | int] | None = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -281,6 +281,8 @@ class SerialBaseField(BaseIntegerField):
         :param minimum: min number for the field at python level.
         :param next_val_seq_name: name for the `nextval` sequence.
         """
+        self.python_is_null = True
+
         super().__init__(
             *pos_arguments,
             is_null=False,
@@ -289,8 +291,6 @@ class SerialBaseField(BaseIntegerField):
             maximum=maximum,
             minimum=minimum,
         )
-
-        self.python_is_null = True
 
         self.next_val_seq_name: str | None = next_val_seq_name
 
@@ -464,7 +464,7 @@ class VarCharField(BaseStringField):
         self: Self,
         *args: Any,
         max_length: int = 255,
-        is_null: bool = False,
+        is_null: bool = True,
         default: str | Callable[[], str] | None = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -519,7 +519,7 @@ class TextField(BaseStringField):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         default: str | Callable[[], str] | None = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -547,7 +547,7 @@ class CharField(Field[str]):
     def __init__(
         self: Self,
         *pos_arguments: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         default: str | Callable[[], str] | None = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -591,7 +591,7 @@ class BaseDatetimeField(Field[FieldType]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
         database_default: str | None = None,
@@ -628,7 +628,7 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
         database_default: str | None = None,
@@ -676,7 +676,7 @@ class DateField(BaseDatetimeField[datetime.date]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: datetime.date | Callable[[], datetime.date] | None = None,
         database_default: str | None = None,
@@ -708,7 +708,7 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: datetime.time | Callable[[], datetime.time] | None = None,
         database_default: str | None = None,
@@ -742,7 +742,7 @@ class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: (
             datetime.datetime | Callable[[], datetime.datetime] | None

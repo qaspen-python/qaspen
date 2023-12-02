@@ -37,7 +37,7 @@ class ForTestField(Field[Union[str, float]]):
     def __init__(
         self: Self,
         *args: Any,  # noqa: ARG002
-        is_null: bool = False,
+        is_null: bool = True,
         default: str | float | None | Callable[[], str | float] = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -60,7 +60,7 @@ class ForTestFieldInt(Field[int]):
     def __init__(
         self: Self,
         *args: Any,  # noqa: ARG002
-        is_null: bool = False,
+        is_null: bool = True,
         default: int | Callable[[], int] | None = None,
         db_field_name: str | None = None,
     ) -> None:
