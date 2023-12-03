@@ -762,29 +762,20 @@ class SelectStatement(
         )
         return self
 
-    def _prepare_fields(
-        self: Self,
-    ) -> list[Field[Any]]:
-        if self.final_select_fields:
-            return self.final_select_fields
-        final_select_fields: Final[list[Field[Any]]] = []
-
-        fields_to_select: list[Field[Any]] = []
-        fields_to_select.extend(self._prepare_select_fields())
-        fields_to_select.extend(
-            self._join_statement._retrieve_all_join_fields(),
-        )
-
-        for field in fields_to_select:
-            aliased_field = self._field_aliases.add_alias(
-                field=field,
-            )
-            final_select_fields.append(aliased_field)
-
-        self.final_select_fields = final_select_fields
-        return final_select_fields
-
     def _select_from(self: Self) -> QueryString:
+        """Build `QueryString`.
+
+        Firstly, we need to select fields from main table
+        and from joins (if they exist).
+        Then we need to add in select all
+        aggregate functions.
+
+        At the end, if we have alias for the table,
+        we use it in AS operator.
+
+        ### Returns:
+        new `QueryString` for SELECT FROM.
+        """
         to_select_fields: str = ", ".join(
             [field.field_name for field in self._prepare_fields()],
         )
@@ -816,6 +807,40 @@ class SelectStatement(
             self._from_table.schemed_original_table_name(),
             sql_template="SELECT {} FROM {}",
         )
+
+    def _prepare_fields(
+        self: Self,
+    ) -> list[Field[Any]]:
+        """Prepare fields.
+
+        If we've already prepared fields, return them.
+
+        We need to get all fields to select,
+        this is fields from main table and fields from joins.
+
+        After we get all fields, we add alias to them.
+
+        ### Returns:
+        list of aliased fields.
+        """
+        if self.final_select_fields:
+            return self.final_select_fields
+        final_select_fields: Final[list[Field[Any]]] = []
+
+        fields_to_select: list[Field[Any]] = []
+        fields_to_select.extend(self._prepare_select_fields())
+        fields_to_select.extend(
+            self._join_statement._retrieve_all_join_fields(),
+        )
+
+        for field in fields_to_select:
+            aliased_field = self._field_aliases.add_alias(
+                field=field,
+            )
+            final_select_fields.append(aliased_field)
+
+        self.final_select_fields = final_select_fields
+        return final_select_fields
 
     def _prepare_select_fields(
         self: Self,
