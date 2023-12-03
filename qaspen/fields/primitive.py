@@ -38,6 +38,7 @@ class BaseIntegerField(Field[Union[int, float]]):
         *pos_arguments: Any,
         is_null: bool = True,
         default: int | Callable[[], int] | None = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
         maximum: float | None = None,
         minimum: float | None = None,
@@ -50,6 +51,7 @@ class BaseIntegerField(Field[Union[int, float]]):
             is_null=is_null,
             default=default,
             db_field_name=db_field_name,
+            database_default=database_default,
         )
 
     def _validate_field_value(
@@ -146,6 +148,7 @@ class NumericField(BaseIntegerField):
         scale: int | None = None,
         is_null: bool = True,
         default: int | Callable[[], int] | None = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
         maximum: float | None = None,
         minimum: float | None = None,
@@ -161,6 +164,7 @@ class NumericField(BaseIntegerField):
             is_null=is_null,
             default=default,
             db_field_name=db_field_name,
+            database_default=database_default,
             maximum=maximum,
             minimum=minimum,
         )
@@ -207,12 +211,14 @@ class RealField(Field[Union[str, int, float]]):
         *pos_arguments: Any,
         is_null: bool = True,
         default: int | str | Callable[[], str | int] | None = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(  # pragma: no cover
             *pos_arguments,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
@@ -236,12 +242,14 @@ class DoublePrecisionField(Field[Union[int, float, str]]):
         *pos_arguments: Any,
         is_null: bool = True,
         default: int | str | Callable[[], str | int] | None = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(  # pragma: no cover
             *pos_arguments,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
@@ -466,6 +474,7 @@ class VarCharField(BaseStringField):
         max_length: int = 255,
         is_null: bool = True,
         default: str | Callable[[], str] | None = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
         self._max_length: int = max_length
@@ -474,6 +483,7 @@ class VarCharField(BaseStringField):
             *args,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
@@ -521,12 +531,14 @@ class TextField(BaseStringField):
         *args: Any,
         is_null: bool = True,
         default: str | Callable[[], str] | None = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(
             *args,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
@@ -549,12 +561,14 @@ class CharField(Field[str]):
         *pos_arguments: Any,
         is_null: bool = True,
         default: str | Callable[[], str] | None = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
         super().__init__(  # pragma: no cover
             *pos_arguments,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 

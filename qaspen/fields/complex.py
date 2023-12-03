@@ -25,11 +25,13 @@ class JsonBase(Field[FieldType]):
         is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
+        database_default: str | None = None,
     ) -> None:
         super().__init__(
             *args,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
@@ -107,12 +109,14 @@ class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
         *args: Any,
         is_null: bool = True,
         db_field_name: str | None = None,
+        database_default: str | None = None,
         default: FieldDefaultType[dict[Any, Any] | str] = None,
     ) -> None:
         super().__init__(
             *args,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
@@ -140,12 +144,14 @@ class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         *args: Any,
         is_null: bool = True,
         db_field_name: str | None = None,
+        database_default: str | None = None,
         default: FieldDefaultType[dict[Any, Any] | str | bytes] = None,
     ) -> None:
         super().__init__(
             *args,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
@@ -172,12 +178,14 @@ class ArrayField(Field[List[Any]]):
         is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[list[Any]] = None,
+        database_default: str | None = None,
         dimension: int | None = None,
     ) -> None:
         super().__init__(
             *args,
             is_null=is_null,
             default=default,
+            database_default=database_default,
             db_field_name=db_field_name,
         )
 
