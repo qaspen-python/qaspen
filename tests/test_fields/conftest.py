@@ -37,7 +37,7 @@ class ForTestField(Field[Union[str, float]]):
     def __init__(
         self: Self,
         *args: Any,  # noqa: ARG002
-        is_null: bool = False,
+        is_null: bool = True,
         default: str | float | None | Callable[[], str | float] = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -60,7 +60,7 @@ class ForTestFieldInt(Field[int]):
     def __init__(
         self: Self,
         *args: Any,  # noqa: ARG002
-        is_null: bool = False,
+        is_null: bool = True,
         default: int | Callable[[], int] | None = None,
         db_field_name: str | None = None,
     ) -> None:
@@ -85,9 +85,9 @@ def for_test_table() -> type[_ForTestTable]:
     class ForTestTable(_ForTestTable):
         """Class for test purposes."""
 
-        name: ForTestField = ForTestField()
+        name: ForTestField = ForTestField(is_null=True)
         count: ForTestFieldInt = ForTestFieldInt(
-            default=100,
+            is_null=True,
         )
 
     return ForTestTable

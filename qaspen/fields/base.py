@@ -28,6 +28,7 @@ from qaspen.statements.combinable_statements.filter_statement import (
     Filter,
     FilterBetween,
 )
+from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
     from qaspen.base.sql_base import SQLSelectable
@@ -56,6 +57,11 @@ class FieldData(Generic[FieldType]):
     If it is callable, do not use it in the database,
     use it in python and than save in the database.
 
+    `callable_default` - callable default, can be function
+    or class.
+
+    `database_default` - this is default on
+
     `prefix` - prefix for the field in the query.
 
     `alias` - alias of the field.
@@ -67,8 +73,10 @@ class FieldData(Generic[FieldType]):
     from_table: type[BaseTable] = None  # type: ignore[assignment]
     is_null: bool = False
     field_value: FieldType | EmptyFieldValue | None = EMPTY_FIELD_VALUE
-    default: str | None = None
+    default: Any | None = None
+    prepared_default: str | None = None
     callable_default: Callable[[], FieldType] | None = None
+    database_default: str | None = None
     prefix: str = ""
     alias: str = ""
     in_join: bool = False
@@ -220,7 +228,16 @@ class BaseField(Generic[FieldType], abc.ABC):
         return self._field_data.field_name
 
     @property
-    def _default(self: Self) -> str | None:
+    def _default(self: Self) -> Any | None:
+        """Return default value of the field.
+
+        ### Return
+        default value.
+        """
+        return self._field_data.default
+
+    @property
+    def _prepared_default(self: Self) -> Any | None:
         """Return default value of the field.
 
         This default is already converted into SQL string.
@@ -229,7 +246,7 @@ class BaseField(Generic[FieldType], abc.ABC):
         ### Return
         default value.
         """
-        return self._field_data.default
+        return self._field_data.prepared_default
 
     @property
     def _callable_default(
@@ -297,8 +314,9 @@ class Field(BaseField[FieldType]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         default: FieldDefaultType[FieldType] = None,
+        database_default: str | None = None,
         db_field_name: str | None = None,
     ) -> None:
         """Create new Field instance.
@@ -313,38 +331,57 @@ class Field(BaseField[FieldType]):
             Note! This value will be set at the python level.
         - `db_field_name`: name of the field in the database.
         """
+        if default and database_default:
+            default_err_msg = (
+                "It's impossible to specify default and database_default. "
+                "Please specify only one."
+            )
+            raise FieldDeclarationError(default_err_msg)
+
         if args:
             args_err_msg: Final = "Use only keyword arguments."
             raise FieldDeclarationError(args_err_msg)
 
-        if is_null and default:
-            err_msg: Final = (
-                "It's not possible to specify is_null and default. "
-                "Specify either is_null or default"
-            )
-            raise FieldDeclarationError(err_msg)
+        self.is_null: Final = is_null if not default else False
+        self.default = default
+        self.database_default = database_default
 
-        self.is_null: Final = is_null
-
-        self._validate_default_value(
-            default_value=default,
-        )
-
-        default_value: str | None = None
-        callable_default_value: CallableDefaultType[FieldType] | None = None
-
+        self.prepared_default: Any | None = None
+        self.callable_default_value: CallableDefaultType[
+            FieldType
+        ] | None = None
+        self.not_callable_default: FieldType | None = None
         if callable(default):
-            callable_default_value = default
+            self.callable_default_value = default
         elif default is not None:
-            default_value = self._prepare_default_value(
+            self.not_callable_default = default
+            self.prepared_default = self._prepare_default_value(
+                default_value=default,
+            )
+
+        # python_is_null is a special flag for validations
+        # and __set__ method.
+        # In general, if there is is_null=False, we can't
+        # set None to the field.
+        # But for example in Serial fields, is_null is always False but
+        # we don't need to always specify value to them.
+        # Because value in this field will be calculated
+        # on database side.
+        if not hasattr(self, "python_is_null"):
+            self.python_is_null = is_null
+
+        if default:
+            self._validate_default_value(
                 default_value=default,
             )
 
         self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name or "",
             is_null=is_null,
-            default=default_value,
-            callable_default=callable_default_value,
+            default=self.not_callable_default,
+            prepared_default=self.prepared_default,
+            callable_default=self.callable_default_value,
+            database_default=database_default,
         )
 
     def __get__(
@@ -371,6 +408,17 @@ class Field(BaseField[FieldType]):
         value: FieldType | EmptyFieldValue | None,
     ) -> None:
         field: Field[FieldType]
+        if value is None:
+            if self.not_callable_default:
+                field = instance.__dict__[self._original_field_name]
+                field._field_data.field_value = self.not_callable_default
+                return
+
+            if self.callable_default_value:
+                field = instance.__dict__[self._original_field_name]
+                field._field_data.field_value = self.callable_default_value()
+                return
+
         if isinstance(value, EmptyFieldValue):
             field = instance.__dict__[self._original_field_name]
             field._field_data.field_value = value
@@ -915,8 +963,15 @@ class Field(BaseField[FieldType]):
 
         :raises FieldValueValidationError: if the `max_length` is exceeded.
         """
-        if not self.is_null and field_value is None:
+        if self.python_is_null and field_value is None:
             return
+
+        if not self.python_is_null and field_value is None:
+            null_err_msg = (
+                f"Value of the field {self.__class__.__name__} "
+                "can't be `None` because parameter is_null is False"
+            )
+            raise FieldValueValidationError(null_err_msg)
 
         if not isinstance(field_value, self._set_available_types):
             err_msg: Final = (
@@ -956,5 +1011,7 @@ class Field(BaseField[FieldType]):
         :returns: prepared default value.
         """
         return (
-            str(default_value) if default_value is not None else default_value
+            transform_value_to_sql(default_value)
+            if default_value is not None
+            else default_value
         )

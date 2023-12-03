@@ -22,7 +22,7 @@ class JsonBase(Field[FieldType]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
     ) -> None:
@@ -105,7 +105,7 @@ class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[dict[Any, Any] | str] = None,
     ) -> None:
@@ -138,7 +138,7 @@ class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
     def __init__(
         self: Self,
         *args: Any,
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[dict[Any, Any] | str | bytes] = None,
     ) -> None:
@@ -169,7 +169,7 @@ class ArrayField(Field[List[Any]]):
         self: Self,
         *args: Any,
         base_type: type[SQLType],
-        is_null: bool = False,
+        is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[list[Any]] = None,
         dimension: int | None = None,

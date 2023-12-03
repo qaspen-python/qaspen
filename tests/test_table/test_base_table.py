@@ -59,6 +59,21 @@ def test_base_table_insert() -> None:
     )
 
 
+def test_base_table_insert_objects() -> None:
+    """Test `insert_objects` method."""
+    insert_stmt = InheritanceBetaTable.insert_objects(
+        InheritanceBetaTable(
+            field1="test",
+            field2="Wow",
+        ),
+    )
+
+    assert (
+        insert_stmt.querystring().build()
+        == "INSERT INTO btable(field1, field2) VALUES ('test', 'Wow')"
+    )
+
+
 def test_base_table_all_fields() -> None:
     """Test `all_fields` method."""
 

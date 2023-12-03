@@ -26,11 +26,13 @@ from qaspen.fields.operators import (
     NotEqualOperator,
     NotInOperator,
 )
+from qaspen.fields.primitive import VarCharField
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE, EMPTY_VALUE, OperatorTypes
 from qaspen.sql_type.primitive_types import VarChar
 from qaspen.table.base_table import BaseTable
 from tests.test_fields.conftest import (
     ForTestField,
+    ForTestFieldInt,
     _ForTestTable,
     calculate_default_field_value,
 )
@@ -96,19 +98,34 @@ def test_field_field_name_property() -> None:
 
 def test_field_field_null_property() -> None:
     """Test `_field_null` property."""
-    field = Field[str]()
 
-    assert field._field_null == "NOT NULL"
+    class TestTable(BaseTable, table_name="tname"):
+        wow_field = VarCharField()
 
-    second_field = Field[str](is_null=True)
+    assert TestTable.wow_field._field_null == ""
 
-    assert second_field._field_null == ""
+    class TestTable2(BaseTable, table_name="tname"):
+        second_field = VarCharField(
+            is_null=False,
+            default="100",
+        )
+
+    assert TestTable2.second_field._field_null == "NOT NULL"
 
 
-def test_field_field_default_property(for_test_table: _ForTestTable) -> None:
+def test_field_field_default_property() -> None:
     """Test `_field_default` property."""
-    assert not for_test_table.name._field_default
-    assert for_test_table.count._field_default == "DEFAULT 100"
+
+    class ForTestTable(_ForTestTable):
+        """Class for test purposes."""
+
+        name: ForTestField = ForTestField(is_null=True)
+        count: ForTestFieldInt = ForTestFieldInt(
+            default=100,
+        )
+
+    assert not ForTestTable.name._field_default
+    assert ForTestTable.count._field_default == "DEFAULT 100"
 
 
 def test_field_field_type_property() -> None:
@@ -130,12 +147,6 @@ def test_no_args_in_parameters() -> None:
         Field("some_arg_argument", "second_arg_argument")
 
 
-def test_is_null_and_default_params() -> None:
-    """Test that is't impossible to have is_null and default parameter."""
-    with pytest.raises(expected_exception=FieldDeclarationError):
-        Field(is_null=True, default="123")
-
-
 def test_db_field_name_param() -> None:
     """Test that db_field_name sets field name."""
     field_name: Final = "cool_field_name"
@@ -153,6 +164,34 @@ def test_automate_field_name() -> None:
     assert ForTestTable.field_in_table._original_field_name == "field_in_table"
 
 
+def test_default_and_database_default() -> None:
+    """Check that it's impossible to specify default and database_default."""
+    with pytest.raises(expected_exception=FieldDeclarationError):
+
+        class ForTestTable(BaseTable):
+            field_in_table = Field[str](
+                default="123",
+                database_default="100",
+            )
+
+
+def test_create_table_object_with_none() -> None:
+    """Test table creation failure.
+
+    Check if we specify is_null=False and
+    try to create table instance without passing
+    value to the field, creation will fail.
+    """
+
+    class ForTestTable(BaseTable):
+        field_in_table = VarCharField(is_null=False)
+
+    with pytest.raises(expected_exception=FieldValueValidationError):
+        ForTestTable()
+
+    ForTestTable(field_in_table="123")
+
+
 @pytest.mark.parametrize(
     ("set_value", "expected_set_value", "expected_exception"),
     [
@@ -161,7 +200,7 @@ def test_automate_field_name() -> None:
         ("correct_string", "correct_string", None),
         (
             {"not": "correct", "type": 2},
-            EMPTY_FIELD_VALUE,
+            None,
             FieldValueValidationError,
         ),
     ],
@@ -216,8 +255,10 @@ def test_default_value_validation_success() -> None:
     """
     field_with_str = ForTestField(default="test_string")
     assert field_with_str._default == "test_string"
+    assert field_with_str._prepared_default == "'test_string'"
     field_with_float = ForTestField(default=12.0)
-    assert field_with_float._default == "12.0"
+    assert field_with_float._default == 12.0  # noqa: PLR2004
+    assert field_with_float._prepared_default == "12.0"
 
     field_with_callable = ForTestField(default=calculate_default_field_value)
     assert not field_with_callable._default
@@ -238,7 +279,7 @@ def test_default_value_validation_success() -> None:
         (True, None, "wow_name", None, None),
         (False, None, "wow_name", None, None),
         (False, "string", "wow_name", "string", None),
-        (False, 12.0, "wow_name", "12.0", None),
+        (False, 12.0, "wow_name", 12.0, None),
         (
             False,
             calculate_default_field_value,
@@ -1337,36 +1378,6 @@ def test_field_validate_default_value(
         for_test_table.name._validate_default_value(
             default_value=value,
         )
-
-
-@pytest.mark.parametrize(
-    ("value", "excepted_default_value"),
-    [
-        (None, None),
-        ("string", "string"),
-        (12, "12"),
-        ({"not": "correct"}, "{'not': 'correct'}"),
-        (["1", 2, 3], "['1', 2, 3]"),
-    ],
-)
-def test_field_prepare_default_value(
-    value: Any,
-    excepted_default_value: str | None,
-    for_test_table: _ForTestTable,
-) -> None:
-    """Test method `_prepare_default_value`.
-
-    Check that method works correctly.
-
-    ### Parameters:
-    - `test_for_test_table`: table for test purposes.
-    """
-    assert (
-        for_test_table.name._prepare_default_value(
-            default_value=value,
-        )
-        == excepted_default_value
-    )
 
 
 @pytest.mark.parametrize(
