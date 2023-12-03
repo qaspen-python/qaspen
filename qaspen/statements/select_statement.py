@@ -845,6 +845,20 @@ class SelectStatement(
     def _prepare_select_fields(
         self: Self,
     ) -> list[Field[Any]]:
+        """Prepare select fields.
+
+        We split all select fields into two categories,
+        fields from main table and fields from joins.
+
+        We return fields from main table.
+
+        Fields from joins we add to the join expressions,
+        because join statement has it's own logic for
+        fields processing.
+
+        ### Returns:
+        list of select fields from main table.
+        """
         fields_from_original_table: list[Field[Any]] = []
         fields_from_joined_table: dict[
             str,
