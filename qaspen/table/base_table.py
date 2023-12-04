@@ -35,10 +35,29 @@ class BaseTable(MetaTable, abstract=True):
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
+        You can specify here fields from main table and joins,
+        aggregate functions.
+
         :param select_fields: fields to select.
             By default select all possible fields.
 
         :returns: SelectStatement.
+
+        Example:
+        -------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            nickname: VarCharField = VarCharField()
+
+
+        select_statement = Buns.select(
+            Buns.name,
+        )
+
+        async def main() -> None:
+            await insert_statement
+        ```
         """
         select_statement: typing.Final[SelectStatement[T_]] = SelectStatement(
             select_objects=select or cls.all_fields(),
@@ -92,6 +111,11 @@ class BaseTable(MetaTable, abstract=True):
                 values=values_to_insert,
             )
         )
+
+        async def main() -> None:
+            await insert_statement
+
+        # As a result you will have 3 new rows in the database.
         ```
         """
         return InsertStatement[T_, None](
@@ -126,6 +150,11 @@ class BaseTable(MetaTable, abstract=True):
             )
         )
         ```
+
+        async def main() -> None:
+            await insert_statement
+
+        # As a result you will have 2 new rows in the database.
         """
         return InsertObjectsStatement[T_, None](
             insert_objects=insert_objects,
