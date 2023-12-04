@@ -32,4 +32,5 @@ def transform_value_to_sql(  # noqa: PLR0911
             default=str,
             indent=2,
         )
+
     return str(value_to_convert)
