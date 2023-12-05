@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -21,9 +21,11 @@ class QueryString:
         self: Self,
         *template_arguments: Any,
         sql_template: str,
+        sql_template_parameters: list[Any] | None = None,
     ) -> None:
-        self.sql_template: str = sql_template
-        self.template_arguments: list[Any] = list(template_arguments)
+        self.sql_template = sql_template
+        self.template_arguments: Final = list(template_arguments)
+        self.sql_template_parameters: Final = sql_template_parameters or []
 
     @classmethod
     def empty(cls: type[QueryString]) -> EmptyQueryString:

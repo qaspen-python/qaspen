@@ -112,8 +112,8 @@ class ExpressionsCombination(CombinableExpression):
         New `QueryString`
         """
         return QueryString(
-            self.left_expression.querystring().build(),
-            self.right_expression.querystring().build(),
+            self.left_expression.querystring(),
+            self.right_expression.querystring(),
             sql_template="{} " + self.operator.operation_template + " {}",
         )
 
@@ -141,6 +141,6 @@ class NotExpression(ExpressionsCombination):
     def querystring(self: Self) -> QueryString:
         """Build QueryString."""
         return QueryString(
-            self.left_expression.querystring().build(),
+            self.left_expression.querystring(),
             sql_template=self.operator.operation_template,
         )
