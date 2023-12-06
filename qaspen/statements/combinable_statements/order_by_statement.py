@@ -6,7 +6,10 @@ import operator
 from typing import TYPE_CHECKING, Any, Iterable
 
 from qaspen.clauses.order_by import OrderBy
-from qaspen.querystring.querystring import OrderByQueryString, QueryString
+from qaspen.querystring.querystring import (
+    CommaSeparatedQueryString,
+    QueryString,
+)
 from qaspen.statements.statement import BaseStatement
 
 if TYPE_CHECKING:
@@ -61,7 +64,7 @@ class OrderByStatement(BaseStatement):
         """Build `QueryString`."""
         if not self.order_by_expressions:
             return QueryString.empty()
-        final_order_by: OrderByQueryString = functools.reduce(
+        final_order_by: CommaSeparatedQueryString = functools.reduce(
             operator.add,
             [
                 order_by_expression.querystring()

@@ -5,9 +5,9 @@ from typing import Final
 import pytest
 
 from qaspen.querystring.querystring import (
+    CommaSeparatedQueryString,
     FilterQueryString,
     FullStatementQueryString,
-    OrderByQueryString,
     QueryString,
 )
 
@@ -16,7 +16,7 @@ from qaspen.querystring.querystring import (
     "querystring",
     [
         QueryString,
-        OrderByQueryString,
+        CommaSeparatedQueryString,
         FilterQueryString,
         FullStatementQueryString,
     ],

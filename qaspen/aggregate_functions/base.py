@@ -59,17 +59,20 @@ class AggFunction(ABC):
         )
 
     @property
-    def _querystring_args(self: Self) -> list[str]:
-        querystring_args: list[str] = []
+    def _querystring_args(self: Self) -> list[QueryString]:
+        querystring_args: list[QueryString] = []
 
         for func_argument in self.func_arguments:
             if isinstance(func_argument, SQLSelectable):
                 querystring_args.append(
-                    func_argument.querystring().build(),
+                    func_argument.querystring(),
                 )
             else:
                 querystring_args.append(
-                    transform_value_to_sql(func_argument),
+                    QueryString(
+                        transform_value_to_sql(func_argument),
+                        sql_template="{}",
+                    ),
                 )
 
         return querystring_args

@@ -44,18 +44,24 @@ class Filter(CombinableExpression):
 
     def querystring(self: Self) -> FilterQueryString:
         """Build new `FilterQueryString`."""
-        compare_value: str = ""
+        compare_value: QueryString = QueryString.empty()
         if self.comparison_value is not EMPTY_VALUE:
             if isinstance(self.comparison_value, SQLSelectable):
-                compare_value = self.comparison_value.querystring().build()
+                compare_value = self.comparison_value.querystring()
             else:
-                compare_value = transform_value_to_sql(self.comparison_value)
+                compare_value = QueryString(
+                    transform_value_to_sql(self.comparison_value),
+                    sql_template="{}",
+                )
         elif self.comparison_values is not EMPTY_VALUE:
-            compare_value = ", ".join(
-                [
+            compare_value = QueryString(
+                *[
                     transform_value_to_sql(comparison_value)
                     for comparison_value in self.comparison_values  # type: ignore[union-attr]
                 ],
+                sql_template=", ".join(
+                    ["{}" for _ in self.comparison_values],  # type: ignore[union-attr]
+                ),
             )
 
         return FilterQueryString(

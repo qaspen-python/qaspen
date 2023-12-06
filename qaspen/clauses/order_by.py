@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Final
 
-from qaspen.querystring.querystring import OrderByQueryString
+from qaspen.querystring.querystring import CommaSeparatedQueryString
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -23,7 +23,7 @@ class OrderBy:
         self.ascending: Final[bool] = ascending
         self.nulls_first: Final[bool] = nulls_first
 
-    def querystring(self: Self) -> OrderByQueryString:
+    def querystring(self: Self) -> CommaSeparatedQueryString:
         """Build `QueryString`."""
         querystring_template: Final[str] = "{} {} {}"
         querystring_arguments: list[str] = [self.field.field_name]
@@ -38,7 +38,7 @@ class OrderBy:
         elif self.nulls_first is False:
             querystring_arguments.append("NULLS LAST")
 
-        return OrderByQueryString(
+        return CommaSeparatedQueryString(
             *querystring_arguments,
             sql_template=querystring_template,
         )

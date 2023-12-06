@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Final
 
 from qaspen.aggregate_functions.base import AggFunction
+from qaspen.querystring.querystring import QueryString
 from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
@@ -160,18 +161,18 @@ class ArrayAgg(AggFunction):
         return "{}"
 
     @property
-    def _querystring_args(self: Self) -> list[str]:
+    def _querystring_args(self: Self) -> list[QueryString]:
         querystring_args = super()._querystring_args
 
         if self.order_by:
             for single_order_by in self.order_by:
                 querystring_args.append(
-                    single_order_by.querystring().build(),
+                    single_order_by.querystring(),
                 )
         if self.order_by_objs:
             for order_by_obj in self.order_by_objs:
                 querystring_args.append(
-                    order_by_obj.querystring().build(),
+                    order_by_obj.querystring(),
                 )
 
         return querystring_args
@@ -271,19 +272,24 @@ class StringAgg(AggFunction):
         return "{}, {}"
 
     @property
-    def _querystring_args(self: Self) -> list[str]:
+    def _querystring_args(self: Self) -> list[QueryString]:
         querystring_args = super()._querystring_args
-        querystring_args.append(self.separator)
+        querystring_args.append(
+            QueryString(
+                self.separator,
+                sql_template="{}",
+            ),
+        )
 
         if self.order_by:
             for single_order_by in self.order_by:
                 querystring_args.append(
-                    single_order_by.querystring().build(),
+                    single_order_by.querystring(),
                 )
         if self.order_by_objs:
             for order_by_obj in self.order_by_objs:
                 querystring_args.append(
-                    order_by_obj.querystring().build(),
+                    order_by_obj.querystring(),
                 )
 
         return querystring_args

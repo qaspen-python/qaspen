@@ -8,6 +8,7 @@ from typing import (
     Generic,
     Iterable,
     Optional,
+    Sequence,
     overload,
 )
 
@@ -15,7 +16,10 @@ from qaspen.aggregate_functions.base import AggFunction
 from qaspen.fields.aliases import FieldAliases
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FromTable
-from qaspen.querystring.querystring import QueryString
+from qaspen.querystring.querystring import (
+    CommaSeparatedQueryString,
+    QueryString,
+)
 from qaspen.statements.base import Executable
 from qaspen.statements.combinable_statements.filter_statement import (
     FilterStatement,
@@ -73,12 +77,12 @@ class SelectStatement(
     def __init__(
         self: Self,
         from_table: type[FromTable],
-        select_objects: Iterable[Field[Any] | AggFunction],
+        select_objects: Sequence[Field[Any] | AggFunction],
     ) -> None:
         self._from_table: Final[type[FromTable]] = from_table
 
-        self._select_fields: Iterable[Field[Any]] = []
-        self._select_agg_functions: Iterable[AggFunction] = []
+        self._select_fields = []
+        self._select_agg_functions: Sequence[AggFunction] = []
 
         for select_object in select_objects:
             if isinstance(select_object, Field):
@@ -776,34 +780,45 @@ class SelectStatement(
         ### Returns:
         new `QueryString` for SELECT FROM.
         """
-        to_select_fields: str = ", ".join(
-            [field.field_name for field in self._prepare_fields()],
+        prepared_fields = self._prepare_fields()
+
+        to_select_fields_qs = CommaSeparatedQueryString(
+            *[
+                QueryString(
+                    field.field_name,
+                    sql_template="{}",
+                )
+                for field in prepared_fields
+            ],
+            sql_template=", ".join(["{}"] * len(prepared_fields)),
         )
-        to_select_agg_funcs = ", ".join(
-            [
-                agg_func.querystring().build()
+        to_select_agg_func_qs = CommaSeparatedQueryString(
+            *[
+                agg_func.querystring()
                 for agg_func in self._select_agg_functions
             ],
+            sql_template=", ".join(["{}"] * len(self._select_agg_functions)),
         )
 
-        final_select_objects = None
-        if to_select_fields and to_select_agg_funcs:
-            final_select_objects = f"{to_select_fields}, {to_select_agg_funcs}"
-        elif to_select_fields and not to_select_agg_funcs:
-            final_select_objects = to_select_fields
-        elif to_select_agg_funcs and not to_select_fields:
-            final_select_objects = to_select_agg_funcs
+        final_to_select: QueryString | None = None
+        if to_select_fields_qs.template_arguments:
+            final_to_select = to_select_fields_qs
+        if to_select_agg_func_qs.template_arguments:
+            if final_to_select:
+                final_to_select = final_to_select + to_select_agg_func_qs
+            else:
+                final_to_select = to_select_agg_func_qs
 
         if self._from_table._table_meta.alias:
             return QueryString(
-                final_select_objects or "1",
+                final_to_select or "1",
                 self._from_table.schemed_original_table_name(),
                 self._from_table._table_meta.alias,
                 sql_template="SELECT {} FROM {} AS {}",
             )
 
         return QueryString(
-            final_select_objects or "1",
+            final_to_select or "1",
             self._from_table.schemed_original_table_name(),
             sql_template="SELECT {} FROM {}",
         )

@@ -57,7 +57,7 @@ class Join(CombinableExpression):
             self.join_type,
             self._join_table.schemed_original_table_name(),
             self._join_table._table_meta.alias or self._alias,
-            self._based_on.querystring().build(),
+            self._based_on.querystring(),
             sql_template="{} {} AS {} ON {}",
         )
 

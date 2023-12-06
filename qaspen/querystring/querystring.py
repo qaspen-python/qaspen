@@ -117,8 +117,8 @@ class EmptyQueryString(QueryString):
     add_delimiter: str = ""
 
 
-class OrderByQueryString(QueryString):
-    """QueryString for OrderBy clauses."""
+class CommaSeparatedQueryString(QueryString):
+    """QueryString with comma separator."""
 
     add_delimiter: str = ", "
 
