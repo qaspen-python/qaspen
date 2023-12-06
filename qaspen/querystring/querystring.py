@@ -100,6 +100,9 @@ class QueryString:
         self.template_arguments.extend(
             additional_querystring.template_arguments,
         )
+        self.sql_template_parameters.extend(
+            additional_querystring.sql_template_parameters,
+        )
         return self
 
     def __str__(self: Self) -> str:
