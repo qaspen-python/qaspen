@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import contextvars
-import typing
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any, Generic, Literal, overload
 
 from qaspen.abc.abc_types import (
     DBConnection,
@@ -11,13 +11,13 @@ from qaspen.abc.abc_types import (
 )
 from qaspen.utils.engine_utils import parse_database
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from typing_extensions import Self
 
 
 class BaseEngine(
     ABC,
-    typing.Generic[
+    Generic[
         DBConnection,
         EngineConnectionPool,
         EngineTransaction,
@@ -30,7 +30,7 @@ class BaseEngine(
     def __init__(
         self: Self,
         connection_url: str,
-        **_kwargs: typing.Any,
+        **_kwargs: Any,
     ) -> None:
         """Initialize Engine.
 
@@ -46,50 +46,56 @@ class BaseEngine(
         )
         self.connection_url = connection_url
 
-    @typing.overload
+    @overload
     async def execute(  # type: ignore[overload-overlap]
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         in_pool: bool = True,
-        fetch_results: typing.Literal[True] = True,
-        **_kwargs: typing.Any,
-    ) -> list[dict[str, typing.Any]]:
+        fetch_results: Literal[True] = True,
+        **_kwargs: Any,
+    ) -> list[dict[str, Any]]:
         ...
 
-    @typing.overload
+    @overload
     async def execute(
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         in_pool: bool = True,
-        fetch_results: typing.Literal[False] = False,
-        **_kwargs: typing.Any,
+        fetch_results: Literal[False] = False,
+        **_kwargs: Any,
     ) -> None:
         ...
 
-    @typing.overload
+    @overload
     async def execute(
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         in_pool: bool = True,
         fetch_results: bool = True,
-        **_kwargs: typing.Any,
-    ) -> list[dict[str, typing.Any]] | None:
+        **_kwargs: Any,
+    ) -> list[dict[str, Any]] | None:
         ...
 
     @abstractmethod
     async def execute(
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         in_pool: bool = True,
         fetch_results: bool = True,
-        **_kwargs: typing.Any,
-    ) -> list[dict[str, typing.Any]] | None:
+        **_kwargs: Any,
+    ) -> list[dict[str, Any]] | None:
         """Execute a querystring.
 
         Run querystring and return list with dict results.
 
         ### Parameters:
-        - `querystring`: `QueryString` or it's subclasses.
+        - `querystring`: SQLable string.
+        - `querystring_parameters`: parameters for querystring.
+            They will be processed on driver side.
         - `in_pool`: execution in connection pool
             or in a new connection.
         - `kwargs`: just for inheritance, subclasses won't
@@ -105,7 +111,7 @@ class BaseEngine(
     ) -> None:
         """Prepare database.
 
-        typing.Anything that must be done before database will be
+        Anything that must be done before database will be
         ready to execute queries.
 
         For example, create extensions in PostgreSQL.

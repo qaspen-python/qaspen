@@ -102,6 +102,7 @@ class IntersectStatement(
         """Execute SQL query and return result."""
         raw_query_result: list[dict[str, Any]] = await engine.execute(
             querystring=self.querystring().build(),
+            querystring_parameters=[],
             fetch_results=True,
         )
         return raw_query_result

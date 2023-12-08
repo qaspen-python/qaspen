@@ -143,6 +143,7 @@ class SelectStatement(
         """
         raw_query_result: list[dict[str, Any]] = await engine.execute(
             querystring=self.querystring().build(),
+            querystring_parameters=[],
             fetch_results=True,
         )
 

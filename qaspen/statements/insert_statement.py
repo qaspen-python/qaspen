@@ -83,6 +83,7 @@ class BaseInsertStatement(
         """
         raw_query_result: list[dict[str, Any]] | None = await engine.execute(
             querystring=self.querystring().build(),
+            querystring_parameters=[],
             fetch_results=bool(self._returning_field),
         )
 

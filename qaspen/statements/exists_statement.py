@@ -78,6 +78,7 @@ class ExistsStatement(
         """
         raw_query_result: list[dict[str, Any]] = await engine.execute(
             querystring=self.querystring_for_select().build(),
+            querystring_parameters=[],
             fetch_results=True,
         )
 
