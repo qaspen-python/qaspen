@@ -114,7 +114,11 @@ class ExpressionsCombination(CombinableExpression):
         return QueryString(
             self.left_expression.querystring(),
             self.right_expression.querystring(),
-            sql_template="{} " + self.operator.operation_template + " {}",
+            sql_template=(
+                f"{QueryString.arg_ph()} "
+                + self.operator.operation_template
+                + f" {QueryString.arg_ph()}"
+            ),
         )
 
 
