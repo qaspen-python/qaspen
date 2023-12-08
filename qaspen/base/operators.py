@@ -48,13 +48,9 @@ class AnyOperator:
         ### Returns:
         `QueryString`
         """
-        sql_template: str = (
-            "ANY (" + self.subquery.querystring().sql_template + ")"
-        )
-        return QueryString(
-            *self.subquery.querystring().template_arguments,
-            sql_template=sql_template,
-        )
+        subquery_qs = self.subquery.querystring()
+        subquery_qs.sql_template = "ANY (" + subquery_qs.sql_template + ")"
+        return subquery_qs
 
 
 class AllOperator:
@@ -98,10 +94,6 @@ class AllOperator:
         ### Returns:
         `QueryString`
         """
-        sql_template: str = (
-            "ALL (" + self.subquery.querystring().sql_template + ")"
-        )
-        return QueryString(
-            *self.subquery.querystring().template_arguments,
-            sql_template=sql_template,
-        )
+        subquery_qs = self.subquery.querystring()
+        subquery_qs.sql_template = "ALL (" + subquery_qs.sql_template + ")"
+        return subquery_qs

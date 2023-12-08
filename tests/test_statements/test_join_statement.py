@@ -69,9 +69,9 @@ def test_join_querystring_method(join_class: type[Join]) -> None:
 
     querystring, qs_parameters = inited_join.querystring().build()
     assert querystring == (
-        f"{join_class.join_type} public.videotest AS {alias} ON videotest.user_id = %s"  # noqa: E501
+        f"{join_class.join_type} public.videotest AS {alias} ON videotest.user_id = usertest.id"  # noqa: E501
     )
-    assert qs_parameters == ["usertest.id"]
+    assert not qs_parameters
 
 
 @pytest.mark.parametrize(
@@ -217,7 +217,7 @@ def test_join_statement_querystring_method(
 
     querystring, qs_parameters = join_stmt.querystring().build()
     assert querystring == (
-        f"{join_class.join_type} public.videotest AS {alias} ON videotest.user_id = %s "  # noqa: E501
-        f"{join_class.join_type} public.videotest AS {alias} ON usertest.id = %s"  # noqa: E501
+        f"{join_class.join_type} public.videotest AS {alias} ON videotest.user_id = usertest.id "  # noqa: E501
+        f"{join_class.join_type} public.videotest AS {alias} ON usertest.id = videotest.user_id"  # noqa: E501
     )
-    assert qs_parameters == ["usertest.id", "videotest.user_id"]
+    assert not qs_parameters

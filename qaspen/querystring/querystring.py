@@ -138,6 +138,8 @@ class QueryString:
         self: Self,
         template_parameters: list[Any] | None = None,
     ) -> tuple[str, list[Any]]:
+        from qaspen.base.sql_base import SQLSelectable
+
         sql_template = self.sql_template.replace(
             self.argument_placeholder,
             "{}",
@@ -170,6 +172,19 @@ class QueryString:
                         1,
                     )
                 template_arguments.append(rendered_template)
+
+            elif isinstance(template_parameter, SQLSelectable):
+                rendered_template, _ = template_parameter.querystring()._build(
+                    template_parameters=template_parameters,
+                )
+                if self.parameter_placeholder in sql_template:
+                    sql_template = sql_template.replace(
+                        self.parameter_placeholder,
+                        "{}",
+                        1,
+                    )
+                template_arguments.append(rendered_template)
+
             else:
                 template_parameters.append(
                     template_parameter,

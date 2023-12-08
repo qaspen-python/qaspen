@@ -16,15 +16,15 @@ from tests.test_statements.conftest import ForTestTable
 
 
 @pytest.mark.parametrize(
-    ("comparison_value", "expected_compare_query"),
+    ("comparison_value", "expected_query_params"),
     [
-        (ForTestTable.count, "fortesttable.count"),
-        ("something", "something"),
+        (ForTestTable.count, None),
+        ("something", ["something"]),
     ],
 )
 def test_filter_querystring_method(
     comparison_value: Any,
-    expected_compare_query: str,
+    expected_query_params: list[str],
 ) -> None:
     """Test `Filter` `querystring` method."""
     filter_instance = Filter(
@@ -34,8 +34,12 @@ def test_filter_querystring_method(
     )
 
     querystring, qs_params = filter_instance.querystring().build()
-    assert querystring == "fortesttable.name = %s"
-    assert expected_compare_query in qs_params
+    if expected_query_params:
+        assert querystring == "fortesttable.name = %s"
+        assert expected_query_params == qs_params
+    else:
+        assert querystring == "fortesttable.name = fortesttable.count"
+        assert not qs_params
 
 
 @pytest.mark.parametrize(

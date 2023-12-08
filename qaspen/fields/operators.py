@@ -55,9 +55,21 @@ class InOperator(BaseOperator):
     )
 
 
+class InWithoutBracketsOperator(BaseOperator):
+    operation_template: str = (
+        f"{QueryString.arg_ph()} IN {QueryString.param_ph()}"
+    )
+
+
 class NotInOperator(BaseOperator):
     operation_template: str = (
         f"{QueryString.arg_ph()} NOT IN ({QueryString.param_ph()})"
+    )
+
+
+class NotInWithoutBracketsOperator(BaseOperator):
+    operation_template: str = (
+        f"{QueryString.arg_ph()} NOT IN {QueryString.param_ph()}"
     )
 
 

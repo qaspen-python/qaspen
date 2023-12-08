@@ -42,15 +42,9 @@ class Filter(CombinableExpression):
 
     def querystring(self: Self) -> FilterQueryString:
         """Build new `FilterQueryString`."""
-        from qaspen.fields.base import Field
-
-        compare_value: Any
+        compare_value: Any = None
         if self.comparison_value is not EMPTY_VALUE:
-            compare_value = (
-                self.comparison_value.field_name
-                if isinstance(self.comparison_value, Field)
-                else self.comparison_value
-            )
+            compare_value = self.comparison_value
 
         elif self.comparison_values is not EMPTY_VALUE:
             compare_value = QueryString(
@@ -60,7 +54,7 @@ class Filter(CombinableExpression):
 
         return FilterQueryString(
             self.field.field_name,
-            template_parameters=[compare_value],
+            template_parameters=([compare_value] if compare_value else []),
             sql_template=self.operator.operation_template,
         )
 
