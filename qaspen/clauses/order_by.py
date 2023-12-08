@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Final
 
-from qaspen.querystring.querystring import CommaSeparatedQueryString
+from qaspen.querystring.querystring import (
+    CommaSeparatedQueryString,
+    QueryString,
+)
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -25,7 +28,10 @@ class OrderBy:
 
     def querystring(self: Self) -> CommaSeparatedQueryString:
         """Build `QueryString`."""
-        querystring_template: Final[str] = "{} {} {}"
+        querystring_template: Final[str] = (
+            f"{QueryString.arg_ph()} {QueryString.arg_ph()} "
+            f"{QueryString.arg_ph()}"
+        )
         querystring_arguments: list[str] = [self.field.field_name]
 
         if self.ascending is True:

@@ -109,9 +109,13 @@ def test_order_by_statement_querystring_method() -> None:
         == expected_number_of_order_by_expressions
     )
 
-    order_by_exp1 = order_by_stmt.order_by_expressions[0].querystring().build()
-    order_by_exp2 = order_by_stmt.order_by_expressions[0].querystring().build()
-    assert (
-        order_by_stmt.querystring().build()
-        == f"ORDER BY {order_by_exp1}, {order_by_exp2}"
+    order_by_exp1 = (
+        order_by_stmt.order_by_expressions[0].querystring().build()[0]
     )
+    order_by_exp2 = (
+        order_by_stmt.order_by_expressions[0].querystring().build()[0]
+    )
+
+    querystring, qs_params = order_by_stmt.querystring().build()
+    assert querystring == (f"ORDER BY {order_by_exp1}, {order_by_exp2}")
+    assert not qs_params

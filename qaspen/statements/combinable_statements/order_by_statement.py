@@ -74,5 +74,6 @@ class OrderByStatement(BaseStatement):
 
         return QueryString(
             *final_order_by.template_arguments,
+            template_parameters=final_order_by.template_parameters,
             sql_template=f"ORDER BY {final_order_by.sql_template}",
         )
