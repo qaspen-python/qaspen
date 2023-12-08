@@ -57,7 +57,7 @@ tomli = {version = ">=2.0.1", markers = "python_version < \"3.11\""}
 name = "backports-zoneinfo"
 version = "0.2.1"
 description = "Backport of the standard library zoneinfo module"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.6"
 files = [
@@ -668,7 +668,7 @@ virtualenv = ">=20.10.0"
 name = "psycopg"
 version = "3.1.14"
 description = "PostgreSQL database adapter for Python"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
@@ -693,7 +693,7 @@ test = ["anyio (>=3.6.2,<4.0)", "mypy (>=1.4.1)", "pproxy (>=2.7)", "pytest (>=6
 name = "psycopg-pool"
 version = "3.2.0"
 description = "Connection Pool for Psycopg"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8"
 files = [
@@ -991,14 +991,14 @@ files = [
 
 [[package]]
 name = "qaspen-psycopg"
-version = "0.0.7a0"
+version = "0.0.9a0"
 description = ""
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "qaspen_psycopg-0.0.7a0-py3-none-any.whl", hash = "sha256:62f208123a6201bd6874f43d8bff079af3728c415d1fc0e607f869301993e23b"},
-    {file = "qaspen_psycopg-0.0.7a0.tar.gz", hash = "sha256:b0a937d74ce213b00a83d012e847af18d51b6887ac3dac70b9cedcaee51cb082"},
+    {file = "qaspen_psycopg-0.0.9a0-py3-none-any.whl", hash = "sha256:89b07f476ebad9391a112fd9835cd2f00ad3d40739b93585150e0262bec0dceb"},
+    {file = "qaspen_psycopg-0.0.9a0.tar.gz", hash = "sha256:f0f7df0bbd68c6df90b102f698394b3e58603aa01405f815ce157a975da3556a"},
 ]
 
 [package.dependencies]
@@ -1102,7 +1102,7 @@ files = [
 name = "tzdata"
 version = "2023.3"
 description = "Provider of IANA time zone data"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2"
 files = [
@@ -1254,4 +1254,4 @@ tokenize-rt = ">=2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "f0afddb17735965b96f77e96a8dc7a7945dcff53ec330eef02bd12aeb17c19dd"
+content-hash = "2900b44606eb53793175bbd782bcf1cfe2872bd7040c6c73a869e9a6f623b0e4"

@@ -89,7 +89,7 @@ class QueryString:
     def build(
         self: Self,
         engine_type: str = "PSQLPsycopg",
-    ) -> str:
+    ) -> tuple[str, list[Any]]:
         """Build string from querystring.
 
         Return full SQL querystring with all parameters
@@ -102,9 +102,14 @@ class QueryString:
         str
         """
         builded_querystring, template_parameters = self._build()
-        return self._replace_param_placeholders(
-            builded_querystring=builded_querystring,
-            engine_type=engine_type,
+        return (
+            self._replace_param_placeholders(
+                builded_querystring=builded_querystring,
+                engine_type=engine_type,
+            ),
+            self._preprocess_template_parameters(
+                template_parameters=template_parameters,
+            ),
         )
 
     def _preprocess_template_parameters(
@@ -153,9 +158,22 @@ class QueryString:
                     template_argument,
                 )
 
-        template_parameters.extend(
-            self.template_parameters,
-        )
+        for template_parameter in self.template_parameters:
+            if isinstance(template_parameter, QueryString):
+                rendered_template, _ = template_parameter._build(
+                    template_parameters=template_parameters,
+                )
+                if self.parameter_placeholder in sql_template:
+                    sql_template = sql_template.replace(
+                        self.parameter_placeholder,
+                        "{}",
+                        1,
+                    )
+                template_arguments.append(rendered_template)
+            else:
+                template_parameters.append(
+                    template_parameter,
+                )
 
         return (
             sql_template.format(

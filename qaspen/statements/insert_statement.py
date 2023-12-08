@@ -81,9 +81,10 @@ class BaseInsertStatement(
         ### Returns
         `SelectStatementResult`
         """
+        querystring, qs_parameters = self.querystring().build()
         raw_query_result: list[dict[str, Any]] | None = await engine.execute(
-            querystring=self.querystring().build(),
-            querystring_parameters=[],
+            querystring=querystring,
+            querystring_parameters=qs_parameters,
             fetch_results=bool(self._returning_field),
         )
 
@@ -109,11 +110,12 @@ class BaseInsertStatement(
         ### Returns
         `InsertStatement`
         """
+        querystring, qs_parameters = self.querystring().build()
         raw_query_result: list[
             dict[str, Any]
         ] | None = await transaction.execute(
-            querystring=self.querystring().build(),
-            querystring_parameters=[],
+            querystring=querystring,
+            querystring_parameters=qs_parameters,
             fetch_results=bool(self._returning_field),
         )
 

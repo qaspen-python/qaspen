@@ -76,9 +76,10 @@ class ExistsStatement(
 
         :param engine: subclass of BaseEngine.
         """
+        querystring, qs_parameters = self.querystring_for_select().build()
         raw_query_result: list[dict[str, Any]] = await engine.execute(
-            querystring=self.querystring_for_select().build(),
-            querystring_parameters=[],
+            querystring=querystring,
+            querystring_parameters=qs_parameters,
             fetch_results=True,
         )
 
@@ -94,9 +95,10 @@ class ExistsStatement(
 
         :param engine: subclass of BaseEngine.
         """
+        querystring, qs_parameters = self.querystring_for_select().build()
         raw_query_result: list[dict[str, Any]] = await transaction.execute(
-            querystring=self.querystring_for_select().build(),
-            querystring_parameters=[],
+            querystring=querystring,
+            querystring_parameters=qs_parameters,
             fetch_results=True,
         )
 

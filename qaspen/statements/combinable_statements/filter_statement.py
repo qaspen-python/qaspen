@@ -5,14 +5,12 @@ import functools
 import operator
 from typing import TYPE_CHECKING, Any, Final, Iterable
 
-from qaspen.base.sql_base import SQLSelectable
 from qaspen.qaspen_types import EMPTY_VALUE, EmptyValue
 from qaspen.querystring.querystring import FilterQueryString, QueryString
 from qaspen.statements.combinable_statements.combinations import (
     CombinableExpression,
 )
 from qaspen.statements.statement import BaseStatement
-from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -33,7 +31,7 @@ class Filter(CombinableExpression):
         self: Self,
         field: Field[Any],
         operator: type[BaseOperator],
-        comparison_value: EmptyValue | Field[Any] | Any = EMPTY_VALUE,
+        comparison_value: Any = EMPTY_VALUE,
         comparison_values: EmptyValue | Iterable[Any] = EMPTY_VALUE,
     ) -> None:
         self.field: Final = field
@@ -44,29 +42,25 @@ class Filter(CombinableExpression):
 
     def querystring(self: Self) -> FilterQueryString:
         """Build new `FilterQueryString`."""
-        compare_value: QueryString = QueryString.empty()
+        from qaspen.fields.base import Field
+
+        compare_value: Any
         if self.comparison_value is not EMPTY_VALUE:
-            if isinstance(self.comparison_value, SQLSelectable):
-                compare_value = self.comparison_value.querystring()
-            else:
-                compare_value = QueryString(
-                    transform_value_to_sql(self.comparison_value),
-                    sql_template="{}",
-                )
+            compare_value = (
+                self.comparison_value.field_name
+                if isinstance(self.comparison_value, Field)
+                else self.comparison_value
+            )
+
         elif self.comparison_values is not EMPTY_VALUE:
             compare_value = QueryString(
-                *[
-                    transform_value_to_sql(comparison_value)
-                    for comparison_value in self.comparison_values  # type: ignore[union-attr]
-                ],
-                sql_template=", ".join(
-                    ["{}" for _ in self.comparison_values],  # type: ignore[union-attr]
-                ),
+                template_parameters=[self.comparison_values],
+                sql_template=f"{QueryString.param_ph()}",
             )
 
         return FilterQueryString(
             self.field.field_name,
-            compare_value,
+            template_parameters=[compare_value],
             sql_template=self.operator.operation_template,
         )
 
@@ -99,19 +93,18 @@ class FilterBetween(CombinableExpression):
         left_value: str = (
             self.left_comparison_value.field_name
             if isinstance(self.left_comparison_value, BaseField)
-            else transform_value_to_sql(self.left_comparison_value)
+            else self.left_comparison_value
         )
 
         right_value: str = (
             self.right_comparison_value.field_name
             if isinstance(self.right_comparison_value, BaseField)
-            else transform_value_to_sql(self.right_comparison_value)
+            else self.right_comparison_value
         )
 
         return FilterQueryString(
             self.field.field_name,
-            left_value,
-            right_value,
+            template_parameters=[left_value, right_value],
             sql_template=self.operator.operation_template,
         )
 
@@ -132,11 +125,11 @@ class FilterExclusive(CombinableExpression):
 
     def querystring(self: Self) -> FilterQueryString:
         """Build new `FilterQueryString`."""
+        comparison_qs: Final = self.comparison.querystring()
         return FilterQueryString(
-            *self.comparison.querystring().template_arguments,
-            sql_template=(
-                "(" + self.comparison.querystring().sql_template + ")"
-            ),
+            *comparison_qs.template_arguments,
+            template_parameters=comparison_qs.template_parameters,
+            sql_template=("(" + comparison_qs.sql_template + ")"),
         )
 
 
@@ -182,18 +175,24 @@ class FilterStatement(BaseStatement):
         if not self.filter_expressions:
             return QueryString.empty()
 
+        final_wheres = []
+        for filter_expression in self.filter_expressions:
+            filter_qs = filter_expression.querystring()
+            final_wheres.append(
+                FilterQueryString(
+                    *filter_qs.template_arguments,
+                    template_parameters=filter_qs.template_parameters,
+                    sql_template=filter_qs.sql_template,
+                ),
+            )
+
         final_where: QueryString = functools.reduce(
             operator.add,
-            [
-                FilterQueryString(
-                    *filter_expression.querystring().template_arguments,
-                    sql_template=filter_expression.querystring().sql_template,
-                )
-                for filter_expression in self.filter_expressions
-            ],
+            final_wheres,
         )
 
         return QueryString(
             *final_where.template_arguments,
             sql_template=f"WHERE {final_where.sql_template}",
+            template_parameters=final_where.template_parameters,
         )
