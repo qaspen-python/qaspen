@@ -171,6 +171,7 @@ class SelectStatement(
         """
         raw_query_result: list[dict[str, Any]] = await transaction.execute(
             querystring=self.querystring().build(),
+            querystring_parameters=[],
             fetch_results=True,
         )
 

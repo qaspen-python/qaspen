@@ -113,6 +113,7 @@ class BaseInsertStatement(
             dict[str, Any]
         ] | None = await transaction.execute(
             querystring=self.querystring().build(),
+            querystring_parameters=[],
             fetch_results=bool(self._returning_field),
         )
 

@@ -51,6 +51,7 @@ class BaseTransaction(ABC, Generic[Engine, DBConnection]):
     async def execute(  # type: ignore[overload-overlap]
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         fetch_results: Literal[True] = True,
     ) -> list[dict[str, Any]]:
         ...
@@ -59,6 +60,7 @@ class BaseTransaction(ABC, Generic[Engine, DBConnection]):
     async def execute(
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         fetch_results: Literal[False] = False,
     ) -> None:
         ...
@@ -67,6 +69,7 @@ class BaseTransaction(ABC, Generic[Engine, DBConnection]):
     async def execute(
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         fetch_results: bool,
     ) -> list[dict[str, Any]] | None:
         ...
@@ -75,6 +78,7 @@ class BaseTransaction(ABC, Generic[Engine, DBConnection]):
     async def execute(
         self: Self,
         querystring: str,
+        querystring_parameters: list[Any],
         fetch_results: bool = True,
     ) -> list[dict[str, Any]] | None:
         """Execute querystring.

@@ -121,6 +121,7 @@ class UnionStatement(
         """Execute SQL query in a transaction and return result."""
         raw_query_result: list[dict[str, Any]] = await transaction.execute(
             querystring=self.querystring().build(),
+            querystring_parameters=[],
             fetch_results=True,
         )
         return raw_query_result
