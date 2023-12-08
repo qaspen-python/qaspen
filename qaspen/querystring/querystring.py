@@ -107,6 +107,28 @@ class QueryString:
             engine_type=engine_type,
         )
 
+    def _preprocess_template_parameters(
+        self: Self,
+        template_parameters: list[Any],
+    ) -> list[Any]:
+        """Preprocess template parameters.
+
+        Sometimes this parameters can handle non-basic
+        python datatypes, like custom classes, ENUMs,
+        qaspen Tables and so on.
+
+        Python database drivers can't process them,
+        so we need to preprocess them firstly and
+        convert them into driver-readable datatypes.
+
+        ### Parameters:
+        - `template_parameters`: query parameters for python db driver.
+
+        ### Returns:
+        preprocessed query parameters for python db driver.
+        """
+        return template_parameters
+
     def _build(
         self: Self,
         template_parameters: list[Any] | None = None,
