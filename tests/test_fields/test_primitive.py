@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
@@ -564,8 +564,9 @@ def test_str_field_like_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == LikeOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"testtable.qaspen LIKE '{comparison_value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "testtable.qaspen LIKE %s"
+    assert qs_params == [comparison_value]
 
 
 @pytest.mark.parametrize(
@@ -631,8 +632,9 @@ def test_str_field_not_like_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotLikeOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"testtable.qaspen NOT LIKE '{comparison_value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "testtable.qaspen NOT LIKE %s"
+    assert qs_params == [comparison_value]
 
 
 @pytest.mark.parametrize(
@@ -698,8 +700,9 @@ def test_str_field_ilike_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == ILikeOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"testtable.qaspen ILIKE '{comparison_value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "testtable.qaspen ILIKE %s"
+    assert qs_params == [comparison_value]
 
 
 @pytest.mark.parametrize(
@@ -765,8 +768,9 @@ def test_str_field_not_ilike_method_success(
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotILikeOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"testtable.qaspen NOT ILIKE '{comparison_value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "testtable.qaspen NOT ILIKE %s"
+    assert qs_params == [comparison_value]
 
 
 @pytest.mark.parametrize(
