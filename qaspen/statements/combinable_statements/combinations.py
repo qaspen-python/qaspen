@@ -145,6 +145,6 @@ class NotExpression(ExpressionsCombination):
     def querystring(self: Self) -> QueryString:
         """Build QueryString."""
         return QueryString(
-            self.left_expression.querystring(),
+            template_parameters=[self.left_expression.querystring()],
             sql_template=self.operator.operation_template,
         )
