@@ -26,9 +26,18 @@ def test_querystring_build(querystring: type[QueryString]) -> None:
     qs: Final = querystring(
         "field",
         "table",
-        sql_template="SELECT {} FROM {}",
+        "orm",
+        template_parameters=["qaspen"],
+        sql_template=(
+            f"SELECT {QueryString.arg_ph()} "
+            f"FROM {QueryString.arg_ph()} "
+            f"WHERE {QueryString.arg_ph()} = "
+            f"{QueryString.param_ph()}"
+        ),
     )
-    assert qs.build() == "SELECT field FROM table"
+    built_qs, qs_params = qs.build()
+    assert built_qs == "SELECT field FROM table WHERE orm = %s"
+    assert qs_params == ["qaspen"]
 
 
 def test_querystring_add() -> None:
@@ -36,7 +45,9 @@ def test_querystring_add() -> None:
     qs1 = QueryString(
         "field",
         "table",
-        sql_template="SELECT {} FROM {}",
+        sql_template=(
+            f"SELECT {QueryString.arg_ph()} FROM {QueryString.arg_ph()}"
+        ),
     )
 
     assert str(qs1) == qs1.sql_template
@@ -44,8 +55,12 @@ def test_querystring_add() -> None:
     qs2 = QueryString(
         "field",
         "'wow'",
-        sql_template="WHERE {} = {}",
+        sql_template=(
+            f"WHERE {QueryString.arg_ph()} = {QueryString.arg_ph()}"
+        ),
     )
 
     final_qs = qs1 + qs2
-    assert (final_qs.build()) == "SELECT field FROM table WHERE field = 'wow'"
+    built_qs, qs_params = final_qs.build()
+    assert built_qs == "SELECT field FROM table WHERE field = 'wow'"
+    assert not qs_params
