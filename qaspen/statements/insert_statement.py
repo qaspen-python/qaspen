@@ -20,7 +20,6 @@ from qaspen.querystring.querystring import (
 )
 from qaspen.statements.base import Executable
 from qaspen.statements.statement import BaseStatement
-from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -75,8 +74,6 @@ class BaseInsertStatement(
 
         ### Parameters
         - `engine`: subclass of BaseEngine.
-        - `fetch_results`: try to get results from the
-        database response or not.
 
         ### Returns
         `SelectStatementResult`
@@ -191,7 +188,11 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
             self._make_fields_querystring(),
             self._make_values_querystring(),
             returning_qs,
-            sql_template="INSERT INTO {} {} VALUES {} {}",
+            sql_template=(
+                f"INSERT INTO {QueryString.arg_ph()}"
+                f"{QueryString.arg_ph()} "
+                f"VALUES {QueryString.arg_ph()} {QueryString.arg_ph()}"
+            ),
         )
 
     def _find_not_passed_field_with_default(
@@ -238,9 +239,7 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
         """
         for values_to_insert_list in values_to_insert:
             for element_idx, element in enumerate(values_to_insert_list):
-                values_to_insert_list[element_idx] = transform_value_to_sql(
-                    element,
-                )
+                values_to_insert_list[element_idx] = element
 
         if not self._not_passed_fields_with_default:
             return values_to_insert
@@ -249,13 +248,11 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
             for field_with_default in self._not_passed_fields_with_default:
                 if field_with_default._default:
                     list_value.append(
-                        field_with_default._prepared_default,
+                        field_with_default._default,
                     )
                 elif field_with_default._callable_default:
                     list_value.append(
-                        transform_value_to_sql(
-                            field_with_default._callable_default(),
-                        ),
+                        field_with_default._callable_default(),
                     )
 
         return values_to_insert
@@ -267,7 +264,7 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
         `Querystring` for fields in INSERT SQL.
         """
         fields_sql_template = ", ".join(
-            ["{}" for _ in self._fields_to_insert],
+            [QueryString.arg_ph()] * len(self._fields_to_insert),
         )
 
         fields_sql_template_args = [
@@ -296,23 +293,21 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
         )
 
         values_sql_template = ", ".join(
-            ["{}" for _ in all_values_to_insert],
+            [QueryString.param_ph()] * len(all_values_to_insert),
         )
 
-        values_sql_template_args = []
         single_values_template = ", ".join(
-            ["{}" for _ in all_values_to_insert[0]],
+            [QueryString.param_ph()] * len(all_values_to_insert[0]),
         )
-        values_sql_template_args = [
+        values_sql_template_params = [
             QueryString(
-                *values_record,
+                template_parameters=values_record,
                 sql_template="(" + single_values_template + ")",
             )
             for values_record in all_values_to_insert
         ]
-
         return QueryString(
-            *values_sql_template_args,
+            template_parameters=values_sql_template_params,
             sql_template=values_sql_template,
         )
 
@@ -331,6 +326,94 @@ class InsertObjectsStatement(
         self._insert_objects: Final = insert_objects
 
         self._returning_field: Field[Any] | None = None
+
+    async def execute(
+        self: Self,
+        engine: BaseEngine[Any, Any, Any],
+    ) -> ReturnResultType:
+        """Execute select statement.
+
+        This is manual execution.
+        You can pass specific engine.
+
+        ### Parameters
+        - `engine`: subclass of BaseEngine.
+
+        ### Returns
+        `SelectStatementResult`
+        """
+        returned_values = []
+        all_qs_objects = [
+            self._build_object_querystring(table_object)
+            for table_object in self._insert_objects
+        ]
+        for qs_object in all_qs_objects:
+            querystring, qs_parameters = qs_object.build()
+            raw_query_result: list[
+                dict[str, Any]
+            ] | None = await engine.execute(
+                querystring=querystring,
+                querystring_parameters=qs_parameters,
+                fetch_results=bool(self._returning_field),
+            )
+
+            returned_value: list[Any] = self._parse_raw_query_result(  # type: ignore[assignment]
+                raw_query_result=raw_query_result,
+            )
+
+            if self._returning_field and returned_value:
+                returned_values.append(returned_value[0])
+
+        if self._returning_field:
+            return returned_values  # type: ignore[return-value]
+
+        return None  # type: ignore[return-value]
+
+    async def transaction_execute(
+        self: Self,
+        transaction: BaseTransaction[Any, Any],
+    ) -> ReturnResultType:
+        """Execute statement inside a transaction context.
+
+        This is manual execution.
+        You can pass specific transaction.
+        IMPORTANT: To commit the changes, with this way of execution,
+        it's necessary to manually call `await transaction.commit()`.
+
+        ### Parameters:
+        - `transaction`: running transaction.
+        database response or not.
+
+        ### Returns
+        `InsertStatement`
+        """
+        returned_values = []
+        all_qs_objects = [
+            self._build_object_querystring(table_object)
+            for table_object in self._insert_objects
+        ]
+
+        for qs_object in all_qs_objects:
+            querystring, qs_parameters = qs_object.build()
+            raw_query_result: list[
+                dict[str, Any]
+            ] | None = await transaction.execute(
+                querystring=querystring,
+                querystring_parameters=qs_parameters,
+                fetch_results=bool(self._returning_field),
+            )
+
+            returned_value: list[Any] = self._parse_raw_query_result(  # type: ignore[assignment]
+                raw_query_result=raw_query_result,
+            )
+
+            if self._returning_field and returned_value:
+                returned_values.append(returned_value[0])
+
+        if self._returning_field:
+            return returned_values  # type: ignore[return-value]
+
+        return None  # type: ignore[return-value]
 
     def querystring(self: Self) -> QueryString:
         """Build querystring for INSERT statement."""
@@ -370,14 +453,11 @@ class InsertObjectsStatement(
         )
 
         values_to_insert_qs = QueryString(
-            *[
-                transform_value_to_sql(field_value)
-                for field_value in self._prepare_values_to_insert(
-                    fields_to_insert,
-                )
-            ],
+            template_parameters=self._prepare_values_to_insert(
+                fields_to_insert,
+            ),
             sql_template="("
-            + ", ".join(["{}" for _ in fields_to_insert])
+            + ", ".join([QueryString.param_ph()] * len(fields_to_insert))
             + ")",
         )
 

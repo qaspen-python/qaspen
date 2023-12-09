@@ -15,29 +15,34 @@ def test_base_table_select() -> None:
         InheritanceBetaTable.field2,
     )
 
+    querystring, qs_params = select_stmt_with_fields.querystring().build()
     assert (
-        select_stmt_with_fields.querystring().build()
-        == "SELECT btable.field1, btable.field2 FROM public.btable"
+        querystring == "SELECT btable.field1, btable.field2 FROM public.btable"
     )
+    assert not qs_params
 
     select_stmt_with_agg = InheritanceBetaTable.select(
         Count(InheritanceBetaTable.field1),
     )
 
-    assert (
-        select_stmt_with_agg.querystring().build()
-        == "SELECT COUNT(btable.field1) FROM public.btable"
-    )
+    querystring, qs_params = select_stmt_with_agg.querystring().build()
+    assert querystring == "SELECT COUNT(btable.field1) FROM public.btable"
+    assert not qs_params
 
     select_stmt_with_fields_and_agg = InheritanceBetaTable.select(
         Count(InheritanceBetaTable.field1),
         InheritanceBetaTable.field2,
     )
 
+    (
+        querystring,
+        qs_params,
+    ) = select_stmt_with_fields_and_agg.querystring().build()
     assert (
-        select_stmt_with_fields_and_agg.querystring().build()
+        querystring
         == "SELECT btable.field2, COUNT(btable.field1) FROM public.btable"
     )
+    assert not qs_params
 
 
 def test_base_table_insert() -> None:
@@ -53,10 +58,12 @@ def test_base_table_insert() -> None:
         ),
     )
 
+    querystring, qs_params = insert_stmt.querystring().build()
     assert (
-        insert_stmt.querystring().build()
-        == "INSERT INTO btable (field1, field2) VALUES ('Qaspen', 'Cool'), ('Python', 'Nice') "  # noqa: E501
+        querystring
+        == "INSERT INTO btable(field1, field2) VALUES (%s, %s), (%s, %s) "
     )
+    assert qs_params == ["Qaspen", "Cool", "Python", "Nice"]
 
 
 def test_base_table_insert_objects() -> None:
@@ -69,8 +76,8 @@ def test_base_table_insert_objects() -> None:
     )
 
     assert (
-        insert_stmt.querystring().build()
-        == "INSERT INTO btable(field1, field2) VALUES ('test', 'Wow')"
+        insert_stmt.querystring().build()[0]
+        == "INSERT INTO btable(field1, field2) VALUES (%s, %s)"
     )
 
 

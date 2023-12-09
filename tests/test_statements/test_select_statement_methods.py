@@ -92,10 +92,12 @@ async def test_select_where_method(
         UserTable.user_id == 1,
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
-        == "SELECT main_users.user_id, main_users.fullname FROM public.main_users WHERE main_users.user_id = 1"  # noqa: E501
+        querystring
+        == "SELECT main_users.user_id, main_users.fullname FROM public.main_users WHERE main_users.user_id = %s"  # noqa: E501
     )
+    assert qs_params == [1]
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -119,10 +121,12 @@ async def test_select_limit_method(
         UserTable.fullname,
     ).limit(limit=1)
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users LIMIT 1"
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -146,10 +150,12 @@ async def test_select_offset_method(
         UserTable.fullname,
     ).offset(offset=1)
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users OFFSET 1"
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -176,10 +182,12 @@ async def test_select_limit_offset_method(
         offset=1,
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users LIMIT 1 OFFSET 1"
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -240,7 +248,9 @@ async def test_select_order_by_method_without_order_bys(
         nulls_first=nulls_first,
     )
 
-    assert stmt.querystring().build() == expected_query
+    querystring, qs_params = stmt.querystring().build()
+    assert querystring == expected_query
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -314,7 +324,9 @@ async def test_select_order_by_method_with_order_bys(
         UserTable.fullname,
     ).order_by(order_bys=order_bys)
 
-    assert stmt.querystring().build() == expected_query
+    querystring, qs_params = stmt.querystring().build()
+    assert querystring == expected_query
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -340,11 +352,13 @@ async def test_select_union_method(
     )
 
     union = stmt.union(stmt2)
+    union_qs, union_qs_params = union.querystring().build()
 
     assert (
-        union.querystring().build()
+        union_qs
         == "SELECT main_users.fullname FROM public.main_users UNION SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not union_qs_params
 
     stmt_result = await union.transaction_execute(
         transaction=test_db_transaction,
@@ -356,10 +370,12 @@ async def test_select_union_method(
 
     union_all = stmt.union(stmt2, union_all=True)
 
+    union_all_qs, union_all_qs_params = union_all.querystring().build()
     assert (
-        union_all.querystring().build()
+        union_all_qs
         == "SELECT main_users.fullname FROM public.main_users UNION ALL SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not union_all_qs_params
 
     stmt_result = await union_all.transaction_execute(
         transaction=test_db_transaction,
@@ -389,10 +405,12 @@ async def test_select_intersect_method(
 
     intersect = stmt.intersect(stmt2)
 
+    querystring, qs_params = intersect.querystring().build()
     assert (
-        intersect.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users INTERSECT SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not qs_params
 
     stmt_result = await intersect.transaction_execute(
         transaction=test_db_transaction,
@@ -417,10 +435,12 @@ async def test_select_exists_method(
         .exists()
     )
 
+    querystring, qs_params = stmt.querystring_for_select().build()
     assert (
-        stmt.querystring_for_select().build()
-        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = 'Qaspen')"  # noqa: E501
+        querystring
+        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = %s)"  # noqa: E501
     )
+    assert qs_params == ["Qaspen"]
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -446,10 +466,12 @@ async def test_select_join_method(
         based_on=aliased_video.profile_id == aliased_profile.profile_id,
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT palias.nickname, valias.video_id FROM public.profiles AS palias JOIN public.videos AS valias ON valias.profile_id = palias.profile_id"  # noqa: E501
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -476,10 +498,12 @@ async def test_select_inner_join_method(
         based_on=UserTable.user_id == ProfileTable.user_id,
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT main_users.fullname, profiles.nickname FROM public.main_users INNER JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -506,10 +530,12 @@ async def test_select_left_join_method(
         based_on=UserTable.user_id == ProfileTable.user_id,
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT main_users.fullname, profiles.nickname FROM public.main_users LEFT JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -536,10 +562,12 @@ async def test_select_right_join_method(
         based_on=UserTable.user_id == ProfileTable.user_id,
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT main_users.fullname, profiles.nickname FROM public.main_users RIGHT JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -566,10 +594,12 @@ async def test_select_full_outer_join_method(
         based_on=UserTable.user_id == ProfileTable.user_id,
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
+        querystring
         == "SELECT main_users.fullname, profiles.nickname FROM public.main_users FULL OUTER JOIN public.profiles AS profiles ON main_users.user_id = profiles.user_id"  # noqa: E501
     )
+    assert not qs_params
 
     stmt_result = await stmt.transaction_execute(
         transaction=test_db_transaction,

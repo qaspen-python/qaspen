@@ -110,7 +110,7 @@ async def test_insert_obj_stmt_execute_method(
     test_engine.running_transaction.set(test_db_transaction)
 
     query_result = await iostmt.execute(engine=test_engine)
-    assert query_result == [1000]
+    assert query_result == [1000, 999]
 
     db_raw_records = await TableTest.select().execute(engine=test_engine)
     db_results = db_raw_records.result()
@@ -152,7 +152,7 @@ async def test_insert_obj_stmt_transaction_execute_method(
     query_result = await iostmt.transaction_execute(
         transaction=test_db_transaction,
     )
-    assert query_result == [1000]
+    assert query_result == [1000, 999]
 
     db_raw_records = await TableTest.select().transaction_execute(
         transaction=test_db_transaction,
