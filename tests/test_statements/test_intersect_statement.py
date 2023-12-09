@@ -39,10 +39,12 @@ async def test_intersect_await_method(
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine
 
+    querystring, qs_params = intersect.querystring().build()
     assert (
-        intersect.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users INTERSECT SELECT main_users.fullname FROM public.main_users INTERSECT SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not qs_params
 
     expected_result = [{"fullname": "Python"}, {"fullname": "Qaspen"}]
     assert await intersect == expected_result
@@ -67,10 +69,12 @@ async def test_intersect_execute_method(
 
     intersect = stmt1.intersect(stmt2)
 
+    querystring, qs_params = intersect.querystring().build()
     assert (
-        intersect.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users INTERSECT SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not qs_params
 
     expected_result = [{"fullname": "Python"}, {"fullname": "Qaspen"}]
     assert (
@@ -102,10 +106,12 @@ async def test_intersect_transaction_execute_method(
     intersect = stmt1.intersect(stmt2)
     intersect = intersect.intersect(stmt3)
 
+    querystring, qs_params = intersect.querystring().build()
     assert (
-        intersect.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users INTERSECT SELECT main_users.fullname FROM public.main_users INTERSECT SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not qs_params
 
     expected_result = [{"fullname": "Python"}, {"fullname": "Qaspen"}]
     assert (
