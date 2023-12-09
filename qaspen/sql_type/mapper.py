@@ -30,11 +30,11 @@ def map_python_type_to_sql(  # noqa: PLR0911
         return BigInt
     if isinstance(for_match_value, float):
         return Decimal
+    if isinstance(for_match_value, datetime):
+        return Timestamp
     if isinstance(for_match_value, date):
         return Date
     if isinstance(for_match_value, time):
         return Time
-    if isinstance(for_match_value, datetime):
-        return Timestamp
 
     return None
