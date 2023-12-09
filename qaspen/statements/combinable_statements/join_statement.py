@@ -58,7 +58,10 @@ class Join(CombinableExpression):
             self._join_table.schemed_original_table_name(),
             self._join_table._table_meta.alias or self._alias,
             self._based_on.querystring(),
-            sql_template="{} {} AS {} ON {}",
+            sql_template=(
+                f"{QueryString.arg_ph()} {QueryString.arg_ph()} "
+                f"AS {QueryString.arg_ph()} ON {QueryString.arg_ph()}"
+            ),
         )
 
     def add_fields(

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Final
 
 from qaspen.aggregate_functions.base import AggFunction
 from qaspen.querystring.querystring import QueryString
-from qaspen.utils.fields_utils import transform_value_to_sql
+from qaspen.sql_type.mapper import map_python_type_to_sql
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -111,7 +111,7 @@ class ArrayAgg(AggFunction):
 
     def __init__(
         self: Self,
-        func_argument: SQLSelectable,
+        func_argument: SQLSelectable | Any,
         alias: str | None = None,
         order_by: list[SQLSelectable] | None = None,
         order_by_objs: list[OrderBy] | None = None,
@@ -135,6 +135,38 @@ class ArrayAgg(AggFunction):
         self.order_by: Final = order_by
         self.order_by_objs: Final = order_by_objs
 
+    def querystring(self: Self) -> QueryString:
+        """Build new `QueryString`.
+
+        ### Returns:
+        `QueryString` for aggregate function.
+        """
+        qs_args, qs_params = self._querystring_args_params
+        template_args = self._template_args
+        if not qs_params:
+            return self._querystring(
+                qs_args=qs_args,
+                qs_params=qs_params,
+                template_args=template_args,
+            )
+
+        for qs_param in qs_params:
+            sql_type = map_python_type_to_sql(
+                for_match_value=qs_param,
+            )
+            if sql_type:
+                template_args = template_args.replace(
+                    QueryString.parameter_placeholder,
+                    f"{QueryString.parameter_placeholder}::{sql_type.sql_type()}",
+                    1,
+                )
+
+        return self._querystring(
+            qs_args=qs_args,
+            qs_params=qs_params,
+            template_args=template_args,
+        )
+
     @property
     def _template_args(self: Self) -> str:
         order_by_args = ""
@@ -142,40 +174,48 @@ class ArrayAgg(AggFunction):
 
         if self.order_by:
             order_by_args = ", ".join(
-                ["{}" for _ in self.order_by],
+                [QueryString.arg_ph()] * len(self.order_by),
             )
         if self.order_by_objs:
             order_by_objects_args = ", ".join(
-                ["{}" for _ in self.order_by_objs],
+                [QueryString.arg_ph()] * len(self.order_by_objs),
             )
+
+        _, qs_params = super()._querystring_args_params
+        qs_placeholder = (
+            QueryString.arg_ph() if not qs_params else QueryString.param_ph()
+        )
 
         if order_by_args and order_by_objects_args:
             return (
-                "{} ORDER BY " + f"{order_by_args}, " + order_by_objects_args
+                f"{qs_placeholder} ORDER BY "
+                f"{order_by_args}, " + order_by_objects_args
             )
         if order_by_args:
-            return "{} ORDER BY " + order_by_args
+            return f"{qs_placeholder} ORDER BY " + order_by_args
         if order_by_objects_args:
-            return "{} ORDER BY " + order_by_objects_args
+            return f"{qs_placeholder} ORDER BY " + order_by_objects_args
 
-        return "{}"
+        return qs_placeholder
 
     @property
-    def _querystring_args(self: Self) -> list[QueryString]:
-        querystring_args = super()._querystring_args
+    def _querystring_args_params(
+        self: Self,
+    ) -> tuple[list[QueryString], list[Any]]:
+        qs_args, qs_params = super()._querystring_args_params
 
         if self.order_by:
             for single_order_by in self.order_by:
-                querystring_args.append(
+                qs_args.append(
                     single_order_by.querystring(),
                 )
         if self.order_by_objs:
             for order_by_obj in self.order_by_objs:
-                querystring_args.append(
+                qs_args.append(
                     order_by_obj.querystring(),
                 )
 
-        return querystring_args
+        return qs_args, qs_params
 
 
 class Sum(AggFunction):
@@ -217,7 +257,7 @@ class StringAgg(AggFunction):
 
     def __init__(
         self: Self,
-        func_argument: SQLSelectable,
+        func_argument: SQLSelectable | Any,
         separator: str,
         alias: str | None = None,
         order_by: list[SQLSelectable] | None = None,
@@ -242,7 +282,39 @@ class StringAgg(AggFunction):
 
         self.order_by: Final = order_by
         self.order_by_objs: Final = order_by_objs
-        self.separator: Final = transform_value_to_sql(separator)
+        self.separator: Final = f"'{separator}'"
+
+    def querystring(self: Self) -> QueryString:
+        """Build new `QueryString`.
+
+        ### Returns:
+        `QueryString` for aggregate function.
+        """
+        qs_args, qs_params = self._querystring_args_params
+        template_args = self._template_args
+        if not qs_params:
+            return self._querystring(
+                qs_args=qs_args,
+                qs_params=qs_params,
+                template_args=template_args,
+            )
+
+        for qs_param in qs_params:
+            sql_type = map_python_type_to_sql(
+                for_match_value=qs_param,
+            )
+            if sql_type:
+                template_args = template_args.replace(
+                    QueryString.parameter_placeholder,
+                    f"{QueryString.parameter_placeholder}::{sql_type.sql_type()}",
+                    1,
+                )
+
+        return self._querystring(
+            qs_args=qs_args,
+            qs_params=qs_params,
+            template_args=template_args,
+        )
 
     @property
     def _template_args(self: Self) -> str:
@@ -251,30 +323,39 @@ class StringAgg(AggFunction):
 
         if self.order_by:
             order_by_args = ", ".join(
-                ["{}" for _ in self.order_by],
+                [QueryString.arg_ph()] * len(self.order_by),
             )
         if self.order_by_objs:
             order_by_objects_args = ", ".join(
-                ["{}" for _ in self.order_by_objs],
+                [QueryString.arg_ph()] * len(self.order_by_objs),
             )
+
+        _, qs_params = super()._querystring_args_params
+        qs_placeholder = (
+            f"{QueryString.param_ph()}, {QueryString.arg_ph()}"
+            if qs_params
+            else f"{QueryString.arg_ph()}, {QueryString.arg_ph()}"
+        )
 
         if order_by_args and order_by_objects_args:
             return (
-                "{}, {} ORDER BY "  # noqa: ISC003
+                f"{qs_placeholder} ORDER BY "  # noqa: ISC003
                 + f"{order_by_args}, "
                 + order_by_objects_args
             )
         if order_by_args:
-            return "{}, {} ORDER BY " + order_by_args
+            return f"{qs_placeholder} ORDER BY " + order_by_args
         if order_by_objects_args:
-            return "{}, {} ORDER BY " + order_by_objects_args
+            return f"{qs_placeholder} ORDER BY " + order_by_objects_args
 
-        return "{}, {}"
+        return qs_placeholder
 
     @property
-    def _querystring_args(self: Self) -> list[QueryString]:
-        querystring_args = super()._querystring_args
-        querystring_args.append(
+    def _querystring_args_params(
+        self: Self,
+    ) -> tuple[list[QueryString], list[Any]]:
+        qs_args, qs_params = super()._querystring_args_params
+        qs_args.append(
             QueryString(
                 self.separator,
                 sql_template="{}",
@@ -283,16 +364,16 @@ class StringAgg(AggFunction):
 
         if self.order_by:
             for single_order_by in self.order_by:
-                querystring_args.append(
+                qs_args.append(
                     single_order_by.querystring(),
                 )
         if self.order_by_objs:
             for order_by_obj in self.order_by_objs:
-                querystring_args.append(
+                qs_args.append(
                     order_by_obj.querystring(),
                 )
 
-        return querystring_args
+        return qs_args, qs_params
 
 
 class Max(AggFunction):
@@ -360,7 +441,7 @@ class Greatest(AggFunction):
 
     def __init__(
         self: Self,
-        *func_argument: SQLSelectable,
+        *func_argument: SQLSelectable | Any,
         alias: str | None = None,
     ) -> None:
         """Create `GREATEST` function.
@@ -387,7 +468,7 @@ class Least(AggFunction):
 
     def __init__(
         self: Self,
-        *func_argument: SQLSelectable,
+        *func_argument: SQLSelectable | Any,
         alias: str | None = None,
     ) -> None:
         """Create `LEAST` function.

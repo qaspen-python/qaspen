@@ -85,6 +85,8 @@ class BaseTransaction(ABC, Generic[Engine, DBConnection]):
 
         ### Parameters:
         - `querystring`: sql querystring to execute.
+        - `querystring_parameters`: parameters for querystring.
+            They will be processed on driver side.
         - `fetch_results`: Get results or not,
             Possible only for queries that return something.
         """

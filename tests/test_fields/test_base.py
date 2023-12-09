@@ -19,12 +19,14 @@ from qaspen.fields.operators import (
     GreaterEqualOperator,
     GreaterOperator,
     InOperator,
+    InWithoutBracketsOperator,
     IsNotNullOperator,
     IsNullOperator,
     LessEqualOperator,
     LessOperator,
     NotEqualOperator,
     NotInOperator,
+    NotInWithoutBracketsOperator,
 )
 from qaspen.fields.primitive import VarCharField
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE, EMPTY_VALUE, OperatorTypes
@@ -138,7 +140,8 @@ def test_field_field_type_property() -> None:
         wow_field = TestField()
 
     assert TestTable.wow_field._field_type == "VARCHAR"
-    assert TestTable.wow_field._field_type == VarChar.querystring().build()
+    type_qs, _ = VarChar.querystring().build()
+    assert TestTable.wow_field._field_type == type_qs
 
 
 def test_no_args_in_parameters() -> None:
@@ -329,10 +332,11 @@ def test_field_in_method_with_values(for_test_table: _ForTestTable) -> None:
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
     assert filter_statement.field in [for_test_table.name]
-    assert filter_statement.operator == InOperator
+    assert filter_statement.operator == InWithoutBracketsOperator
 
-    querystring = filter_statement.querystring().build()
-    assert querystring == ("fortesttable.name IN ('search', 'this', 'string')")
+    querystring, qs_params = filter_statement.querystring().build()
+    assert querystring == ("fortesttable.name IN %s")
+    assert qs_params == [("search", "this", "string")]
 
 
 def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
@@ -351,11 +355,12 @@ def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
     assert filter_statement.field in [for_test_table.name]
     assert filter_statement.operator == InOperator
 
-    querystring = filter_statement.querystring().build()
+    querystring, qs_params = filter_statement.querystring().build()
     assert querystring == (
         "fortesttable.name IN "
         "(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_in_method_with_subquery_and_values(
@@ -407,12 +412,11 @@ def test_field_not_in_method_with_values(
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
     assert filter_statement.field in [for_test_table.name]
-    assert filter_statement.operator == NotInOperator
+    assert filter_statement.operator == NotInWithoutBracketsOperator
 
-    querystring = filter_statement.querystring().build()
-    assert querystring == (
-        "fortesttable.name NOT IN ('search', 'this', 'string')"
-    )
+    querystring, qs_params = filter_statement.querystring().build()
+    assert querystring == ("fortesttable.name NOT IN %s")
+    assert qs_params == [comparison_values]
 
 
 def test_field_not_in_method_with_subquery(
@@ -433,11 +437,12 @@ def test_field_not_in_method_with_subquery(
     assert filter_statement.field in [for_test_table.name]
     assert filter_statement.operator == NotInOperator
 
-    querystring = filter_statement.querystring().build()
+    querystring, qs_params = filter_statement.querystring().build()
     assert querystring == (
         "fortesttable.name NOT IN "
         "(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_not_in_method_with_subquery_and_values(
@@ -484,8 +489,12 @@ def test_field_between_method(for_test_table: _ForTestTable) -> None:
     assert filter_between.field in [for_test_table.name]
     assert filter_between.operator == BetweenOperator
 
-    querystring: Final = filter_between.querystring().build()
-    assert querystring == ("fortesttable.name BETWEEN 'left' AND 'right'")
+    querystring, qs_params = filter_between.querystring().build()
+    assert querystring == ("fortesttable.name BETWEEN %s AND %s")
+    assert qs_params == [
+        left_value,
+        right_value,
+    ]
 
 
 @pytest.mark.parametrize(
@@ -532,8 +541,9 @@ def test_field_overloaded_eq_method_with_field(
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == EqualOperator
 
-    querystring: Final = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_field.querystring().build()
     assert querystring == "fortesttable.name = fortesttable.name"
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -564,12 +574,13 @@ def test_field_overloaded_eq_method_with_operator(
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == EqualOperator
 
-    querystring: Final = filter_with_operator.querystring().build()
+    querystring, qs_params = filter_with_operator.querystring().build()
     assert querystring == (
         "fortesttable.name = "
         f"{operator_string} "
         f"(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_overloaded_eq_method_with_value(
@@ -589,8 +600,9 @@ def test_field_overloaded_eq_method_with_value(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == EqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name = '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name = %s"
+    assert qs_params == [value]
 
 
 def test_field_overloaded_eq_method_wrong_value(
@@ -626,8 +638,9 @@ def test_field_eq_method_with_none_value(
     assert filter_with_value.comparison_value == EMPTY_VALUE
     assert filter_with_value.operator == IsNullOperator
 
-    querystring: Final = filter_with_value.querystring().build()
+    querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "fortesttable.name IS NULL"
+    assert not qs_params
 
 
 def test_field_eq_method(
@@ -649,8 +662,9 @@ def test_field_eq_method(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == EqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name = '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name = %s"
+    assert qs_params == [value]
 
 
 def test_overloaded_ne_method_with_field(
@@ -671,8 +685,9 @@ def test_overloaded_ne_method_with_field(
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == NotEqualOperator
 
-    querystring: Final = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_field.querystring().build()
     assert querystring == "fortesttable.name != fortesttable.name"
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -703,12 +718,13 @@ def test_field_overloaded_ne_method_with_operator(
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == NotEqualOperator
 
-    querystring: Final = filter_with_operator.querystring().build()
+    querystring, qs_params = filter_with_operator.querystring().build()
     assert querystring == (
         "fortesttable.name != "
         f"{operator_string} "
         f"(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_overloaded_ne_method_with_value(
@@ -728,8 +744,9 @@ def test_field_overloaded_ne_method_with_value(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == NotEqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name != '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name != %s"
+    assert qs_params == [value]
 
 
 def test_field_overloaded_ne_method_wrong_value(
@@ -765,8 +782,9 @@ def test_field_ne_method_with_none_value(
     assert filter_with_value.comparison_value == EMPTY_VALUE
     assert filter_with_value.operator == IsNotNullOperator
 
-    querystring: Final = filter_with_value.querystring().build()
+    querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "fortesttable.name IS NOT NULL"
+    assert not qs_params
 
 
 def test_field_ne_method(
@@ -788,8 +806,9 @@ def test_field_ne_method(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == NotEqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name != '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name != %s"
+    assert qs_params == [value]
 
 
 def test_overloaded_gt_method_with_field(
@@ -810,8 +829,9 @@ def test_overloaded_gt_method_with_field(
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == GreaterOperator
 
-    querystring: Final = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_field.querystring().build()
     assert querystring == "fortesttable.name > fortesttable.name"
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -842,12 +862,13 @@ def test_field_overloaded_gt_method_with_operator(
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == GreaterOperator
 
-    querystring: Final = filter_with_operator.querystring().build()
+    querystring, qs_params = filter_with_operator.querystring().build()
     assert querystring == (
         "fortesttable.name > "
         f"{operator_string} "
         f"(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_overloaded_gt_method_with_value(
@@ -867,8 +888,9 @@ def test_field_overloaded_gt_method_with_value(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name > '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name > %s"
+    assert qs_params == [value]
 
 
 def test_field_overloaded_gt_method_wrong_value(
@@ -908,8 +930,9 @@ def test_field_gt_method(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name > '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name > %s"
+    assert qs_params == [value]
 
 
 def test_overloaded_ge_method_with_field(
@@ -930,8 +953,9 @@ def test_overloaded_ge_method_with_field(
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == GreaterEqualOperator
 
-    querystring: Final = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_field.querystring().build()
     assert querystring == "fortesttable.name >= fortesttable.name"
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -962,12 +986,13 @@ def test_field_overloaded_ge_method_with_operator(
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == GreaterEqualOperator
 
-    querystring: Final = filter_with_operator.querystring().build()
+    querystring, qs_params = filter_with_operator.querystring().build()
     assert querystring == (
         "fortesttable.name >= "
         f"{operator_string} "
-        f"(SELECT fortesttable.name FROM public.fortesttable)"
+        "(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_overloaded_ge_method_with_value(
@@ -987,8 +1012,9 @@ def test_field_overloaded_ge_method_with_value(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterEqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name >= '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name >= %s"
+    assert qs_params == [value]
 
 
 def test_field_overloaded_ge_method_wrong_value(
@@ -1028,8 +1054,9 @@ def test_field_gte_method(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterEqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name >= '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name >= %s"
+    assert qs_params == [value]
 
 
 def test_overloaded_lt_method_with_field(
@@ -1050,8 +1077,9 @@ def test_overloaded_lt_method_with_field(
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == LessOperator
 
-    querystring: Final = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_field.querystring().build()
     assert querystring == "fortesttable.name < fortesttable.name"
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -1082,12 +1110,13 @@ def test_field_overloaded_lt_method_with_operator(
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == LessOperator
 
-    querystring: Final = filter_with_operator.querystring().build()
+    querystring, qs_params = filter_with_operator.querystring().build()
     assert querystring == (
         "fortesttable.name < "
         f"{operator_string} "
         f"(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_overloaded_lt_method_with_value(
@@ -1107,8 +1136,9 @@ def test_field_overloaded_lt_method_with_value(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name < '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name < %s"
+    assert qs_params == [value]
 
 
 def test_field_overloaded_lt_method_wrong_value(
@@ -1148,8 +1178,9 @@ def test_field_lt_method(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name < '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name < %s"
+    assert qs_params == [value]
 
 
 def test_overloaded_le_method_with_field(
@@ -1170,8 +1201,9 @@ def test_overloaded_le_method_with_field(
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == LessEqualOperator
 
-    querystring: Final = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_field.querystring().build()
     assert querystring == "fortesttable.name <= fortesttable.name"
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -1202,12 +1234,13 @@ def test_field_overloaded_le_method_with_operator(
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == LessEqualOperator
 
-    querystring: Final = filter_with_operator.querystring().build()
+    querystring, qs_params = filter_with_operator.querystring().build()
     assert querystring == (
         "fortesttable.name <= "
         f"{operator_string} "
         f"(SELECT fortesttable.name FROM public.fortesttable)"
     )
+    assert not qs_params
 
 
 def test_field_overloaded_le_method_with_value(
@@ -1227,8 +1260,9 @@ def test_field_overloaded_le_method_with_value(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessEqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name <= '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name <= %s"
+    assert qs_params == [value]
 
 
 def test_field_overloaded_le_method_wrong_value(
@@ -1268,8 +1302,9 @@ def test_field_lte_method(
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessEqualOperator
 
-    querystring: Final = filter_with_value.querystring().build()
-    assert querystring == f"fortesttable.name <= '{value}'"
+    querystring, qs_params = filter_with_value.querystring().build()
+    assert querystring == "fortesttable.name <= %s"
+    assert qs_params == [value]
 
 
 def test_field_with_alias_method(
@@ -1291,11 +1326,12 @@ def test_field_with_alias_method(
         for_test_table.name.with_alias(alias_name=alias_name),
     )
 
-    querystring: Final = statement_with_aliased.querystring().build()
+    querystring, qs_params = statement_with_aliased.querystring().build()
 
     assert querystring == (
         "SELECT fortesttable.name AS good_alias FROM public.fortesttable"
     )
+    assert not qs_params
 
 
 def test_field_correct_method_value_types(

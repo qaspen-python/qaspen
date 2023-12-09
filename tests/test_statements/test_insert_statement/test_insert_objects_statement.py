@@ -110,7 +110,7 @@ async def test_insert_obj_stmt_execute_method(
     test_engine.running_transaction.set(test_db_transaction)
 
     query_result = await iostmt.execute(engine=test_engine)
-    assert query_result == [1000]
+    assert query_result == [1000, 999]
 
     db_raw_records = await TableTest.select().execute(engine=test_engine)
     db_results = db_raw_records.result()
@@ -152,7 +152,50 @@ async def test_insert_obj_stmt_transaction_execute_method(
     query_result = await iostmt.transaction_execute(
         transaction=test_db_transaction,
     )
-    assert query_result == [1000]
+    assert query_result == [1000, 999]
+
+    db_raw_records = await TableTest.select().transaction_execute(
+        transaction=test_db_transaction,
+    )
+    db_results = db_raw_records.result()
+    expected_db_results = [
+        {"some_id": 1000, "some_name": "Qaspen", "some_number": 100},
+        {"some_id": 999, "some_name": "ORM", "some_number": 100},
+    ]
+
+    assert db_results == expected_db_results
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_table")
+async def test_insert_obj_stmt_transaction_execute_method_no_return(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `InsertStatement` `__await__` method."""
+    TableTest._table_meta.database_engine = None
+    table_obj1_some_id = 1000
+    table_obj1 = TableTest(some_id=table_obj1_some_id)
+
+    table_obj2_some_id = 999
+    table_obj2_some_name = "ORM"
+    table_obj2 = TableTest(
+        some_id=table_obj2_some_id,
+        some_name=table_obj2_some_name,
+    )
+
+    insert_objects = [
+        table_obj1,
+        table_obj2,
+    ]
+
+    iostmt = InsertObjectsStatement[TableTest, None](
+        insert_objects=insert_objects,
+        from_table=TableTest,
+    )
+
+    await iostmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
 
     db_raw_records = await TableTest.select().transaction_execute(
         transaction=test_db_transaction,

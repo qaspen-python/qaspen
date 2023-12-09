@@ -24,107 +24,139 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "expected_query"),
+    ("func_argument", "expected_query", "expected_qs_params"),
     [
         (
             TableForTest.name,
             "SELECT COUNT(ttest.name) FROM public.ttest",
+            None,
         ),
         (
             "something",
-            "SELECT COUNT('something') FROM public.ttest",
+            "SELECT COUNT(%s) FROM public.ttest",
+            ["something"],
         ),
     ],
 )
 def test_count_agg_function(
     func_argument: Any,
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `Count` agg function."""
     agg_statement = TableForTest.select(
         Count(func_argument=func_argument),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_arguments", "expected_query"),
+    ("func_arguments", "expected_query", "expected_qs_params"),
     [
         (
             [TableForTest.name, "something"],
-            "SELECT COALESCE(ttest.name, 'something') FROM public.ttest",
+            "SELECT COALESCE(ttest.name, %s) FROM public.ttest",
+            ["something"],
         ),
         (
             [TableForTest.name],
             "SELECT COALESCE(ttest.name) FROM public.ttest",
+            None,
         ),
     ],
 )
 def test_coalesce_agg_function(
     func_arguments: Any,
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `COALESCE` agg function."""
     agg_statement = TableForTest.select(
         Coalesce(*func_arguments),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "expected_query"),
+    ("func_argument", "expected_query", "expected_qs_params"),
     [
         (
             TableForTest.name,
             "SELECT AVG(ttest.name) FROM public.ttest",
+            None,
         ),
         (
             "something",
-            "SELECT AVG('something') FROM public.ttest",
+            "SELECT AVG(%s) FROM public.ttest",
+            ["something"],
         ),
     ],
 )
 def test_avg_agg_function(
     func_argument: Any,
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `Avg` agg function."""
     agg_statement = TableForTest.select(
         Avg(func_argument=func_argument),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "expected_query"),
+    ("func_argument", "expected_query", "expected_qs_params"),
     [
         (
             TableForTest.name,
             "SELECT ARRAY_AGG(ttest.name) FROM public.ttest",
+            None,
         ),
         (
             "something",
-            "SELECT ARRAY_AGG('something') FROM public.ttest",
+            "SELECT ARRAY_AGG(%s::VARCHAR) FROM public.ttest",
+            ["something"],
         ),
     ],
 )
 def test_array_agg_function_simple(
     func_argument: Any,
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `ArrayAgg` agg function."""
     agg_statement = TableForTest.select(
         ArrayAgg(func_argument=func_argument),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "order_by", "expected_query"),
+    ("func_argument", "order_by", "expected_query", "expected_qs_params"),
     [
         (
             TableForTest.name,
@@ -133,6 +165,7 @@ def test_array_agg_function_simple(
                 "SELECT ARRAY_AGG(ttest.name ORDER BY ttest.name) "
                 "FROM public.ttest"
             ),
+            None,
         ),
         (
             TableForTest.name,
@@ -142,14 +175,16 @@ def test_array_agg_function_simple(
                 "(ttest.name ORDER BY ttest.name, ttest.count) "
                 "FROM public.ttest"
             ),
+            None,
         ),
         (
             "something",
             [TableForTest.name],
             (
-                "SELECT ARRAY_AGG('something' ORDER BY ttest.name) "
+                "SELECT ARRAY_AGG(%s::VARCHAR ORDER BY ttest.name) "
                 "FROM public.ttest"
             ),
+            ["something"],
         ),
     ],
 )
@@ -157,6 +192,7 @@ def test_array_agg_function_with_order_by(
     func_argument: Any,
     order_by: list[SQLSelectable],
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `ArrayAgg` agg function with `order_by` parameter."""
     agg_statement = TableForTest.select(
@@ -166,11 +202,21 @@ def test_array_agg_function_with_order_by(
         ),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "order_by_objs", "expected_query"),
+    (
+        "func_argument",
+        "order_by_objs",
+        "expected_query",
+        "expected_qs_params",
+    ),
     [
         (
             TableForTest.name,
@@ -178,6 +224,7 @@ def test_array_agg_function_with_order_by(
             (
                 "SELECT ARRAY_AGG(ttest.name ORDER BY ttest.name ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
             ),
+            None,
         ),
         (
             TableForTest.name,
@@ -194,13 +241,15 @@ def test_array_agg_function_with_order_by(
             (
                 "SELECT ARRAY_AGG(ttest.name ORDER BY ttest.name ASC NULLS FIRST, ttest.count DESC NULLS LAST) FROM public.ttest"  # noqa: E501
             ),
+            None,
         ),
         (
             "something",
             [OrderBy(field=TableForTest.name)],
             (
-                "SELECT ARRAY_AGG('something' ORDER BY ttest.name ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
+                "SELECT ARRAY_AGG(%s::VARCHAR ORDER BY ttest.name ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
             ),
+            ["something"],
         ),
     ],
 )
@@ -208,6 +257,7 @@ def test_array_agg_function_with_order_by_objs(
     func_argument: Any,
     order_by_objs: list[OrderBy],
     expected_query: str,
+    expected_qs_params: list[str],
 ) -> None:
     """Test `ArrayAgg` agg function with `order_by` parameter."""
     agg_statement = TableForTest.select(
@@ -217,11 +267,22 @@ def test_array_agg_function_with_order_by_objs(
         ),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "order_by", "order_by_objs", "expected_query"),
+    (
+        "func_argument",
+        "order_by",
+        "order_by_objs",
+        "expected_query",
+        "expected_qs_params",
+    ),
     [
         (
             TableForTest.name,
@@ -230,14 +291,16 @@ def test_array_agg_function_with_order_by_objs(
             (
                 "SELECT ARRAY_AGG(ttest.name ORDER BY ttest.name, ttest.count ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
             ),
+            None,
         ),
         (
             "something",
             [TableForTest.name],
             [OrderBy(field=TableForTest.count)],
             (
-                "SELECT ARRAY_AGG('something' ORDER BY ttest.name, ttest.count ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
+                "SELECT ARRAY_AGG(%s::VARCHAR ORDER BY ttest.name, ttest.count ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
             ),
+            ["something"],
         ),
     ],
 )
@@ -246,6 +309,7 @@ def test_array_agg_function_with_order_by_objs_and_order_by(
     order_by: list[SQLSelectable],
     order_by_objs: list[OrderBy],
     expected_query: str,
+    expected_qs_params: list[str],
 ) -> None:
     """Test `ArrayAgg` agg function.
 
@@ -260,7 +324,12 @@ def test_array_agg_function_with_order_by_objs_and_order_by(
         ),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -285,25 +354,30 @@ def test_sum_agg_function(
         Sum(func_argument=func_argument),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "expected_query"),
+    ("func_argument", "expected_query", "expected_qs_params"),
     [
         (
             TableForTest.name,
             "SELECT STRING_AGG(ttest.name, ',') FROM public.ttest",
+            None,
         ),
         (
             "something",
-            "SELECT STRING_AGG('something', ',') FROM public.ttest",
+            "SELECT STRING_AGG(%s::VARCHAR, ',') FROM public.ttest",
+            ["something"],
         ),
     ],
 )
 def test_string_agg_function_simple(
     func_argument: Any,
     expected_query: str,
+    expected_qs_params: list[str] | None,
 ) -> None:
     """Test `StringAgg` agg function."""
     agg_statement = TableForTest.select(
@@ -313,11 +387,16 @@ def test_string_agg_function_simple(
         ),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "order_by", "expected_query"),
+    ("func_argument", "order_by", "expected_query", "expected_qs_params"),
     [
         (
             TableForTest.name,
@@ -326,15 +405,17 @@ def test_string_agg_function_simple(
                 "SELECT STRING_AGG(ttest.name, ',' ORDER BY ttest.name) "
                 "FROM public.ttest"
             ),
+            None,
         ),
         (
-            TableForTest.name,
+            "something",
             [TableForTest.name, TableForTest.count],
             (
                 "SELECT STRING_AGG"
-                "(ttest.name, ',' ORDER BY ttest.name, ttest.count) "
+                "(%s::VARCHAR, ',' ORDER BY ttest.name, ttest.count) "
                 "FROM public.ttest"
             ),
+            ["something"],
         ),
     ],
 )
@@ -342,6 +423,7 @@ def test_string_agg_function_with_order_by(
     func_argument: Any,
     order_by: list[SQLSelectable],
     expected_query: str,
+    expected_qs_params: list[str] | None,
 ) -> None:
     """Test `StringAgg` agg function with `order_by` parameter."""
     agg_statement = TableForTest.select(
@@ -352,11 +434,21 @@ def test_string_agg_function_with_order_by(
         ),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "order_by_objs", "expected_query"),
+    (
+        "func_argument",
+        "order_by_objs",
+        "expected_query",
+        "expected_qs_params",
+    ),
     [
         (
             TableForTest.name,
@@ -364,6 +456,15 @@ def test_string_agg_function_with_order_by(
             (
                 "SELECT STRING_AGG(ttest.name, ',' ORDER BY ttest.name ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
             ),
+            None,
+        ),
+        (
+            "something",
+            [OrderBy(field=TableForTest.name)],
+            (
+                "SELECT STRING_AGG(%s::VARCHAR, ',' ORDER BY ttest.name ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
+            ),
+            ["something"],
         ),
         (
             TableForTest.name,
@@ -380,6 +481,7 @@ def test_string_agg_function_with_order_by(
             (
                 "SELECT STRING_AGG(ttest.name, ',' ORDER BY ttest.name ASC NULLS FIRST, ttest.count DESC NULLS LAST) FROM public.ttest"  # noqa: E501
             ),
+            None,
         ),
     ],
 )
@@ -387,6 +489,7 @@ def test_string_agg_function_with_order_by_objs(
     func_argument: Any,
     order_by_objs: list[OrderBy],
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `StringAgg` agg function with `order_by` parameter."""
     agg_statement = TableForTest.select(
@@ -397,11 +500,22 @@ def test_string_agg_function_with_order_by_objs(
         ),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_argument", "order_by", "order_by_objs", "expected_query"),
+    (
+        "func_argument",
+        "order_by",
+        "order_by_objs",
+        "expected_query",
+        "expected_qs_params",
+    ),
     [
         (
             TableForTest.name,
@@ -410,6 +524,16 @@ def test_string_agg_function_with_order_by_objs(
             (
                 "SELECT STRING_AGG(ttest.name, ',' ORDER BY ttest.name, ttest.count ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
             ),
+            None,
+        ),
+        (
+            "something",
+            [TableForTest.name],
+            [OrderBy(field=TableForTest.count)],
+            (
+                "SELECT STRING_AGG(%s::VARCHAR, ',' ORDER BY ttest.name, ttest.count ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
+            ),
+            ["something"],
         ),
         (
             TableForTest.count,
@@ -418,6 +542,7 @@ def test_string_agg_function_with_order_by_objs(
             (
                 "SELECT STRING_AGG(ttest.count, ',' ORDER BY ttest.name, ttest.count ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
             ),
+            None,
         ),
     ],
 )
@@ -426,6 +551,7 @@ def test_string_agg_function_with_order_by_objs_and_order_by(
     order_by: list[SQLSelectable],
     order_by_objs: list[OrderBy],
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `StringAgg` agg function.
 
@@ -441,7 +567,12 @@ def test_string_agg_function_with_order_by_objs_and_order_by(
         ),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -466,7 +597,9 @@ def test_max_agg_function(
         Max(func_argument=func_argument),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
@@ -491,54 +624,82 @@ def test_min_agg_function(
         Min(func_argument=func_argument),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_arguments", "expected_query"),
+    ("func_arguments", "expected_query", "expected_qs_params"),
     [
         (
             [TableForTest.name],
             "SELECT GREATEST(ttest.name) FROM public.ttest",
+            None,
         ),
         (
             [TableForTest.name, TableForTest.count],
             "SELECT GREATEST(ttest.name, ttest.count) FROM public.ttest",
+            None,
+        ),
+        (
+            ["Hello", "Qaspen", TableForTest.name],
+            "SELECT GREATEST(%s, %s, ttest.name) FROM public.ttest",
+            ["Hello", "Qaspen"],
         ),
     ],
 )
 def test_greatest_agg_function(
     func_arguments: Any,
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `Greatest` agg function."""
     agg_statement = TableForTest.select(
         Greatest(*func_arguments),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params
 
 
 @pytest.mark.parametrize(
-    ("func_arguments", "expected_query"),
+    ("func_arguments", "expected_query", "expected_qs_params"),
     [
         (
             [TableForTest.name],
             "SELECT LEAST(ttest.name) FROM public.ttest",
+            None,
         ),
         (
             [TableForTest.name, TableForTest.count],
             "SELECT LEAST(ttest.name, ttest.count) FROM public.ttest",
+            None,
+        ),
+        (
+            ["Hello", "Qaspen", TableForTest.name],
+            "SELECT LEAST(%s, %s, ttest.name) FROM public.ttest",
+            ["Hello", "Qaspen"],
         ),
     ],
 )
 def test_least_agg_function(
     func_arguments: Any,
     expected_query: str,
+    expected_qs_params: list[Any] | None,
 ) -> None:
     """Test `Least` agg function."""
     agg_statement = TableForTest.select(
         Least(*func_arguments),
     )
 
-    assert agg_statement.querystring().build() == expected_query
+    querystring, qs_params = agg_statement.querystring().build()
+    assert querystring == expected_query
+    if expected_qs_params:
+        assert qs_params == expected_qs_params
+    else:
+        assert not qs_params

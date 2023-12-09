@@ -293,7 +293,8 @@ class BaseField(Generic[FieldType], abc.ABC):
         ### Return
         SQL `string`.
         """
-        return str(self._sql_type.querystring().build())
+        query, _ = self._sql_type.querystring().build()
+        return query
 
 
 class Field(BaseField[FieldType]):
@@ -527,6 +528,7 @@ class Field(BaseField[FieldType]):
             where_parameters["comparison_value"] = subquery
         elif comparison_values:
             where_parameters["comparison_values"] = comparison_values
+            where_parameters["operator"] = operators.InWithoutBracketsOperator
 
         return Filter(**where_parameters)
 
@@ -612,6 +614,9 @@ class Field(BaseField[FieldType]):
             where_parameters["comparison_value"] = subquery
         elif comparison_values:
             where_parameters["comparison_values"] = comparison_values
+            where_parameters[
+                "operator"
+            ] = operators.NotInWithoutBracketsOperator
 
         return Filter(**where_parameters)
 

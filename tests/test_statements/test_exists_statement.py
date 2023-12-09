@@ -31,10 +31,12 @@ async def test_exists_await_method(
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine
 
+    querystring, qs_params = stmt.querystring_for_select().build()
     assert (
-        stmt.querystring_for_select().build()
-        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = 'Qaspen')"  # noqa: E501
+        querystring
+        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = %s)"  # noqa: E501
     )
+    assert qs_params == ["Qaspen"]
 
     assert await stmt
 
@@ -56,10 +58,12 @@ async def test_exists_execute_method(
         .exists()
     )
 
+    querystring, qs_params = stmt.querystring_for_select().build()
     assert (
-        stmt.querystring_for_select().build()
-        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = 'Qaspen')"  # noqa: E501
+        querystring
+        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = %s)"  # noqa: E501
     )
+    assert qs_params == ["Qaspen"]
 
     assert await stmt.execute(
         engine=test_engine,
@@ -80,10 +84,12 @@ async def test_exists_transaction_execute_method(
         .exists()
     )
 
+    querystring, qs_params = stmt.querystring_for_select().build()
     assert (
-        stmt.querystring_for_select().build()
-        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = 'Qaspen')"  # noqa: E501
+        querystring
+        == "SELECT EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = %s)"  # noqa: E501
     )
+    assert qs_params == ["Qaspen"]
 
     assert await stmt.transaction_execute(
         transaction=test_db_transaction,
@@ -106,10 +112,12 @@ async def test_exists_as_subquery_method(
         .exists(),
     )
 
+    querystring, qs_params = stmt.querystring().build()
     assert (
-        stmt.querystring().build()
-        == "SELECT main_users.fullname FROM public.main_users WHERE EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = 'Qaspen')"  # noqa: E501
+        querystring
+        == "SELECT main_users.fullname FROM public.main_users WHERE EXISTS (SELECT 1 FROM public.main_users WHERE main_users.fullname = %s)"  # noqa: E501
     )
+    assert qs_params == ["Qaspen"]
 
     assert await stmt.transaction_execute(
         transaction=test_db_transaction,

@@ -40,10 +40,12 @@ async def test_union_await_method(
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine
 
+    querystring, qs_params = union.querystring().build()
     assert (
-        union.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users UNION SELECT main_users.fullname FROM public.main_users UNION SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not qs_params
 
     expected_result = [
         {"fullname": "Python"},
@@ -71,10 +73,12 @@ async def test_union_execute_method(
 
     union = stmt1.union(stmt2, union_all=True)
 
+    querystring, qs_params = union.querystring().build()
     assert (
-        union.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users UNION ALL SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not qs_params
 
     expected_result = [
         {"fullname": "Qaspen"},
@@ -111,10 +115,12 @@ async def test_union_transaction_execute_method(
     union = stmt1.union(stmt2)
     union = union.union(stmt3)
 
+    querystring, qs_params = union.querystring().build()
     assert (
-        union.querystring().build()
+        querystring
         == "SELECT main_users.fullname FROM public.main_users UNION SELECT main_users.fullname FROM public.main_users UNION SELECT main_users.fullname FROM public.main_users"  # noqa: E501
     )
+    assert not qs_params
 
     expected_result = [{"fullname": "Python"}, {"fullname": "Qaspen"}]
     assert (

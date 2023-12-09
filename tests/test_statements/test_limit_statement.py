@@ -18,4 +18,6 @@ def test_limit_statement() -> None:
 
     assert limit_stmt.limit_number == new_limit_number
 
-    assert limit_stmt.querystring().build() == f"LIMIT {new_limit_number}"
+    querystring, qs_params = limit_stmt.querystring().build()
+    assert querystring == f"LIMIT {new_limit_number}"
+    assert not qs_params

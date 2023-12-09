@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING, Any, Final, Literal
 
 if TYPE_CHECKING:
@@ -88,8 +87,7 @@ class QueryString:
 
     def build(
         self: Self,
-        engine_type: str = "PSQLPsycopg",
-    ) -> str:
+    ) -> tuple[str, list[Any]]:
         """Build string from querystring.
 
         Return full SQL querystring with all parameters
@@ -102,9 +100,13 @@ class QueryString:
         str
         """
         builded_querystring, template_parameters = self._build()
-        return self._replace_param_placeholders(
-            builded_querystring=builded_querystring,
-            engine_type=engine_type,
+        return (
+            self._replace_param_placeholders(
+                builded_querystring=builded_querystring,
+            ),
+            self._preprocess_template_parameters(
+                template_parameters=template_parameters,
+            ),
         )
 
     def _preprocess_template_parameters(
@@ -133,6 +135,8 @@ class QueryString:
         self: Self,
         template_parameters: list[Any] | None = None,
     ) -> tuple[str, list[Any]]:
+        from qaspen.base.sql_base import SQLSelectable
+
         sql_template = self.sql_template.replace(
             self.argument_placeholder,
             "{}",
@@ -153,9 +157,35 @@ class QueryString:
                     template_argument,
                 )
 
-        template_parameters.extend(
-            self.template_parameters,
-        )
+        for template_parameter in self.template_parameters:
+            if isinstance(template_parameter, QueryString):
+                rendered_template, _ = template_parameter._build(
+                    template_parameters=template_parameters,
+                )
+                if self.parameter_placeholder in sql_template:
+                    sql_template = sql_template.replace(
+                        self.parameter_placeholder,
+                        "{}",
+                        1,
+                    )
+                template_arguments.append(rendered_template)
+
+            elif isinstance(template_parameter, SQLSelectable):
+                rendered_template, _ = template_parameter.querystring()._build(
+                    template_parameters=template_parameters,
+                )
+                if self.parameter_placeholder in sql_template:
+                    sql_template = sql_template.replace(
+                        self.parameter_placeholder,
+                        "{}",
+                        1,
+                    )
+                template_arguments.append(rendered_template)
+
+            else:
+                template_parameters.append(
+                    template_parameter,
+                )
 
         return (
             sql_template.format(
@@ -167,7 +197,6 @@ class QueryString:
     def _replace_param_placeholders(
         self: Self,
         builded_querystring: str,
-        engine_type: str,
     ) -> str:
         """Replace parameters placeholders.
 
@@ -177,30 +206,10 @@ class QueryString:
         For example psycopg needs `%s` for parameters,
         at the same time asyncpg needs $1, $2, ...
         """
-        all_params_matches = [
-            0
-            for _ in re.finditer(
-                self.parameter_placeholder,
-                builded_querystring,
-            )
-        ]
-        template_parameters_count = 1
-
-        if engine_type == "PSQLPsycopg":
-            return builded_querystring.replace(
-                self.parameter_placeholder,
-                "%s",
-            )
-
-        for _ in all_params_matches:
-            builded_querystring = builded_querystring.replace(
-                self.parameter_placeholder,
-                f"${template_parameters_count}",
-                1,
-            )
-            template_parameters_count += 1
-
-        return builded_querystring
+        return builded_querystring.replace(
+            self.parameter_placeholder,
+            "%s",
+        )
 
     def __add__(
         self: Self,

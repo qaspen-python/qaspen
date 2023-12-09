@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any
 
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.querystring.querystring import QueryString
-from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -37,30 +36,49 @@ class AggFunction(ABC):
     def querystring(self: Self) -> QueryString:
         """Build new `QueryString`.
 
-        If function argument is `SQLSelectable`
-        (usually it's a Field), then use `querystring()`
-        method.
-
-        If function argument isn't `SQLSelectable`,
-        then try to convert this value into SQL-readable string.
-
         ### Returns:
         `QueryString` for aggregate function.
         """
+        qs_args, qs_params = self._querystring_args_params
+        return self._querystring(
+            qs_args=qs_args,
+            qs_params=qs_params,
+            template_args=self._template_args,
+        )
+
+    def _querystring(
+        self: Self,
+        qs_args: list[QueryString],
+        qs_params: list[Any],
+        template_args: str,
+    ) -> QueryString:
         return QueryString(
-            *self._querystring_args,
-            sql_template=self.function_name + "(" + self._template_args + ")",
+            *qs_args,
+            template_parameters=qs_params,
+            sql_template=self.function_name + "(" + template_args + ")",
         )
 
     @property
     def _template_args(self: Self) -> str:
-        return ", ".join(
-            ["{}" for _ in self.func_arguments],
-        )
+        result_template_args: list[str] = []
+        for func_argument in self.func_arguments:
+            if isinstance(func_argument, SQLSelectable):
+                result_template_args.append(
+                    QueryString.arg_ph(),
+                )
+            else:
+                result_template_args.append(
+                    QueryString.param_ph(),
+                )
+
+        return ", ".join(result_template_args)
 
     @property
-    def _querystring_args(self: Self) -> list[QueryString]:
+    def _querystring_args_params(
+        self: Self,
+    ) -> tuple[list[QueryString], list[Any]]:
         querystring_args: list[QueryString] = []
+        querystring_params: list[Any] = []
 
         for func_argument in self.func_arguments:
             if isinstance(func_argument, SQLSelectable):
@@ -68,11 +86,6 @@ class AggFunction(ABC):
                     func_argument.querystring(),
                 )
             else:
-                querystring_args.append(
-                    QueryString(
-                        transform_value_to_sql(func_argument),
-                        sql_template="{}",
-                    ),
-                )
+                querystring_params.append(func_argument)
 
-        return querystring_args
+        return querystring_args, querystring_params

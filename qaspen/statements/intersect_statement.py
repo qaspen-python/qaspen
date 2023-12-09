@@ -100,9 +100,10 @@ class IntersectStatement(
         engine: BaseEngine[Any, Any, Any],
     ) -> list[dict[str, Any]]:
         """Execute SQL query and return result."""
+        querystring, qs_parameters = self.querystring().build()
         raw_query_result: list[dict[str, Any]] = await engine.execute(
-            querystring=self.querystring().build(),
-            querystring_parameters=[],
+            querystring=querystring,
+            querystring_parameters=qs_parameters,
             fetch_results=True,
         )
         return raw_query_result
@@ -112,9 +113,10 @@ class IntersectStatement(
         transaction: BaseTransaction[Any, Any],
     ) -> list[dict[str, Any]]:
         """Execute SQL query in a transaction and return result."""
+        querystring, qs_parameters = self.querystring().build()
         raw_query_result: list[dict[str, Any]] = await transaction.execute(
-            querystring=self.querystring().build(),
-            querystring_parameters=[],
+            querystring=querystring,
+            querystring_parameters=qs_parameters,
             fetch_results=True,
         )
         return raw_query_result

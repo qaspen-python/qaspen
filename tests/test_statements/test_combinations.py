@@ -15,14 +15,14 @@ def test_combinable_expression_and_method() -> None:
     filter2 = Filter(
         field=ForTestTable.name,
         operator=EqualOperator,
-        comparison_value="123",
+        comparison_value="test_value",
     )
 
     final_filter = filter1 & filter2
-    assert (
-        final_filter.querystring().build()
-        == "fortesttable.name = '123' AND fortesttable.name = '123'"
-    )
+
+    querystring, qs_params = final_filter.querystring().build()
+    assert querystring == ("fortesttable.name = %s AND fortesttable.name = %s")
+    assert qs_params == ["123", "test_value"]
 
 
 def test_combinable_expression_or_method() -> None:
@@ -35,14 +35,17 @@ def test_combinable_expression_or_method() -> None:
     filter2 = Filter(
         field=ForTestTable.name,
         operator=EqualOperator,
-        comparison_value="123",
+        comparison_value="test_value",
     )
 
     final_filter = filter1 | filter2
-    assert (
-        final_filter.querystring().build()
-        == "fortesttable.name = '123' OR fortesttable.name = '123'"
-    )
+
+    querystring, qs_params = final_filter.querystring().build()
+    assert querystring == ("fortesttable.name = %s OR fortesttable.name = %s")
+    assert qs_params == [
+        "123",
+        "test_value",
+    ]
 
 
 def test_combinable_expression_invert_method() -> None:
@@ -54,6 +57,9 @@ def test_combinable_expression_invert_method() -> None:
     )
 
     final_filter = ~filter1
-    assert (
-        final_filter.querystring().build() == "NOT (fortesttable.name = '123')"
-    )
+
+    querystring, qs_params = final_filter.querystring().build()
+    assert querystring == ("NOT (fortesttable.name = %s)")
+    assert qs_params == [
+        "123",
+    ]

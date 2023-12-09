@@ -18,4 +18,6 @@ def test_offset_statement() -> None:
 
     assert offset_stmt.offset_number == new_offset_number
 
-    assert offset_stmt.querystring().build() == f"OFFSET {new_offset_number}"
+    querystring, qs_params = offset_stmt.querystring().build()
+    assert querystring == f"OFFSET {new_offset_number}"
+    assert not qs_params

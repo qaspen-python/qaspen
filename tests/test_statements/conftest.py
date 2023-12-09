@@ -83,6 +83,7 @@ async def _create_test_data(
 
     await test_db_transaction.execute(
         fetch_results=False,
+        querystring_parameters=[],
         querystring=(
             """
             INSERT INTO main_users VALUES
@@ -94,6 +95,7 @@ async def _create_test_data(
 
     await test_db_transaction.execute(
         fetch_results=False,
+        querystring_parameters=[],
         querystring=(
             """
             INSERT INTO profiles VALUES
@@ -105,6 +107,7 @@ async def _create_test_data(
 
     await test_db_transaction.execute(
         fetch_results=False,
+        querystring_parameters=[],
         querystring=(
             """
             INSERT INTO videos VALUES
@@ -121,6 +124,7 @@ async def create_user_table(
     """Create `UserTable`."""
     await test_db_transaction.execute(
         fetch_results=False,
+        querystring_parameters=[],
         querystring=(
             """
             CREATE TABLE main_users (
@@ -138,6 +142,7 @@ async def create_profile_table(
     """Create `ProfileTable`."""
     await test_db_transaction.execute(
         fetch_results=False,
+        querystring_parameters=[],
         querystring=(
             """
             CREATE TABLE profiles (
@@ -156,6 +161,7 @@ async def create_video_table(
     """Create `ProfileTable`."""
     await test_db_transaction.execute(
         fetch_results=False,
+        querystring_parameters=[],
         querystring=(
             """
             CREATE TABLE videos (
