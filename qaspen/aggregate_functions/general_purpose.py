@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any, Final
 from qaspen.aggregate_functions.base import AggFunction
 from qaspen.querystring.querystring import QueryString
 from qaspen.sql_type.mapper import map_python_type_to_sql
-from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -283,7 +282,7 @@ class StringAgg(AggFunction):
 
         self.order_by: Final = order_by
         self.order_by_objs: Final = order_by_objs
-        self.separator: Final = transform_value_to_sql(separator)
+        self.separator: Final = f"'{separator}'"
 
     def querystring(self: Self) -> QueryString:
         """Build new `QueryString`.
