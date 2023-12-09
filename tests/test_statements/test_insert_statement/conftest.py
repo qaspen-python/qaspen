@@ -37,6 +37,7 @@ async def _create_test_table(
     """Create `TableTest` table in the database."""
     await test_db_transaction.execute(
         fetch_results=False,
+        querystring_parameters=[],
         querystring=(
             """
             CREATE TABLE table_test (
