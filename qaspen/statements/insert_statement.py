@@ -464,7 +464,7 @@ class InsertObjectsStatement(
         returning_qs = (
             QueryString(
                 self._returning_field._original_field_name,
-                sql_template=" RETURNING {}",
+                sql_template=f" RETURNING f{QueryString.arg_ph()}",
             )
             if self._returning_field
             else QueryString.empty()
@@ -492,7 +492,7 @@ class InsertObjectsStatement(
         for field in table_object._table_meta.table_fields.values():
             available_condition: bool = any(
                 (
-                    field._field_data.field_value,
+                    field._field_data.field_value != EMPTY_FIELD_VALUE,
                     field._field_data.callable_default,
                     field._field_data.default,
                 ),
@@ -514,13 +514,8 @@ class InsertObjectsStatement(
         ### Returns:
         tuple of lists with values to insert.
         """
-        final_values: list[Any] = []
-        for field in table_fields:
-            field_value_condition = field._field_data.field_value and (
-                field._field_data.field_value != EMPTY_FIELD_VALUE
-            )
-            if field_value_condition:
-                final_values.append(
-                    field._field_data.field_value,
-                )
-        return final_values
+        return [
+            field._field_data.field_value
+            for field in table_fields
+            if field._field_data.field_value != EMPTY_FIELD_VALUE
+        ]

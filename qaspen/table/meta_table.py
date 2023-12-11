@@ -48,6 +48,19 @@ class MetaTableData:
     database_engine: BaseEngine[Any, Any, Any] | None = None
     alias: str | None = None
 
+    def __deepcopy__(self: Self, memo: Any) -> MetaTableData:
+        return MetaTableData(
+            table_name=copy.copy(self.table_name),
+            table_schema=copy.copy(self.table_schema),
+            abstract=copy.copy(self.abstract),
+            table_fields=copy.deepcopy(self.table_fields),
+            table_fields_with_default=copy.deepcopy(
+                self.table_fields_with_default,
+            ),
+            database_engine=self.database_engine,
+            alias=copy.copy(self.alias),
+        )
+
 
 class MetaTable:
     """Meta Table."""
