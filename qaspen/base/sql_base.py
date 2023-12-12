@@ -1,9 +1,10 @@
 import abc
-from typing import runtime_checkable
+from typing import TYPE_CHECKING, runtime_checkable
 
 from typing_extensions import Protocol, Self
 
-from qaspen.querystring.querystring import QueryString
+if TYPE_CHECKING:
+    from qaspen.querystring.querystring import QueryString
 
 
 @runtime_checkable
@@ -11,7 +12,7 @@ class SQLSelectable(Protocol):
     """Protocol for any object that can be used in SQL query."""
 
     @abc.abstractmethod
-    def querystring(self: Self) -> QueryString:
+    def querystring(self: Self) -> "QueryString":
         """Create new QueryString.
 
         QueryString is the main SQL query building class.
