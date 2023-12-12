@@ -33,6 +33,9 @@ class GroupByStatement(BaseStatement):
 
     def querystring(self: Self) -> QueryString:
         """Build new `QueryString`."""
+        if not self.group_bys:
+            return QueryString.empty()
+
         querystring_template: Final = ", ".join(
             [QueryString.arg_ph()] * len(self.group_bys),
         )

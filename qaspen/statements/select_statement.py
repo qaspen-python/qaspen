@@ -35,6 +35,9 @@ from qaspen.statements.statement import BaseStatement
 from qaspen.statements.statement_result.select_statement_result import (
     SelectStatementResult,
 )
+from qaspen.statements.sub_statements.group_by_statement import (
+    GroupByStatement,
+)
 from qaspen.statements.sub_statements.limit_statement import LimitStatement
 from qaspen.statements.sub_statements.offset_statement import OffsetStatement
 
@@ -43,6 +46,7 @@ if TYPE_CHECKING:
 
     from qaspen.abc.db_engine import BaseEngine
     from qaspen.abc.db_transaction import BaseTransaction
+    from qaspen.base.sql_base import SQLSelectable
     from qaspen.clauses.order_by import OrderBy
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,
@@ -95,9 +99,10 @@ class SelectStatement(
         self.final_select_fields: list[Field[Any]] = []
         self.exist_prefixes: Final[list[str]] = []
 
-        self._filter_statement: FilterStatement = FilterStatement()
-        self._limit_statement: LimitStatement = LimitStatement()
-        self._offset_statement: OffsetStatement = OffsetStatement()
+        self._filter_statement = FilterStatement()
+        self._limit_statement = LimitStatement()
+        self._offset_statement = OffsetStatement()
+        self._group_by_statement = GroupByStatement()
         self._order_by_statement: OrderByStatement = OrderByStatement()
         self._join_statement: JoinStatement = JoinStatement()
         self._field_aliases: FieldAliases = FieldAliases()
@@ -280,7 +285,7 @@ class SelectStatement(
 
         statement = statement.offset(offset=30)
 
-        # not limit is OFFSET 30.
+        # now limit is OFFSET 30.
         ```
         """
         self._offset_statement.offset(offset_number=offset)
@@ -297,6 +302,46 @@ class SelectStatement(
         """
         self._limit_statement.limit(limit_number=limit)
         self._offset_statement.offset(offset_number=offset)
+        return self
+
+    def group_by(
+        self: Self,
+        *group_by: SQLSelectable,
+    ) -> Self:
+        """Add GROUP BY to the query.
+
+        You can specify anything that supports
+        SQLSelectable protocol, that means anything
+        that have `querystring()` method.
+
+        Qaspen has this method for all SQL related
+        objects, like subclasses of `Field`, subclasses of `AggFunction`,
+        etc.
+
+        ### Parameters:
+        - `group_by`: arguments for GROUP BY clause.
+
+        ### Returns:
+        self
+
+        Example:
+        -------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+
+        statement = Buns.select(
+            Buns.name,
+        ).group_by(
+            Buns.description,
+        )
+        ```
+        """
+        self._group_by_statement.group_by(
+            *group_by,
+        )
         return self
 
     def order_by(
@@ -750,6 +795,7 @@ class SelectStatement(
         sql_querystring = self._select_from()
         sql_querystring += self._join_statement.querystring()
         sql_querystring += self._filter_statement.querystring()
+        sql_querystring += self._group_by_statement.querystring()
         sql_querystring += self._order_by_statement.querystring()
         sql_querystring += self._limit_statement.querystring()
         sql_querystring += self._offset_statement.querystring()
@@ -846,13 +892,7 @@ class SelectStatement(
             return self.final_select_fields
         final_select_fields: Final[list[Field[Any]]] = []
 
-        fields_to_select: list[Field[Any]] = []
-        fields_to_select.extend(self._prepare_select_fields())
-        fields_to_select.extend(
-            self._join_statement._retrieve_all_join_fields(),
-        )
-
-        for field in fields_to_select:
+        for field in self._select_fields:
             aliased_field = self._field_aliases.add_alias(
                 field=field,
             )
@@ -860,48 +900,3 @@ class SelectStatement(
 
         self.final_select_fields = final_select_fields
         return final_select_fields
-
-    def _prepare_select_fields(
-        self: Self,
-    ) -> list[Field[Any]]:
-        """Prepare select fields.
-
-        We split all select fields into two categories,
-        fields from main table and fields from joins.
-
-        We return fields from main table.
-
-        Fields from joins we add to the join expressions,
-        because join statement has it's own logic for
-        fields processing.
-
-        ### Returns:
-        list of select fields from main table.
-        """
-        fields_from_original_table: list[Field[Any]] = []
-        fields_from_joined_table: dict[
-            str,
-            list[Field[Any]],
-        ] = {}
-
-        for field in self._select_fields:
-            is_original = field._field_data.from_table == self._from_table
-            if is_original:
-                fields_from_original_table.append(
-                    field,
-                )
-            else:
-                fields_from_joined_table.setdefault(
-                    field._field_data.from_table.original_table_name(),
-                    [],
-                ).append(field)
-
-        for join_expr in self._join_statement.join_expressions:
-            join_fields = fields_from_joined_table.get(
-                join_expr._join_table.original_table_name(),
-            )
-            if not join_fields:
-                continue
-            join_expr.add_fields(join_fields)
-
-        return fields_from_original_table
