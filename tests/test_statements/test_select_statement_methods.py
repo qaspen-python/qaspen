@@ -340,6 +340,39 @@ async def test_select_order_by_method_with_order_bys(
 
 @pytest.mark.anyio()
 @pytest.mark.usefixtures("_create_test_data")
+async def test_select_group_by_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `group_by` method."""
+    stmt = UserTable.select(
+        UserTable.fullname,
+    ).group_by(
+        UserTable.fullname,
+    )
+
+    querystring, qs_params = stmt.querystring().build()
+
+    assert (
+        querystring
+        == "SELECT main_users.fullname FROM public.main_users GROUP BY main_users.fullname"  # noqa: E501
+    )
+    assert not qs_params
+
+    stmt_raw_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    stmt_result = stmt_raw_result.result()
+
+    expected_number_of_results = 2
+    assert len(stmt_result) == expected_number_of_results
+    assert stmt_result == [
+        {"fullname": "Python"},
+        {"fullname": "Qaspen"},
+    ]
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
 async def test_select_union_method(
     test_db_transaction: PsycopgTransaction,
 ) -> None:

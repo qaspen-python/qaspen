@@ -177,7 +177,7 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
         returning_qs = (
             QueryString(
                 self._returning_field._original_field_name,
-                sql_template="RETURNING {}",
+                sql_template=f"RETURNING {QueryString.arg_ph()}",
             )
             if self._returning_field
             else QueryString.empty()
@@ -464,7 +464,7 @@ class InsertObjectsStatement(
         returning_qs = (
             QueryString(
                 self._returning_field._original_field_name,
-                sql_template=f" RETURNING f{QueryString.arg_ph()}",
+                sql_template=f" RETURNING {QueryString.arg_ph()}",
             )
             if self._returning_field
             else QueryString.empty()

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, Literal
+from typing import TYPE_CHECKING, Any, Final, Iterable, Literal
+
+from qaspen.base.sql_base import SQLSelectable
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -28,11 +30,11 @@ class QueryString:
         self: Self,
         *template_arguments: Any,
         sql_template: str,
-        template_parameters: list[Any] | None = None,
+        template_parameters: Iterable[Any] | None = None,
     ) -> None:
         self.sql_template = sql_template
         self.template_arguments: Final = list(template_arguments)
-        self.template_parameters: Final = template_parameters or []
+        self.template_parameters: Final = list(template_parameters or [])
 
         self.template_parameters_count = 1
 
@@ -135,20 +137,72 @@ class QueryString:
         self: Self,
         template_parameters: list[Any] | None = None,
     ) -> tuple[str, list[Any]]:
-        from qaspen.base.sql_base import SQLSelectable
-
         sql_template = self.sql_template.replace(
             self.argument_placeholder,
             "{}",
         )
 
-        template_arguments = []
+        template_arguments: list[str] = []
         if template_parameters is None:
             template_parameters = []
 
+        (
+            template_arguments,
+            template_parameters,
+        ) = self._process_template_arguments(
+            template_arguments=template_arguments,
+            template_parameters=template_parameters,
+        )
+
+        (
+            template_arguments,
+            template_parameters,
+            sql_template,
+        ) = self._process_template_parameters(
+            template_arguments=template_arguments,
+            template_parameters=template_parameters,
+            sql_template=sql_template,
+        )
+
+        return (
+            sql_template.format(
+                *template_arguments,
+            ),
+            template_parameters,
+        )
+
+    def _process_template_arguments(
+        self: Self,
+        template_arguments: list[str],
+        template_parameters: list[Any],
+    ) -> tuple[list[str], list[Any]]:
+        """Process template arguments.
+
+        Template arguments are values that must be processed on the
+        qaspen side.
+        For example, it can be subclass of Field or AggFunction.
+
+        If template argument is QueryString or something SQLSelectable
+        we build it, take `template_arguments` and add built object to it.
+
+        If template argument isn't QueryString or something SQLSelectable
+        we just add it as-is to template_arguments.
+
+        ### Parameters:
+        - `template_arguments`: built or as-is arguments.
+        - `template_parameters`: arguments for driver side render.
+
+        ### Return:
+        tuple of `template_arguments` and `template_parameters`.
+        """
         for template_argument in self.template_arguments:
             if isinstance(template_argument, QueryString):
                 rendered_template, _ = template_argument._build(
+                    template_parameters=template_parameters,
+                )
+                template_arguments.append(rendered_template)
+            elif isinstance(template_argument, SQLSelectable):
+                rendered_template, _ = template_argument.querystring()._build(
                     template_parameters=template_parameters,
                 )
                 template_arguments.append(rendered_template)
@@ -157,6 +211,33 @@ class QueryString:
                     template_argument,
                 )
 
+        return template_arguments, template_parameters
+
+    def _process_template_parameters(
+        self: Self,
+        template_arguments: list[str],
+        template_parameters: list[Any],
+        sql_template: str,
+    ) -> tuple[list[str], list[Any], str]:
+        """Process template parameters.
+
+        Template parameters are values that must be processed on the
+        driver side.
+        They can be any default python type (`str`, `int`, `dict`, etc.).
+
+        If template parameters is QueryString or something SQLSelectable
+        we build it, take `template_parameters` and add built object to it.
+
+        If template parameters isn't QueryString or something SQLSelectable
+        we just add it as-is to template_parameters.
+
+        ### Parameters:
+        - `template_arguments`: built or as-is arguments.
+        - `template_parameters`: arguments for driver side render.
+
+        ### Return:
+        tuple of `template_arguments` and `template_parameters`.
+        """
         for template_parameter in self.template_parameters:
             if isinstance(template_parameter, QueryString):
                 rendered_template, _ = template_parameter._build(
@@ -187,12 +268,7 @@ class QueryString:
                     template_parameter,
                 )
 
-        return (
-            sql_template.format(
-                *template_arguments,
-            ),
-            template_parameters,
-        )
+        return template_arguments, template_parameters, sql_template
 
     def _replace_param_placeholders(
         self: Self,
