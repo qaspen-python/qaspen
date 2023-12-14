@@ -1,8 +1,18 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Final, Generator, List, Optional
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Final,
+    Generator,
+    Generic,
+    List,
+    Optional,
+)
 
 from qaspen.exceptions import FieldDeclarationError
+from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import Executable
 from qaspen.statements.combinable_statements.filter_statement import (
@@ -16,7 +26,6 @@ if TYPE_CHECKING:
     from qaspen.abc.db_engine import BaseEngine
     from qaspen.abc.db_transaction import BaseTransaction
     from qaspen.fields.base import Field
-    from qaspen.qaspen_types import FromTable
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,
     )
@@ -25,6 +34,7 @@ if TYPE_CHECKING:
 class UpdateStatement(
     BaseStatement,
     Executable[Optional[List[Dict[str, Any]]]],
+    Generic[FromTable],
 ):
     """Statement for UPDATE queries."""
 
@@ -213,7 +223,7 @@ class UpdateStatement(
                 field_to_update._original_field_name,
                 template_parameters=[update_value],
                 sql_template=(
-                    f"{QueryString.arg_ph()} {QueryString.param_ph()}"
+                    f"{QueryString.arg_ph()} = {QueryString.param_ph()}"
                 ),
             )
             for field_to_update, update_value in self._for_update_map.items()
