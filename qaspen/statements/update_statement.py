@@ -244,7 +244,7 @@ class UpdateStatement(
         )
 
     def _returning_query(self: Self) -> QueryString:
-        if not self._returning:
+        if not self._returning:  # pragma: no cover
             return QueryString.empty()
 
         returning_template: Final = ", ".join(

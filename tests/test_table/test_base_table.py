@@ -94,6 +94,31 @@ def test_base_table_all_fields() -> None:
     ]
 
 
+def test_base_table_update_method() -> None:
+    """Test `update()` method."""
+    update_stmt = (
+        InheritanceBetaTable.update(
+            for_update_map={
+                InheritanceBetaTable.field1: "TestNew",
+            },
+        )
+        .where(
+            InheritanceBetaTable.field2 == "NotNew",
+        )
+        .returning(
+            InheritanceBetaTable.field1,
+        )
+    )
+
+    querystring, qs_params = update_stmt.querystring().build()
+
+    assert (
+        querystring
+        == "UPDATE btable SET field1 = %s WHERE btable.field2 = %s RETURNING btable.field1"  # noqa: E501
+    )
+    assert qs_params == ["TestNew", "NotNew"]
+
+
 def test_base_table_aliased_method() -> None:
     """Test `aliased` method."""
     table_alias = "field_wow"
