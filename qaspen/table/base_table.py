@@ -10,6 +10,7 @@ from qaspen.statements.insert_statement import (
     InsertStatement,
 )
 from qaspen.statements.select_statement import SelectStatement
+from qaspen.statements.update_statement import UpdateStatement
 from qaspen.table.meta_table import MetaTable
 
 if typing.TYPE_CHECKING:
@@ -149,16 +150,53 @@ class BaseTable(MetaTable, abstract=True):
                 Buns(name="Python", nickname="Cool"),
             )
         )
-        ```
 
         async def main() -> None:
             await insert_statement
-
+        ```
         # As a result you will have 2 new rows in the database.
         """
         return InsertObjectsStatement[T_, None](
             insert_objects=insert_objects,
             from_table=cls,
+        )
+
+    @classmethod
+    def update(
+        cls: type[T_],
+        for_update_map: dict[
+            Field[typing.Any],
+            typing.Any,
+        ],
+    ) -> UpdateStatement[T_]:
+        """Create `UpdateStatement`.
+
+        This method allows update records in the database.
+
+        Example:
+        -------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            nickname: VarCharField = VarCharField()
+
+
+        update_statement = (
+            Buns
+            .update(
+                {
+                    Buns.name: "New Name",
+                    Buns.nickname: "Qaspen",
+                }
+            ).where(
+                Buns.name == "Old name",
+            )
+        )
+        ```
+        """
+        return UpdateStatement[T_](
+            from_table=cls,
+            for_update_map=for_update_map,
         )
 
     @classmethod

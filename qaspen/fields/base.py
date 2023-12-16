@@ -385,6 +385,16 @@ class Field(BaseField[FieldType]):
             database_default=database_default,
         )
 
+    def __hash__(
+        self: Self,
+    ) -> int:
+        """Make Field hashable.
+
+        ### Returns:
+        hash number.
+        """
+        return hash(repr(self))
+
     def __get__(
         self: Self,
         instance: BaseTable | None,
