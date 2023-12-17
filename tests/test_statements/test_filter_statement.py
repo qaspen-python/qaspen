@@ -4,12 +4,10 @@ from typing import Any
 
 import pytest
 
+from qaspen.clauses.filter import Filter, FilterBetween, FilterExclusive
 from qaspen.fields.operators import BetweenOperator, EqualOperator
 from qaspen.querystring.querystring import EmptyQueryString
 from qaspen.statements.combinable_statements.filter_statement import (
-    Filter,
-    FilterBetween,
-    FilterExclusive,
     FilterStatement,
 )
 from tests.test_statements.conftest import ForTestTable

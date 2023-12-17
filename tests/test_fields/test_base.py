@@ -40,10 +40,7 @@ from tests.test_fields.conftest import (
 )
 
 if TYPE_CHECKING:
-    from qaspen.statements.combinable_statements.filter_statement import (
-        Filter,
-        FilterBetween,
-    )
+    from qaspen.clauses.filter import Filter, FilterBetween
 
 
 def test_set_name_magic_method() -> None:

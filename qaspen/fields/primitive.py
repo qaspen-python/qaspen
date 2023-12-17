@@ -4,6 +4,7 @@ import datetime
 from typing import TYPE_CHECKING, Any, Callable, Final, Union
 
 from qaspen.base.operators import AllOperator, AnyOperator
+from qaspen.clauses.filter import Filter
 from qaspen.exceptions import (
     FieldComparisonError,
     FieldDeclarationError,
@@ -13,7 +14,6 @@ from qaspen.fields import operators
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import primitive_types
-from qaspen.statements.combinable_statements.filter_statement import Filter
 
 if TYPE_CHECKING:
     from typing_extensions import Self
