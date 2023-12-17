@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Callable, Final, Generic, Union, cast
 
 from typing_extensions import Self
 
+from qaspen.clauses.filter import Filter, FilterBetween
 from qaspen.exceptions import (
     FieldComparisonError,
     FieldDeclarationError,
@@ -24,10 +25,6 @@ from qaspen.qaspen_types import (
     OperatorTypes,
 )
 from qaspen.querystring.querystring import QueryString
-from qaspen.statements.combinable_statements.filter_statement import (
-    Filter,
-    FilterBetween,
-)
 from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
