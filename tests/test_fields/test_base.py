@@ -617,7 +617,7 @@ def test_field_overloaded_eq_method_wrong_value(
         pass
 
     with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name == WrongCompValue()  # noqa: B015
+        for_test_table.name == WrongCompValue()
 
 
 def test_field_eq_method_with_none_value(
@@ -761,7 +761,7 @@ def test_field_overloaded_ne_method_wrong_value(
         pass
 
     with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name != WrongCompValue()  # noqa: B015
+        for_test_table.name != WrongCompValue()
 
 
 def test_field_ne_method_with_none_value(
@@ -905,7 +905,7 @@ def test_field_overloaded_gt_method_wrong_value(
         pass
 
     with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name > WrongCompValue()  # noqa: B015
+        for_test_table.name > WrongCompValue()  # type: ignore[operator]
 
 
 def test_field_gt_method(
@@ -1029,7 +1029,7 @@ def test_field_overloaded_ge_method_wrong_value(
         pass
 
     with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name >= WrongCompValue()  # noqa: B015
+        for_test_table.name >= WrongCompValue()  # type: ignore[operator]
 
 
 def test_field_gte_method(
@@ -1153,7 +1153,7 @@ def test_field_overloaded_lt_method_wrong_value(
         pass
 
     with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name < WrongCompValue()  # noqa: B015
+        for_test_table.name < WrongCompValue()  # type: ignore[operator]
 
 
 def test_field_lt_method(
@@ -1277,7 +1277,7 @@ def test_field_overloaded_le_method_wrong_value(
         pass
 
     with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name <= WrongCompValue()  # noqa: B015
+        for_test_table.name <= WrongCompValue()  # type: ignore[operator]
 
 
 def test_field_lte_method(

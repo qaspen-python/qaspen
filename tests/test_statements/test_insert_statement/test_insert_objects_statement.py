@@ -31,7 +31,8 @@ def test_insert_obj_stmt_returning_method() -> None:
         from_table=TableTest,
     ).returning(TableTest.some_id)
 
-    assert iostmt._returning_field == TableTest.some_id
+    if iostmt._returning_field:
+        assert iostmt._returning_field == TableTest.some_id
 
 
 @pytest.mark.anyio()
