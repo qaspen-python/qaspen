@@ -122,7 +122,9 @@ def test_filter_exclusive_querystring_method() -> None:
 
 def test_filter_statement() -> None:
     """Test `FilterStatement` statement."""
-    filter_stmt = FilterStatement()
+    filter_stmt = FilterStatement(
+        filter_operator="WHERE",
+    )
 
     left_comparison_value = "test"
     right_comparison_value = "s_test"
@@ -157,6 +159,8 @@ def test_filter_statement() -> None:
 
 def test_filter_statement_empty() -> None:
     """Test empty `FilterStatement` statement."""
-    filter_stmt = FilterStatement()
+    filter_stmt = FilterStatement(
+        filter_operator="WHERE",
+    )
 
     assert isinstance(filter_stmt.querystring(), EmptyQueryString)

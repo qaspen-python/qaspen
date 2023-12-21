@@ -21,8 +21,13 @@ class FilterStatement(BaseStatement):
     """Filter statement for high-level statements.
 
     It is used in Select/Update/Insert/Delete Statements.
+
+    There is `filter_operator` parameter because
+    we have WHERE clauses and HAVING and them are
+    almost equal.
     """
 
+    filter_operator: str
     filter_expressions: list[CombinableExpression] = dataclasses.field(
         default_factory=list,
     )
@@ -76,6 +81,6 @@ class FilterStatement(BaseStatement):
 
         return QueryString(
             *final_where.template_arguments,
-            sql_template=f"WHERE {final_where.sql_template}",
+            sql_template=f"{self.filter_operator} {final_where.sql_template}",
             template_parameters=final_where.template_parameters,
         )

@@ -99,7 +99,12 @@ class SelectStatement(
         self.final_select_fields: list[Field[Any]] = []
         self.exist_prefixes: Final[list[str]] = []
 
-        self._filter_statement = FilterStatement()
+        self._filter_statement = FilterStatement(
+            filter_operator="WHERE",
+        )
+        self._having_filter_statement = FilterStatement(
+            filter_operator="HAVING",
+        )
         self._limit_statement = LimitStatement()
         self._offset_statement = OffsetStatement()
         self._group_by_statement = GroupByStatement()
@@ -229,6 +234,43 @@ class SelectStatement(
         In this statement `&` is AND, `|` is OR.
         """
         self._filter_statement.add_filter(*where_arguments)
+        return self
+
+    def having(
+        self: Self,
+        *having_arguments: CombinableExpression,
+    ) -> Self:
+        """Add having clause to the statement.
+
+        It's possible to use this method as many times as you want.
+        If you use `having` more than one time, clauses will be connected
+        with `AND` operator.
+
+        Fields have different methods for the comparison.
+        Also, you can pass the combination of the `having` clauses.
+
+        One `HAVING` Example:
+        ------
+        ```
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            description: VarCharField = VarCharField()
+
+        statement = (
+            Buns
+            .select(Buns.name)
+            .group_by(
+                Buns.name,
+            )
+            .having(
+                Buns.name == "Tasty",
+            )
+        )
+        ```
+        """
+        self._having_filter_statement.add_filter(
+            *having_arguments,
+        )
         return self
 
     def limit(
@@ -796,6 +838,7 @@ class SelectStatement(
         sql_querystring += self._join_statement.querystring()
         sql_querystring += self._filter_statement.querystring()
         sql_querystring += self._group_by_statement.querystring()
+        sql_querystring += self._having_filter_statement.querystring()
         sql_querystring += self._order_by_statement.querystring()
         sql_querystring += self._limit_statement.querystring()
         sql_querystring += self._offset_statement.querystring()
