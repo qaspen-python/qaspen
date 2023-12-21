@@ -11,6 +11,7 @@ from qaspen.statements.combinable_statements.combinations import (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
+    from qaspen.base.text import Text
     from qaspen.fields.base import Field
     from qaspen.fields.operators import BaseOperator
 
@@ -25,12 +26,12 @@ class Filter(CombinableExpression):
 
     def __init__(
         self: Self,
-        field: Field[Any],
+        left_operand: Field[Any] | Text,
         operator: type[BaseOperator],
         comparison_value: Any = EMPTY_VALUE,
         comparison_values: EmptyValue | Iterable[Any] = EMPTY_VALUE,
     ) -> None:
-        self.field: Final = field
+        self.left_operand: Final = left_operand
         self.operator: Final = operator
 
         self.comparison_value: Final = comparison_value
@@ -49,7 +50,7 @@ class Filter(CombinableExpression):
             )
 
         return FilterQueryString(
-            self.field.field_name,
+            self.left_operand.querystring(),
             template_parameters=([compare_value] if compare_value else []),
             sql_template=self.operator.operation_template,
         )

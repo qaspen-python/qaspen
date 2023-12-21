@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Final, Iterable, Literal
+from typing import TYPE_CHECKING, Any, Iterable, Literal
 
 from qaspen.base.sql_base import SQLSelectable
 
@@ -33,8 +33,8 @@ class QueryString:
         template_parameters: Iterable[Any] | None = None,
     ) -> None:
         self.sql_template = sql_template
-        self.template_arguments: Final = list(template_arguments)
-        self.template_parameters: Final = list(template_parameters or [])
+        self.template_arguments = list(template_arguments)
+        self.template_parameters = list(template_parameters or [])
 
         self.template_parameters_count = 1
 
@@ -319,15 +319,16 @@ class QueryString:
         if isinstance(additional_querystring, EmptyQueryString):
             return self
 
-        self.sql_template += (
-            f"{self.add_delimiter}{additional_querystring.sql_template}"
+        built_self_qs, built_self_qs_params = self.build()
+        additional_qs, additional_qs_params = additional_querystring.build()
+        all_qs_params = [*built_self_qs_params, *additional_qs_params]
+
+        self.sql_template = (
+            f"{built_self_qs}{self.add_delimiter}{additional_qs}"
         )
-        self.template_arguments.extend(
-            additional_querystring.template_arguments,
-        )
-        self.template_parameters.extend(
-            additional_querystring.template_parameters,
-        )
+        self.template_arguments = []
+        self.template_parameters = all_qs_params
+
         return self
 
     def __str__(self: Self) -> str:

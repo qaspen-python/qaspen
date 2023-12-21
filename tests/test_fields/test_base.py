@@ -328,7 +328,7 @@ def test_field_in_method_with_values(for_test_table: _ForTestTable) -> None:
 
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
-    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.left_operand in [for_test_table.name]
     assert filter_statement.operator == InWithoutBracketsOperator
 
     querystring, qs_params = filter_statement.querystring().build()
@@ -349,7 +349,7 @@ def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
 
     assert filter_statement.comparison_value == subquery
     assert filter_statement.comparison_values == EMPTY_VALUE
-    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.left_operand in [for_test_table.name]
     assert filter_statement.operator == InOperator
 
     querystring, qs_params = filter_statement.querystring().build()
@@ -408,7 +408,7 @@ def test_field_not_in_method_with_values(
     )
     assert filter_statement.comparison_values == comparison_values
     assert filter_statement.comparison_value == EMPTY_VALUE
-    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.left_operand in [for_test_table.name]
     assert filter_statement.operator == NotInWithoutBracketsOperator
 
     querystring, qs_params = filter_statement.querystring().build()
@@ -431,7 +431,7 @@ def test_field_not_in_method_with_subquery(
 
     assert filter_statement.comparison_value == subquery
     assert filter_statement.comparison_values == EMPTY_VALUE
-    assert filter_statement.field in [for_test_table.name]
+    assert filter_statement.left_operand in [for_test_table.name]
     assert filter_statement.operator == NotInOperator
 
     querystring, qs_params = filter_statement.querystring().build()
@@ -534,7 +534,7 @@ def test_field_overloaded_eq_method_with_field(
         for_test_table.name == for_test_table.name
     )
 
-    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.left_operand in [for_test_table.name]
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == EqualOperator
 
@@ -567,7 +567,7 @@ def test_field_overloaded_eq_method_with_operator(
     )
     filter_with_operator: Final[Filter] = for_test_table.name == operator
 
-    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.left_operand in [for_test_table.name]
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == EqualOperator
 
@@ -593,7 +593,7 @@ def test_field_overloaded_eq_method_with_value(
     value: Final = "valid_value"
     filter_with_value: Final[Filter] = for_test_table.name == value
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == EqualOperator
 
@@ -631,7 +631,7 @@ def test_field_eq_method_with_none_value(
         for_test_table.name == None  # noqa: E711
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == EMPTY_VALUE
     assert filter_with_value.operator == IsNullOperator
 
@@ -655,7 +655,7 @@ def test_field_eq_method(
         comparison_value=value,
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == EqualOperator
 
@@ -678,7 +678,7 @@ def test_overloaded_ne_method_with_field(
         for_test_table.name != for_test_table.name
     )
 
-    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.left_operand in [for_test_table.name]
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == NotEqualOperator
 
@@ -711,7 +711,7 @@ def test_field_overloaded_ne_method_with_operator(
     )
     filter_with_operator: Final[Filter] = for_test_table.name != operator
 
-    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.left_operand in [for_test_table.name]
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == NotEqualOperator
 
@@ -737,7 +737,7 @@ def test_field_overloaded_ne_method_with_value(
     value: Final = "valid_value"
     filter_with_value: Final[Filter] = for_test_table.name != value
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == NotEqualOperator
 
@@ -775,7 +775,7 @@ def test_field_ne_method_with_none_value(
         for_test_table.name != None  # noqa: E711
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == EMPTY_VALUE
     assert filter_with_value.operator == IsNotNullOperator
 
@@ -799,7 +799,7 @@ def test_field_ne_method(
         comparison_value=value,
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == NotEqualOperator
 
@@ -822,7 +822,7 @@ def test_overloaded_gt_method_with_field(
         for_test_table.name > for_test_table.name
     )
 
-    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.left_operand in [for_test_table.name]
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == GreaterOperator
 
@@ -855,7 +855,7 @@ def test_field_overloaded_gt_method_with_operator(
     )
     filter_with_operator: Final[Filter] = for_test_table.name > operator
 
-    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.left_operand in [for_test_table.name]
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == GreaterOperator
 
@@ -881,7 +881,7 @@ def test_field_overloaded_gt_method_with_value(
     value: Final = "valid_value"
     filter_with_value: Final[Filter] = for_test_table.name > value
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterOperator
 
@@ -923,7 +923,7 @@ def test_field_gt_method(
         comparison_value=value,
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterOperator
 
@@ -946,7 +946,7 @@ def test_overloaded_ge_method_with_field(
         for_test_table.name >= for_test_table.name
     )
 
-    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.left_operand in [for_test_table.name]
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == GreaterEqualOperator
 
@@ -979,7 +979,7 @@ def test_field_overloaded_ge_method_with_operator(
     )
     filter_with_operator: Final[Filter] = for_test_table.name >= operator
 
-    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.left_operand in [for_test_table.name]
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == GreaterEqualOperator
 
@@ -1005,7 +1005,7 @@ def test_field_overloaded_ge_method_with_value(
     value: Final = "valid_value"
     filter_with_value: Final[Filter] = for_test_table.name >= value
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterEqualOperator
 
@@ -1047,7 +1047,7 @@ def test_field_gte_method(
         comparison_value=value,
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == GreaterEqualOperator
 
@@ -1070,7 +1070,7 @@ def test_overloaded_lt_method_with_field(
         for_test_table.name < for_test_table.name
     )
 
-    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.left_operand in [for_test_table.name]
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == LessOperator
 
@@ -1103,7 +1103,7 @@ def test_field_overloaded_lt_method_with_operator(
     )
     filter_with_operator: Final[Filter] = for_test_table.name < operator
 
-    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.left_operand in [for_test_table.name]
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == LessOperator
 
@@ -1129,7 +1129,7 @@ def test_field_overloaded_lt_method_with_value(
     value: Final = "valid_value"
     filter_with_value: Final[Filter] = for_test_table.name < value
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessOperator
 
@@ -1171,7 +1171,7 @@ def test_field_lt_method(
         comparison_value=value,
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessOperator
 
@@ -1194,7 +1194,7 @@ def test_overloaded_le_method_with_field(
         for_test_table.name <= for_test_table.name
     )
 
-    assert filter_with_field.field in [for_test_table.name]
+    assert filter_with_field.left_operand in [for_test_table.name]
     assert filter_with_field.comparison_value == for_test_table.name
     assert filter_with_field.operator == LessEqualOperator
 
@@ -1227,7 +1227,7 @@ def test_field_overloaded_le_method_with_operator(
     )
     filter_with_operator: Final[Filter] = for_test_table.name <= operator
 
-    assert filter_with_operator.field in [for_test_table.name]
+    assert filter_with_operator.left_operand in [for_test_table.name]
     assert filter_with_operator.comparison_value == operator
     assert filter_with_operator.operator == LessEqualOperator
 
@@ -1253,7 +1253,7 @@ def test_field_overloaded_le_method_with_value(
     value: Final = "valid_value"
     filter_with_value: Final[Filter] = for_test_table.name <= value
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessEqualOperator
 
@@ -1295,7 +1295,7 @@ def test_field_lte_method(
         comparison_value=value,
     )
 
-    assert filter_with_value.field in [for_test_table.name]
+    assert filter_with_value.left_operand in [for_test_table.name]
     assert filter_with_value.comparison_value == value
     assert filter_with_value.operator == LessEqualOperator
 

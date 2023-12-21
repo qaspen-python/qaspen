@@ -560,7 +560,7 @@ def test_str_field_like_method_success(
     filter_with_value = TestTable.qaspen.like(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == LikeOperator
 
@@ -628,7 +628,7 @@ def test_str_field_not_like_method_success(
     filter_with_value = TestTable.qaspen.not_like(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotLikeOperator
 
@@ -696,7 +696,7 @@ def test_str_field_ilike_method_success(
     filter_with_value = TestTable.qaspen.ilike(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == ILikeOperator
 
@@ -764,7 +764,7 @@ def test_str_field_not_ilike_method_success(
     filter_with_value = TestTable.qaspen.not_ilike(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotILikeOperator
 

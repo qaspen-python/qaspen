@@ -447,7 +447,7 @@ class Field(BaseField[FieldType]):
         """
         return QueryString(
             self.field_name,
-            sql_template="{}",
+            sql_template=QueryString.arg_ph(),
         )
 
     def in_(
@@ -524,7 +524,7 @@ class Field(BaseField[FieldType]):
                 raise FieldComparisonError(err_msg)
 
         where_parameters: dict[str, Any] = {
-            "field": self,
+            "left_operand": self,
             "operator": operators.InOperator,
         }
 
@@ -610,7 +610,7 @@ class Field(BaseField[FieldType]):
                 raise FieldComparisonError(err_msg)
 
         where_parameters: dict[str, Any] = {
-            "field": self,
+            "left_operand": self,
             "operator": operators.NotInOperator,
         }
 
@@ -673,13 +673,13 @@ class Field(BaseField[FieldType]):
     ) -> Filter:
         if comparison_value is None:
             return Filter(
-                field=self,
+                left_operand=self,
                 operator=operators.IsNullOperator,
             )
 
         if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.EqualOperator,
             )
@@ -714,13 +714,13 @@ class Field(BaseField[FieldType]):
     ) -> Filter:
         if comparison_value is None:
             return Filter(
-                field=self,
+                left_operand=self,
                 operator=operators.IsNotNullOperator,
             )
 
         if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.NotEqualOperator,
             )
@@ -755,7 +755,7 @@ class Field(BaseField[FieldType]):
     ) -> Filter:
         if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.GreaterOperator,
             )
@@ -790,7 +790,7 @@ class Field(BaseField[FieldType]):
     ) -> Filter:
         if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.GreaterEqualOperator,
             )
@@ -824,7 +824,7 @@ class Field(BaseField[FieldType]):
     ) -> Filter:
         if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.LessOperator,
             )
@@ -858,7 +858,7 @@ class Field(BaseField[FieldType]):
     ) -> Filter:
         if isinstance(comparison_value, self._correct_method_value_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.LessEqualOperator,
             )

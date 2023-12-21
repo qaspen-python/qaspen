@@ -8,12 +8,12 @@ from tests.test_statements.conftest import ForTestTable
 def test_combinable_expression_and_method() -> None:
     """Test `CombinableExpression` `__and__` method."""
     filter1 = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value="123",
     )
     filter2 = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value="test_value",
     )
@@ -28,12 +28,12 @@ def test_combinable_expression_and_method() -> None:
 def test_combinable_expression_or_method() -> None:
     """Test `CombinableExpression` `__or__` method."""
     filter1 = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value="123",
     )
     filter2 = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value="test_value",
     )
@@ -51,7 +51,7 @@ def test_combinable_expression_or_method() -> None:
 def test_combinable_expression_invert_method() -> None:
     """Test `CombinableExpression` `__and__` method."""
     filter1 = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value="123",
     )

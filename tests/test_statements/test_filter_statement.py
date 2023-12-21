@@ -26,7 +26,7 @@ def test_filter_querystring_method(
 ) -> None:
     """Test `Filter` `querystring` method."""
     filter_instance = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value=comparison_value,
     )
@@ -100,7 +100,7 @@ def test_filter_exclusive_querystring_method() -> None:
 
     comparison_value = "default_filter"
     filter_instance = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value=comparison_value,
     )
@@ -139,7 +139,7 @@ def test_filter_statement() -> None:
 
     comparison_value = "default_filter"
     filter_instance = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value=comparison_value,
     )

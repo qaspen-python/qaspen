@@ -364,7 +364,7 @@ class BaseStringField(Field[str]):
         """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.LikeOperator,
             )
@@ -392,7 +392,7 @@ class BaseStringField(Field[str]):
         """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.NotLikeOperator,
             )
@@ -420,7 +420,7 @@ class BaseStringField(Field[str]):
         """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.ILikeOperator,
             )
@@ -447,7 +447,7 @@ class BaseStringField(Field[str]):
         """
         if isinstance(comparison_value, self._available_comparison_types):
             return Filter(
-                field=self,
+                left_operand=self,
                 comparison_value=comparison_value,
                 operator=operators.NotILikeOperator,
             )
