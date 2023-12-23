@@ -2,12 +2,13 @@ from typing import Final
 
 from typing_extensions import Self
 
-from qaspen.clauses.filter import Filter
-from qaspen.fields.operators import EqualOperator
+from qaspen.base.comparison_operators import EqualOperatorMixin
 from qaspen.querystring.querystring import QueryString
 
 
-class Text:
+class Text(
+    EqualOperatorMixin[object],
+):
     """Class for translating python string to database as-is."""
 
     def __init__(
@@ -40,14 +41,4 @@ class Text:
         return QueryString(
             self.string_value,
             sql_template=QueryString.arg_ph(),
-        )
-
-    def __eq__(  # type: ignore[override]
-        self: Self,
-        comparison_value: object,
-    ) -> "Filter":
-        return Filter(
-            left_operand=self,
-            comparison_value=comparison_value,
-            operator=EqualOperator,
         )

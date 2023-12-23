@@ -62,3 +62,7 @@ MSGSpecStruct = typing.TypeVar(
 )
 
 OperatorTypes = typing.Union[AnyOperator, AllOperator]
+
+ComparisonT = typing.TypeVar(
+    "ComparisonT",
+)

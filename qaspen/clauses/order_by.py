@@ -19,31 +19,34 @@ class OrderBy:
     def __init__(
         self: Self,
         field: Field[Any],
-        ascending: bool = True,
-        nulls_first: bool = True,
+        ascending: bool | None = None,
+        nulls_first: bool | None = None,
     ) -> None:
         self.field: Final[Field[Any]] = field  # type: ignore[arg-type]
-        self.ascending: Final[bool] = ascending
-        self.nulls_first: Final[bool] = nulls_first
+        self.ascending: Final = ascending
+        self.nulls_first: Final = nulls_first
 
     def querystring(self: Self) -> CommaSeparatedQueryString:
         """Build `QueryString`."""
-        querystring_template: Final[str] = (
-            f"{QueryString.arg_ph()} {QueryString.arg_ph()} "
-            f"{QueryString.arg_ph()}"
-        )
+        querystring_template = f"{QueryString.arg_ph()}"
         querystring_arguments: list[str] = [self.field.field_name]
 
-        if self.ascending is True:
-            querystring_arguments.append("ASC")
-        elif self.ascending is False:
-            querystring_arguments.append("DESC")
+        if self.ascending is not None:
+            querystring_template += f" {QueryString.arg_ph()}"
+            if self.ascending is True:
+                querystring_arguments.append("ASC")
+            elif self.ascending is False:
+                querystring_arguments.append("DESC")
 
-        if self.nulls_first is True:
-            querystring_arguments.append("NULLS FIRST")
-        elif self.nulls_first is False:
-            querystring_arguments.append("NULLS LAST")
+        if self.nulls_first is not None:
+            querystring_template += f" {QueryString.arg_ph()}"
+            if self.nulls_first is True:
+                querystring_arguments.append("NULLS FIRST")
+            elif self.nulls_first is False:
+                querystring_arguments.append("NULLS LAST")
 
+        print(querystring_template)
+        # print(querystring_arguments)
         return CommaSeparatedQueryString(
             *querystring_arguments,
             sql_template=querystring_template,

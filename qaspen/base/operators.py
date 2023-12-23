@@ -1,10 +1,11 @@
 """Base SQL operators."""
-from typing import Final
+from typing import Final, TYPE_CHECKING
 
 from typing_extensions import Self
 
-from qaspen.base.sql_base import SQLSelectable
-from qaspen.querystring.querystring import QueryString
+if TYPE_CHECKING:
+    from qaspen.base.sql_base import SQLSelectable
+    from qaspen.querystring.querystring import QueryString
 
 
 class AnyOperator:
@@ -15,7 +16,7 @@ class AnyOperator:
 
     def __init__(
         self: Self,
-        subquery: SQLSelectable,
+        subquery: "SQLSelectable",
     ) -> None:
         """Initialize AnyOperator.
 
@@ -42,7 +43,7 @@ class AnyOperator:
         """
         self.subquery: Final = subquery
 
-    def querystring(self: Self) -> QueryString:
+    def querystring(self: Self) -> "QueryString":
         """Build `QueryString` object.
 
         ### Returns:
@@ -61,7 +62,7 @@ class AllOperator:
 
     def __init__(
         self: Self,
-        subquery: SQLSelectable,
+        subquery: "SQLSelectable",
     ) -> None:
         """Initialize AllOperator.
 
@@ -88,7 +89,7 @@ class AllOperator:
         """
         self.subquery: Final = subquery
 
-    def querystring(self: Self) -> QueryString:
+    def querystring(self: Self) -> "QueryString":
         """Build `QueryString` object.
 
         ### Returns:
