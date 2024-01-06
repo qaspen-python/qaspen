@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from qaspen.aggregate_functions.general_purpose import Count
 from qaspen.clauses.order_by import OrderBy
 from tests.test_statements.conftest import ProfileTable, UserTable, VideoTable
 
@@ -480,6 +481,36 @@ async def test_select_exists_method(
     )
 
     assert stmt_result
+
+
+@pytest.mark.anyio()
+@pytest.mark.usefixtures("_create_test_data")
+async def test_select_having_method(
+    test_db_transaction: PsycopgTransaction,
+) -> None:
+    """Test `having` `SelectStatement` method."""
+    stmt = (
+        UserTable.select(
+            UserTable.fullname,
+        )
+        .group_by(UserTable.fullname)
+        .having(Count(UserTable.fullname).eq("1"))
+    )
+
+    querystring, qs_params = stmt.querystring().build()
+    assert (
+        querystring
+        == "SELECT main_users.fullname FROM public.main_users GROUP BY main_users.fullname HAVING COUNT(main_users.fullname) = %s"  # noqa: E501
+    )
+    assert qs_params == ["1"]
+
+    stmt_result = await stmt.transaction_execute(
+        transaction=test_db_transaction,
+    )
+    assert stmt_result.result() == [
+        {"fullname": "Python"},
+        {"fullname": "Qaspen"},
+    ]
 
 
 @pytest.mark.anyio()
