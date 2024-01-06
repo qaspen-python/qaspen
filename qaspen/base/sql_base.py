@@ -28,7 +28,7 @@ class SQLComparison(
     SQLSelectable,
     Generic[ComparisonT],
 ):
-    """This class is used for inheritance for all comparison classes.
+    """Class is used for inheritance for all comparison classes.
 
     For example, for the class that makes custom logic for __eq__ class.
 
