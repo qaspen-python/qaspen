@@ -462,8 +462,10 @@ def test_string_agg_function_with_order_by(
             "something",
             [
                 OrderBy(
-                    field=TableForTest.name, ascending=True, nulls_first=True
-                )
+                    field=TableForTest.name,
+                    ascending=True,
+                    nulls_first=True,
+                ),
             ],
             (
                 "SELECT STRING_AGG(%s::VARCHAR, ',' ORDER BY ttest.name ASC NULLS FIRST) FROM public.ttest"  # noqa: E501
