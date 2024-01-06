@@ -1,5 +1,5 @@
 """Base SQL operators."""
-from typing import Final, TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from typing_extensions import Self
 
@@ -8,8 +8,8 @@ if TYPE_CHECKING:
     from qaspen.querystring.querystring import QueryString
 
 
-class AnyOperator:
-    """ANY PostgreSQL operator.
+class Any_:  # noqa: N801
+    """`ANY` PostgreSQL operator.
 
     Provide functionality of ANY PostgreSQL operator.
     """
@@ -18,7 +18,7 @@ class AnyOperator:
         self: Self,
         subquery: "SQLSelectable",
     ) -> None:
-        """Initialize AnyOperator.
+        """Initialize `Any_`.
 
         ### Parameters:
         - `subquery`: Any object that provides `querystring()` method.
@@ -34,7 +34,7 @@ class AnyOperator:
             Buns
             .select()
             .where(
-                Buns.name == AnyOperator(
+                Buns.name == Any_(
                     subquery=Buns.select()
                 )
             )
@@ -54,7 +54,7 @@ class AnyOperator:
         return subquery_qs
 
 
-class AllOperator:
+class All_:  # noqa: N801
     """ALL PostgreSQL operator.
 
     Provide functionality of ALL PostgreSQL operator.
@@ -64,7 +64,7 @@ class AllOperator:
         self: Self,
         subquery: "SQLSelectable",
     ) -> None:
-        """Initialize AllOperator.
+        """Initialize `All_`.
 
         ### Parameters:
         - `subquery`: Any object that provides `querystring()` method.
@@ -80,7 +80,7 @@ class AllOperator:
             Buns
             .select()
             .where(
-                Buns.name == AllOperator(
+                Buns.name == All_(
                     subquery=Buns.select()
                 )
             )

@@ -45,8 +45,6 @@ class OrderBy:
             elif self.nulls_first is False:
                 querystring_arguments.append("NULLS LAST")
 
-        print(querystring_template)
-        # print(querystring_arguments)
         return CommaSeparatedQueryString(
             *querystring_arguments,
             sql_template=querystring_template,

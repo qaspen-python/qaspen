@@ -5,28 +5,27 @@ from typing import TYPE_CHECKING, Any, Callable, Final
 
 import pytest
 
-from qaspen.base.operators import AllOperator, AnyOperator
+from qaspen.base.operators import All_, Any_
 from qaspen.exceptions import (
-    FieldComparisonError,
     FieldDeclarationError,
     FieldValueValidationError,
     FilterComparisonError,
 )
 from qaspen.fields.base import Field
 from qaspen.fields.operators import (
+    AnyOperator,
     BetweenOperator,
     EqualOperator,
     GreaterEqualOperator,
     GreaterOperator,
     InOperator,
-    InWithoutBracketsOperator,
     IsNotNullOperator,
     IsNullOperator,
     LessEqualOperator,
     LessOperator,
+    NotAnyOperator,
     NotEqualOperator,
     NotInOperator,
-    NotInWithoutBracketsOperator,
 )
 from qaspen.fields.primitive import VarCharField
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE, EMPTY_VALUE, OperatorTypes
@@ -326,14 +325,14 @@ def test_field_in_method_with_values(for_test_table: _ForTestTable) -> None:
         *comparison_values,
     )
 
-    assert filter_statement.comparison_values == comparison_values
+    assert filter_statement.comparison_values == list(comparison_values)
     assert filter_statement.comparison_value == EMPTY_VALUE
     assert filter_statement.left_operand in [for_test_table.name]
-    assert filter_statement.operator == InWithoutBracketsOperator
+    assert filter_statement.operator == AnyOperator
 
     querystring, qs_params = filter_statement.querystring().build()
-    assert querystring == ("fortesttable.name IN %s")
-    assert qs_params == [("search", "this", "string")]
+    assert querystring == ("fortesttable.name = ANY(%s)")
+    assert qs_params == [list(comparison_values)]
 
 
 def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
@@ -378,18 +377,6 @@ def test_field_in_method_with_subquery_and_values(
         )
 
 
-def test_field_in_method_wrong_parameter_type() -> None:
-    """Test `in_` method.
-
-    Check that method is failing if comparison types are wrong.
-    """
-    with pytest.raises(expected_exception=FieldComparisonError):
-        ForTestField().in_(
-            "normal_param",
-            {"not": "correct", "type": 0},  # type: ignore[arg-type]
-        )
-
-
 def test_field_not_in_method_with_values(
     for_test_table: _ForTestTable,
 ) -> None:
@@ -406,14 +393,14 @@ def test_field_not_in_method_with_values(
     filter_statement: Final[Filter] = for_test_table.name.not_in(
         *comparison_values,
     )
-    assert filter_statement.comparison_values == comparison_values
+    assert filter_statement.comparison_values == list(comparison_values)
     assert filter_statement.comparison_value == EMPTY_VALUE
     assert filter_statement.left_operand in [for_test_table.name]
-    assert filter_statement.operator == NotInWithoutBracketsOperator
+    assert filter_statement.operator == NotAnyOperator
 
     querystring, qs_params = filter_statement.querystring().build()
-    assert querystring == ("fortesttable.name NOT IN %s")
-    assert qs_params == [comparison_values]
+    assert querystring == ("NOT (fortesttable.name = ANY(%s))")
+    assert qs_params == [list(comparison_values)]
 
 
 def test_field_not_in_method_with_subquery(
@@ -460,18 +447,6 @@ def test_field_not_in_method_with_subquery_and_values(
         )
 
 
-def test_field_not_in_method_wrong_parameter_type() -> None:
-    """Test `not_in` method.
-
-    Check that method is failing if comparison types are wrong.
-    """
-    with pytest.raises(expected_exception=FieldComparisonError):
-        ForTestField().not_in(
-            "normal_param",
-            {"not": "correct", "type": 0},  # type: ignore[arg-type]
-        )
-
-
 def test_field_between_method(for_test_table: _ForTestTable) -> None:
     """Test `between` method."""
     left_value: Final = "left"
@@ -492,32 +467,6 @@ def test_field_between_method(for_test_table: _ForTestTable) -> None:
         left_value,
         right_value,
     ]
-
-
-@pytest.mark.parametrize(
-    ("left_value", "right_value"),
-    [
-        ("correct", 12),
-        (12, "correct"),
-        ({"incorrect": 0}, 12),
-        ({"incorrect": 0}, [1, 2, 3]),
-        ({1, 2, 3}, ("incorrect", "types")),
-    ],
-)
-def test_field_between_method_incorrect_type(
-    for_test_table: _ForTestTable,
-    left_value: Any,
-    right_value: Any,
-) -> None:
-    """Test `between` method.
-
-    Check that method is failing if comparison types are wrong.
-    """
-    with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name.between(
-            left_value=left_value,
-            right_value=right_value,
-        )
 
 
 def test_field_overloaded_eq_method_with_field(
@@ -546,8 +495,8 @@ def test_field_overloaded_eq_method_with_field(
 @pytest.mark.parametrize(
     ("operator_class", "operator_string"),
     [
-        (AnyOperator, "ANY"),
-        (AllOperator, "ALL"),
+        (Any_, "ANY"),
+        (All_, "ALL"),
     ],
 )
 def test_field_overloaded_eq_method_with_operator(
@@ -602,24 +551,6 @@ def test_field_overloaded_eq_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_overloaded_eq_method_wrong_value(
-    for_test_table: _ForTestTable,
-) -> None:
-    """Test `__eq__` method.
-
-    Check that method fails if comparison value is wrong.
-
-    ### Parameters:
-    - `test_for_test_table`: table for test purposes.
-    """
-
-    class WrongCompValue:
-        pass
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name == WrongCompValue()
-
-
 def test_field_eq_method_with_none_value(
     for_test_table: _ForTestTable,
 ) -> None:
@@ -652,7 +583,7 @@ def test_field_eq_method(
     """
     value: Final = "valid_value"
     filter_with_value: Final[Filter] = for_test_table.name.eq(
-        comparison_value=value,
+        comparison=value,
     )
 
     assert filter_with_value.left_operand in [for_test_table.name]
@@ -690,8 +621,8 @@ def test_overloaded_ne_method_with_field(
 @pytest.mark.parametrize(
     ("operator_class", "operator_string"),
     [
-        (AnyOperator, "ANY"),
-        (AllOperator, "ALL"),
+        (Any_, "ANY"),
+        (All_, "ALL"),
     ],
 )
 def test_field_overloaded_ne_method_with_operator(
@@ -744,24 +675,6 @@ def test_field_overloaded_ne_method_with_value(
     querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "fortesttable.name != %s"
     assert qs_params == [value]
-
-
-def test_field_overloaded_ne_method_wrong_value(
-    for_test_table: _ForTestTable,
-) -> None:
-    """Test `__ne__` method.
-
-    Check that method fails if comparison value is wrong.
-
-    ### Parameters:
-    - `test_for_test_table`: table for test purposes.
-    """
-
-    class WrongCompValue:
-        pass
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name != WrongCompValue()
 
 
 def test_field_ne_method_with_none_value(
@@ -834,8 +747,8 @@ def test_overloaded_gt_method_with_field(
 @pytest.mark.parametrize(
     ("operator_class", "operator_string"),
     [
-        (AnyOperator, "ANY"),
-        (AllOperator, "ALL"),
+        (Any_, "ANY"),
+        (All_, "ALL"),
     ],
 )
 def test_field_overloaded_gt_method_with_operator(
@@ -890,24 +803,6 @@ def test_field_overloaded_gt_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_overloaded_gt_method_wrong_value(
-    for_test_table: _ForTestTable,
-) -> None:
-    """Test `__gt__` method.
-
-    Check that method fails if comparison value is wrong.
-
-    ### Parameters:
-    - `test_for_test_table`: table for test purposes.
-    """
-
-    class WrongCompValue:
-        pass
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name > WrongCompValue()  # type: ignore[operator]
-
-
 def test_field_gt_method(
     for_test_table: _ForTestTable,
 ) -> None:
@@ -958,8 +853,8 @@ def test_overloaded_ge_method_with_field(
 @pytest.mark.parametrize(
     ("operator_class", "operator_string"),
     [
-        (AnyOperator, "ANY"),
-        (AllOperator, "ALL"),
+        (Any_, "ANY"),
+        (All_, "ALL"),
     ],
 )
 def test_field_overloaded_ge_method_with_operator(
@@ -1014,24 +909,6 @@ def test_field_overloaded_ge_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_overloaded_ge_method_wrong_value(
-    for_test_table: _ForTestTable,
-) -> None:
-    """Test `__ge__` method.
-
-    Check that method fails if comparison value is wrong.
-
-    ### Parameters:
-    - `test_for_test_table`: table for test purposes.
-    """
-
-    class WrongCompValue:
-        pass
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name >= WrongCompValue()  # type: ignore[operator]
-
-
 def test_field_gte_method(
     for_test_table: _ForTestTable,
 ) -> None:
@@ -1082,8 +959,8 @@ def test_overloaded_lt_method_with_field(
 @pytest.mark.parametrize(
     ("operator_class", "operator_string"),
     [
-        (AnyOperator, "ANY"),
-        (AllOperator, "ALL"),
+        (Any_, "ANY"),
+        (All_, "ALL"),
     ],
 )
 def test_field_overloaded_lt_method_with_operator(
@@ -1138,24 +1015,6 @@ def test_field_overloaded_lt_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_overloaded_lt_method_wrong_value(
-    for_test_table: _ForTestTable,
-) -> None:
-    """Test `__lt__` method.
-
-    Check that method fails if comparison value is wrong.
-
-    ### Parameters:
-    - `test_for_test_table`: table for test purposes.
-    """
-
-    class WrongCompValue:
-        pass
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name < WrongCompValue()  # type: ignore[operator]
-
-
 def test_field_lt_method(
     for_test_table: _ForTestTable,
 ) -> None:
@@ -1206,8 +1065,8 @@ def test_overloaded_le_method_with_field(
 @pytest.mark.parametrize(
     ("operator_class", "operator_string"),
     [
-        (AnyOperator, "ANY"),
-        (AllOperator, "ALL"),
+        (Any_, "ANY"),
+        (All_, "ALL"),
     ],
 )
 def test_field_overloaded_le_method_with_operator(
@@ -1260,24 +1119,6 @@ def test_field_overloaded_le_method_with_value(
     querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "fortesttable.name <= %s"
     assert qs_params == [value]
-
-
-def test_field_overloaded_le_method_wrong_value(
-    for_test_table: _ForTestTable,
-) -> None:
-    """Test `__le__` method.
-
-    Check that method fails if comparison value is wrong.
-
-    ### Parameters:
-    - `test_for_test_table`: table for test purposes.
-    """
-
-    class WrongCompValue:
-        pass
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        for_test_table.name <= WrongCompValue()  # type: ignore[operator]
 
 
 def test_field_lte_method(

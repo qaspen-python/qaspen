@@ -4,18 +4,22 @@ import abc
 import copy
 import dataclasses
 import types
-from typing import TYPE_CHECKING, Any, Callable, Final, Generic, cast
+from typing import TYPE_CHECKING, Any, Callable, Final, Generic, Union, cast
 
 from typing_extensions import Self
 
-from qaspen.clauses.filter import Filter, FilterBetween
-from qaspen.exceptions import (
-    FieldComparisonError,
-    FieldDeclarationError,
-    FieldValueValidationError,
-    FilterComparisonError,
+from qaspen.base.comparison_operators import (
+    BetweenComparisonMixin,
+    EqualComparisonMixin,
+    GreaterComparisonMixin,
+    GreaterEqualComparisonMixin,
+    InComparisonMixin,
+    LessComparisonMixin,
+    LessEqualComparisonMixin,
+    NotEqualComparisonMixin,
+    NotInComparisonMixin,
 )
-from qaspen.fields import operators
+from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.qaspen_types import (
     EMPTY_FIELD_VALUE,
     CallableDefaultType,
@@ -28,7 +32,6 @@ from qaspen.querystring.querystring import QueryString
 from qaspen.utils.fields_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
-    from qaspen.base.sql_base import SQLSelectable
     from qaspen.sql_type.base import SQLType
     from qaspen.table.base_table import BaseTable
 
@@ -291,7 +294,20 @@ class BaseField(Generic[FieldType], abc.ABC):
         return query
 
 
-class Field(BaseField[FieldType]):
+class Field(
+    BaseField[FieldType],
+    EqualComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType, None]],
+    NotEqualComparisonMixin[
+        Union["Field[Any]", OperatorTypes, FieldType, None],
+    ],
+    GreaterComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
+    GreaterEqualComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
+    LessComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
+    LessEqualComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
+    BetweenComparisonMixin[Union[FieldType, "Field[Any]"]],
+    InComparisonMixin[FieldType],
+    NotInComparisonMixin[FieldType],
+):
     """Main Field class.
 
     All subclasses must be inherited from this class.
@@ -449,442 +465,6 @@ class Field(BaseField[FieldType]):
             self.field_name,
             sql_template=QueryString.arg_ph(),
         )
-
-    def in_(
-        self: Self,
-        *comparison_values: FieldType,
-        subquery: SQLSelectable | None = None,
-    ) -> Filter:
-        """`IN` PostgreSQL clause.
-
-        It allows you to use `IN` clause.
-        You can specify either unlimited number of `comparison` values
-        or `subquery`.
-
-        ### Parameters:
-        - `comparison_values`: values for `IN` clause,
-            they must be correct type. For example, if you are
-            working with string Field, you have to use str objects.
-        - `subquery`: Any object that provides `queryset()` method.
-
-        ### Returns:
-        Initialized `Filter` class.
-
-        Example:
-        -------
-        ```python
-        class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-
-
-        select_statement = (
-            Buns
-            .select()
-            .where(
-                Buns.name.in_(
-                    "Awesome",
-                    "Qaspen",
-                    "Project",
-                )
-            )
-        )
-
-        select_statement = (
-            Buns
-            .select()
-            .where(
-                Buns.name.in_(
-                    subquery=Buns.select(
-                        Buns.name,
-                    ),
-                ),
-            )
-        )
-        ```
-        """
-        if subquery and comparison_values:
-            args_err_msg: Final = (
-                "It's not possible to specify subquery "
-                "with positional arguments in `in_` method. "
-                "Please choose either subquery or positional arguments.",
-            )
-            raise FilterComparisonError(args_err_msg)
-
-        for comparison_value in comparison_values:
-            is_valid_type: bool = isinstance(
-                comparison_value,
-                self._available_comparison_types,
-            )
-            if not is_valid_type:
-                err_msg = (
-                    f"It's impossible to use `IN` operator "
-                    f"to compare {self.__class__.__name__} "
-                    f"and {type(comparison_value)}",
-                )
-                raise FieldComparisonError(err_msg)
-
-        where_parameters: dict[str, Any] = {
-            "left_operand": self,
-            "operator": operators.InOperator,
-        }
-
-        if subquery:
-            where_parameters["comparison_value"] = subquery
-        elif comparison_values:
-            where_parameters["comparison_values"] = comparison_values
-            where_parameters["operator"] = operators.InWithoutBracketsOperator
-
-        return Filter(**where_parameters)
-
-    def not_in(
-        self: Self,
-        *comparison_values: FieldType,
-        subquery: SQLSelectable | None = None,
-    ) -> Filter:
-        """`NOT IN` PostgreSQL clause.
-
-        It allows you to use `NOT IN` clause.
-        You can specify either unlimited number of `comparison` values
-        or `subquery`.
-
-        ### Parameters:
-        - `comparison_values`: values for `NOT IN` clause,
-            they must be correct type. For example, if you are
-            working with string Field, you have to use str objects.
-        - `subquery`: Any object that provides `queryset()` method.
-
-        ### Returns:
-        Initialized `Filter` class.
-
-        Example:
-        -------
-        ```python
-        class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-
-
-        select_statement = (
-            Buns
-            .select()
-            .where(
-                Buns.name.not_in(
-                    "Awesome",
-                    "Qaspen",
-                    "Project",
-                )
-            )
-        )
-
-        select_statement = (
-            Buns
-            .select()
-            .where(
-                Buns.name.not_in(
-                    subquery=Buns.select(
-                        Buns.name,
-                    ),
-                ),
-            )
-        )
-        ```
-        """
-        if subquery and comparison_values:
-            args_err_msg: Final = (
-                "It's not possible to specify subquery "
-                "with positional arguments in `not_in` method. "
-                "Please choose either subquery or positional arguments.",
-            )
-            raise FilterComparisonError(args_err_msg)
-
-        for comparison_value in comparison_values:
-            is_valid_type: bool = isinstance(
-                comparison_value,
-                self._available_comparison_types,
-            )
-            if not is_valid_type:
-                err_msg = (
-                    f"It's impossible to use `NOT IN` operator "
-                    f"to compare {self.__class__.__name__} "
-                    f"and {type(comparison_value)}",
-                )
-                raise FieldComparisonError(err_msg)
-
-        where_parameters: dict[str, Any] = {
-            "left_operand": self,
-            "operator": operators.NotInOperator,
-        }
-
-        if subquery:
-            where_parameters["comparison_value"] = subquery
-        elif comparison_values:
-            where_parameters["comparison_values"] = comparison_values
-            where_parameters[
-                "operator"
-            ] = operators.NotInWithoutBracketsOperator
-
-        return Filter(**where_parameters)
-
-    def between(
-        self: Self,
-        left_value: FieldType | Field[Any],
-        right_value: FieldType | Field[Any],
-    ) -> FilterBetween:
-        """`BETWEEN` PostgreSQL clause.
-
-        It allows you to use `BETWEEN` clause.
-
-        ### Parameters:
-        - `left_value`: left-side value in the between clause.
-        - `right_value`: right-side value in the between clause.
-
-        ### Returns:
-        Initialized `FilterBetween`.
-        """
-        is_valid_type: Final[bool] = all(
-            (
-                isinstance(
-                    left_value,
-                    self._available_comparison_types,
-                ),
-                isinstance(
-                    right_value,
-                    self._available_comparison_types,
-                ),
-            ),
-        )
-        if is_valid_type:
-            return FilterBetween(
-                field=self,
-                operator=operators.BetweenOperator,
-                left_comparison_value=left_value,
-                right_comparison_value=right_value,
-            )
-
-        type_err_msg = (
-            f"Incorrect type of one of the values "
-            f"in `BETWEEN`. "
-            f"You can use these - {self._available_comparison_types}",
-        )
-        raise FieldComparisonError(type_err_msg)
-
-    def __eq__(  # type: ignore[override]
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType | None,
-    ) -> Filter:
-        if comparison_value is None:
-            return Filter(
-                left_operand=self,
-                operator=operators.IsNullOperator,
-            )
-
-        if isinstance(comparison_value, self._correct_method_value_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.EqualOperator,
-            )
-
-        comparison_err_msg: Final = (
-            f"It's impossible to use `!=` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def eq(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType | None,
-    ) -> Filter:
-        """Analog for `==` (`__eq__` method) operation.
-
-        Works exactly the same. It exists just because some
-        people prefer to use methods instead of python comparison.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        return self.__eq__(comparison_value)
-
-    def __ne__(  # type: ignore[override]
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType | None,
-    ) -> Filter:
-        if comparison_value is None:
-            return Filter(
-                left_operand=self,
-                operator=operators.IsNotNullOperator,
-            )
-
-        if isinstance(comparison_value, self._correct_method_value_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.NotEqualOperator,
-            )
-
-        comparison_err_msg: Final = (
-            f"It's impossible to use `!=` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def neq(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType | None,
-    ) -> Filter:
-        """Analog for `!=` (`__ne__` method) operation.
-
-        Works exactly the same. It exists just because some
-        people prefer to use methods instead of python comparison.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        return self.__ne__(comparison_value)
-
-    def __gt__(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        if isinstance(comparison_value, self._correct_method_value_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.GreaterOperator,
-            )
-
-        comparison_err_msg: Final = (
-            f"It's impossible to use `>` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def gt(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        """Analog for `>` (`__gt__` method) operation.
-
-        Works exactly the same. It exists just because some
-        people prefer to use methods instead of python comparison.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        return self.__gt__(comparison_value)
-
-    def __ge__(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        if isinstance(comparison_value, self._correct_method_value_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.GreaterEqualOperator,
-            )
-        comparison_err_msg: Final = (
-            f"It's impossible to use `>=` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def gte(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        """Analog for `>=` (`__ge__` method) operation.
-
-        Works exactly the same. It exists just because some
-        people prefer to use methods instead of python comparison.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        return self.__ge__(comparison_value)
-
-    def __lt__(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        if isinstance(comparison_value, self._correct_method_value_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.LessOperator,
-            )
-        comparison_err_msg: Final = (
-            f"It's impossible to use `<` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def lt(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        """Analog for `<` (`__lt__` method) operation.
-
-        Works exactly the same. It exists just because some
-        people prefer to use methods instead of python comparison.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        return self.__lt__(comparison_value)
-
-    def __le__(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        if isinstance(comparison_value, self._correct_method_value_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.LessEqualOperator,
-            )
-        comparison_err_msg: Final = (
-            f"It's impossible to use `<=` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def lte(
-        self: Self,
-        comparison_value: Field[Any] | OperatorTypes | FieldType,
-    ) -> Filter:
-        """Analog for `<=` (`__le__` method) operation.
-
-        Works exactly the same. It exists just because some
-        people prefer to use methods instead of python comparison.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        return self.__le__(comparison_value)
 
     def with_alias(
         self: Self,

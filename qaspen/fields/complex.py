@@ -4,7 +4,7 @@ import json
 from ast import literal_eval
 from typing import TYPE_CHECKING, Any, Dict, Final, List, Union
 
-from qaspen.base.operators import AllOperator, AnyOperator
+from qaspen.base.operators import All_, Any_
 from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
@@ -98,8 +98,8 @@ class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
         list,
         str,
         Field,
-        AllOperator,
-        AnyOperator,
+        All_,
+        Any_,
     )
     _set_available_types: tuple[type, ...] = (dict, list, str)
     _sql_type = complex_types.Json
@@ -133,8 +133,8 @@ class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         str,
         list,
         Field,
-        AllOperator,
-        AnyOperator,
+        All_,
+        Any_,
     )
     _set_available_types: tuple[type, ...] = (dict, str, bytes, list)
     _sql_type = complex_types.Jsonb
@@ -165,8 +165,8 @@ class ArrayField(Field[List[Any]]):
     ] = (
         list,
         Field,
-        AllOperator,
-        AnyOperator,
+        All_,
+        Any_,
     )
     _set_available_types: tuple[type, ...] = (list,)
     _sql_type = complex_types.Array

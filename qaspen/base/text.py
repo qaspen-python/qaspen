@@ -2,13 +2,11 @@ from typing import Final
 
 from typing_extensions import Self
 
-from qaspen.base.comparison_operators import EqualOperatorMixin
+from qaspen.base.comparison_operators import AllComparisonMixin
 from qaspen.querystring.querystring import QueryString
 
 
-class Text(
-    EqualOperatorMixin[object],
-):
+class Text(AllComparisonMixin[object]):
     """Class for translating python string to database as-is."""
 
     def __init__(

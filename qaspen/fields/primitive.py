@@ -3,14 +3,14 @@ from __future__ import annotations
 import datetime
 from typing import TYPE_CHECKING, Any, Callable, Final, Union
 
-from qaspen.base.operators import AllOperator, AnyOperator
-from qaspen.clauses.filter import Filter
-from qaspen.exceptions import (
-    FieldComparisonError,
-    FieldDeclarationError,
-    FieldValueValidationError,
+from qaspen.base.comparison_operators import (
+    ILikeComparisonMixin,
+    LikeComparisonMixin,
+    NotILikeComparisonMixin,
+    NotLikeComparisonMixin,
 )
-from qaspen.fields import operators
+from qaspen.base.operators import All_, Any_
+from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import FieldDefaultType, FieldType
 from qaspen.sql_type import primitive_types
@@ -26,8 +26,8 @@ class BaseIntegerField(Field[Union[int, float]]):
         int,
         float,
         Field,
-        AnyOperator,
-        AllOperator,
+        Any_,
+        All_,
     )
     _set_available_types: tuple[type, ...] = (int, float)
     _available_max_value: int | None
@@ -200,8 +200,8 @@ class RealField(Field[Union[str, int, float]]):
         int,
         float,
         Field,
-        AnyOperator,
-        AllOperator,
+        Any_,
+        All_,
     )
     _set_available_types: tuple[type, ...] = (str, int, float)
     _sql_type = primitive_types.Real
@@ -231,8 +231,8 @@ class DoublePrecisionField(Field[Union[int, float, str]]):
         int,
         float,
         Field,
-        AnyOperator,
-        AllOperator,
+        Any_,
+        All_,
     )
     _set_available_types: tuple[type, ...] = (str, int, float)
     _sql_type = primitive_types.DoublePrecision
@@ -260,8 +260,8 @@ class BooleanField(Field[bool]):
     _available_comparison_types: tuple[type, ...] = (
         bool,
         Field,
-        AnyOperator,
-        AllOperator,
+        Any_,
+        All_,
     )
     _set_available_types: tuple[type, ...] = (bool,)
     _sql_type = primitive_types.Boolean
@@ -334,12 +334,18 @@ class BigSerialField(SerialBaseField, BigIntField):
 AvailableComparisonTypes = (
     str,
     Field,
-    AnyOperator,
-    AllOperator,
+    Any_,
+    All_,
 )
 
 
-class BaseStringField(Field[str]):
+class BaseStringField(
+    Field[str],
+    LikeComparisonMixin[str],
+    NotLikeComparisonMixin[str],
+    ILikeComparisonMixin[str],
+    NotILikeComparisonMixin[str],
+):
     """Base Field for all string-related Fields.
 
     It adds LIKE, NOT LIKE, ILIKE and NOT ILIKE methods.
@@ -347,117 +353,6 @@ class BaseStringField(Field[str]):
 
     _available_comparison_types: tuple[type, ...] = AvailableComparisonTypes
     _set_available_types: tuple[type, ...] = (str,)
-
-    def like(
-        self: Self,
-        comparison_value: str,
-    ) -> Filter:
-        """`LIKE` PostgreSQL clause.
-
-        It allows you to use `LIKE` clause.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        if isinstance(comparison_value, self._available_comparison_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.LikeOperator,
-            )
-
-        comparison_err_msg: Final = (
-            f"It's impossible to use `LIKE` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def not_like(
-        self: Self,
-        comparison_value: str,
-    ) -> Filter:
-        """`NOT LIKE` PostgreSQL clause.
-
-        It allows you to use `NOT LIKE` clause.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        if isinstance(comparison_value, self._available_comparison_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.NotLikeOperator,
-            )
-
-        comparison_err_msg: Final = (
-            f"It's impossible to use `NOT LIKE` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def ilike(
-        self: Self,
-        comparison_value: str,
-    ) -> Filter:
-        """`ILIKE` PostgreSQL clause.
-
-        It allows you to use `ILIKE` clause.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        if isinstance(comparison_value, self._available_comparison_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.ILikeOperator,
-            )
-        comparison_err_msg: Final = (
-            f"It's impossible to use `ILIKE` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
-
-    def not_ilike(
-        self: Self,
-        comparison_value: str,
-    ) -> Filter:
-        """`NOT ILIKE` PostgreSQL clause.
-
-        It allows you to use `NOT ILIKE` clause.
-
-        ### Parameters:
-        - `comparison_value`: value to compare with.
-
-        ### Returns:
-        Initialized `Filter`.
-        """
-        if isinstance(comparison_value, self._available_comparison_types):
-            return Filter(
-                left_operand=self,
-                comparison_value=comparison_value,
-                operator=operators.NotILikeOperator,
-            )
-
-        comparison_err_msg: Final = (
-            f"It's impossible to use `NOT ILIKE` operator "
-            f"to compare {self.__class__.__name__} "
-            f"and {type(comparison_value)}",
-        )
-        raise FieldComparisonError(comparison_err_msg)
 
 
 class VarCharField(BaseStringField):
@@ -681,8 +576,8 @@ class DateField(BaseDatetimeField[datetime.date]):
     ] = (
         datetime.date,
         Field,
-        AllOperator,
-        AnyOperator,
+        All_,
+        Any_,
     )
     _set_available_types: tuple[type, ...] = (datetime.date,)
     _sql_type = primitive_types.Date
@@ -713,8 +608,8 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
     ] = (
         datetime.time,
         Field,
-        AllOperator,
-        AnyOperator,
+        All_,
+        Any_,
     )
     _set_available_types: tuple[type, ...] = (datetime.time,)
     _sql_type = primitive_types.Time
@@ -747,8 +642,8 @@ class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     ] = (
         datetime.datetime,
         Field,
-        AllOperator,
-        AnyOperator,
+        All_,
+        Any_,
     )
     _set_available_types: tuple[type, ...] = (datetime.datetime,)
     _sql_type = primitive_types.Timestamp
@@ -783,8 +678,8 @@ class IntervalField(Field[datetime.timedelta]):
     ] = (
         datetime.timedelta,
         Field,
-        AllOperator,
-        AnyOperator,
+        All_,
+        Any_,
     )
     _set_available_types: tuple[type, ...] = (datetime.timedelta,)
     _sql_type = primitive_types.Interval

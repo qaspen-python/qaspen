@@ -61,6 +61,18 @@ class InWithoutBracketsOperator(BaseOperator):
     )
 
 
+class AnyOperator(BaseOperator):
+    operation_template: str = (
+        f"{QueryString.arg_ph()} = ANY({QueryString.param_ph()})"
+    )
+
+
+class NotAnyOperator(BaseOperator):
+    operation_template: str = (
+        f"NOT ({QueryString.arg_ph()} = ANY({QueryString.param_ph()}))"
+    )
+
+
 class NotInOperator(BaseOperator):
     operation_template: str = (
         f"{QueryString.arg_ph()} NOT IN ({QueryString.param_ph()})"

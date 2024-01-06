@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.base.sql_base import SQLComparison
-    from qaspen.fields.base import Field
     from qaspen.fields.operators import BaseOperator
 
 
@@ -66,7 +65,7 @@ class FilterBetween(CombinableExpression):
 
     def __init__(
         self: Self,
-        field: Field[Any],
+        field: SQLComparison[Any],
         operator: type[BaseOperator],
         left_comparison_value: Any,
         right_comparison_value: Any,
@@ -94,7 +93,7 @@ class FilterBetween(CombinableExpression):
         )
 
         return FilterQueryString(
-            self.field.field_name,
+            self.field.querystring(),
             template_parameters=[left_value, right_value],
             sql_template=self.operator.operation_template,
         )
