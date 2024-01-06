@@ -494,7 +494,7 @@ async def test_select_having_method(
             UserTable.fullname,
         )
         .group_by(UserTable.fullname)
-        .having(Count(UserTable.fullname).eq("1"))
+        .having(Count(UserTable.fullname) == "1")
     )
 
     querystring, qs_params = stmt.querystring().build()
