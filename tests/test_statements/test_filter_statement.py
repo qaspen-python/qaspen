@@ -26,7 +26,7 @@ def test_filter_querystring_method(
 ) -> None:
     """Test `Filter` `querystring` method."""
     filter_instance = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value=comparison_value,
     )
@@ -100,7 +100,7 @@ def test_filter_exclusive_querystring_method() -> None:
 
     comparison_value = "default_filter"
     filter_instance = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value=comparison_value,
     )
@@ -122,7 +122,9 @@ def test_filter_exclusive_querystring_method() -> None:
 
 def test_filter_statement() -> None:
     """Test `FilterStatement` statement."""
-    filter_stmt = FilterStatement()
+    filter_stmt = FilterStatement(
+        filter_operator="WHERE",
+    )
 
     left_comparison_value = "test"
     right_comparison_value = "s_test"
@@ -137,7 +139,7 @@ def test_filter_statement() -> None:
 
     comparison_value = "default_filter"
     filter_instance = Filter(
-        field=ForTestTable.name,
+        left_operand=ForTestTable.name,
         operator=EqualOperator,
         comparison_value=comparison_value,
     )
@@ -157,6 +159,8 @@ def test_filter_statement() -> None:
 
 def test_filter_statement_empty() -> None:
     """Test empty `FilterStatement` statement."""
-    filter_stmt = FilterStatement()
+    filter_stmt = FilterStatement(
+        filter_operator="WHERE",
+    )
 
     assert isinstance(filter_stmt.querystring(), EmptyQueryString)

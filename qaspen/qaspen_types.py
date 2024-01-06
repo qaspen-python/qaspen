@@ -4,7 +4,7 @@ from msgspec import Struct
 from pydantic import BaseModel
 from typing_extensions import Self
 
-from qaspen.base.operators import AllOperator, AnyOperator
+from qaspen.base.operators import All_, Any_
 
 if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
@@ -61,4 +61,8 @@ MSGSpecStruct = typing.TypeVar(
     bound=Struct,
 )
 
-OperatorTypes = typing.Union[AnyOperator, AllOperator]
+OperatorTypes = typing.Union[Any_, All_]
+
+ComparisonT = typing.TypeVar(
+    "ComparisonT",
+)

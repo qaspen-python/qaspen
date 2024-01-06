@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Union
 
+from qaspen.base.comparison_operators import AllComparisonMixin
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.querystring.querystring import QueryString
 
@@ -10,7 +11,10 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-class AggFunction(ABC):
+class AggFunction(
+    ABC,
+    AllComparisonMixin[Union[object, SQLSelectable, None]],
+):
     """Main class for all PostgreSQL aggregate function."""
 
     function_name: str

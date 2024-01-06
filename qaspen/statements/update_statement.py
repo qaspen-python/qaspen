@@ -46,7 +46,9 @@ class UpdateStatement(
         self._from_table: Final = from_table
         self._for_update_map: Final = for_update_map
 
-        self._filter_statement = FilterStatement()
+        self._filter_statement = FilterStatement(
+            filter_operator="WHERE",
+        )
         self._is_where_used: bool = False
         self._force: bool = False
         self._returning: tuple[Field[Any], ...] | None = None

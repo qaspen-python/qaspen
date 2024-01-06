@@ -5,12 +5,8 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from qaspen.base.operators import AllOperator, AnyOperator
-from qaspen.exceptions import (
-    FieldComparisonError,
-    FieldDeclarationError,
-    FieldValueValidationError,
-)
+from qaspen.base.operators import All_, Any_
+from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.operators import (
     ILikeOperator,
     LikeOperator,
@@ -292,58 +288,12 @@ def test_primitive_field_available_comparison_types_success(
     ],
 )
 @pytest.mark.parametrize(
-    "incorrect_comparison_value",
-    [
-        {"incorrect": "type"},
-        {1, 2, 3},
-        (1, 2, 3),
-        [1, 2, 3],
-        frozenset([1, 2, 3]),
-    ],
-)
-def test_primitive_field_available_comparison_types_failure(
-    field: type[Field[Any]],
-    incorrect_comparison_value: Any,
-) -> None:
-    """Test `_available_comparison_types` with base types."""
-
-    class TestTable(BaseTable):
-        qaspen = field()
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        TestTable.qaspen == incorrect_comparison_value  # noqa: B015
-
-
-@pytest.mark.parametrize(
-    "field",
-    [
-        SmallIntField,
-        IntegerField,
-        BigIntField,
-        NumericField,
-        DecimalField,
-        RealField,
-        DoublePrecisionField,
-        BooleanField,
-        SmallSerialField,
-        SerialField,
-        BigSerialField,
-        VarCharField,
-        TextField,
-        CharField,
-        DateField,
-        TimeField,
-        TimestampField,
-        IntervalField,
-    ],
-)
-@pytest.mark.parametrize(
     "comparison_value",
     [
-        AnyOperator(
+        Any_(
             subquery=_ForTestTable.select(_ForTestTable.name),
         ),
-        AllOperator(
+        All_(
             subquery=_ForTestTable.select(_ForTestTable.name),
         ),
     ],
@@ -560,47 +510,13 @@ def test_str_field_like_method_success(
     filter_with_value = TestTable.qaspen.like(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == LikeOperator
 
     querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "testtable.qaspen LIKE %s"
     assert qs_params == [comparison_value]
-
-
-@pytest.mark.parametrize(
-    "field",
-    [VarCharField, TextField],
-)
-@pytest.mark.parametrize(
-    "comparison_value",
-    [
-        12,
-        12.0,
-        {"dict": "is not correct"},
-        {"set", "is", "incorrect"},
-        ["list", "isn't", "correct"],
-        ("tuple", "isn't", "correct"),
-        frozenset(("frozenset", "isn't", "correct")),
-    ],
-)
-def test_str_field_like_method_failure(
-    field: type[BaseStringField],
-    comparison_value: str,
-) -> None:
-    """Test string fields `like` method.
-
-    Check that method raises an exception with wrong types.
-    """
-
-    class TestTable(BaseTable):
-        qaspen = field()
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        TestTable.qaspen.like(
-            comparison_value=comparison_value,
-        )
 
 
 @pytest.mark.parametrize(
@@ -628,47 +544,13 @@ def test_str_field_not_like_method_success(
     filter_with_value = TestTable.qaspen.not_like(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotLikeOperator
 
     querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "testtable.qaspen NOT LIKE %s"
     assert qs_params == [comparison_value]
-
-
-@pytest.mark.parametrize(
-    "field",
-    [VarCharField, TextField],
-)
-@pytest.mark.parametrize(
-    "comparison_value",
-    [
-        12,
-        12.0,
-        {"dict": "is not correct"},
-        {"set", "is", "incorrect"},
-        ["list", "isn't", "correct"],
-        ("tuple", "isn't", "correct"),
-        frozenset(("frozenset", "isn't", "correct")),
-    ],
-)
-def test_str_field_not_like_method_failure(
-    field: type[BaseStringField],
-    comparison_value: str,
-) -> None:
-    """Test string fields `not_like` method.
-
-    Check that method raises an exception with wrong types.
-    """
-
-    class TestTable(BaseTable):
-        qaspen = field()
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        TestTable.qaspen.not_like(
-            comparison_value=comparison_value,
-        )
 
 
 @pytest.mark.parametrize(
@@ -696,47 +578,13 @@ def test_str_field_ilike_method_success(
     filter_with_value = TestTable.qaspen.ilike(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == ILikeOperator
 
     querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "testtable.qaspen ILIKE %s"
     assert qs_params == [comparison_value]
-
-
-@pytest.mark.parametrize(
-    "field",
-    [VarCharField, TextField],
-)
-@pytest.mark.parametrize(
-    "comparison_value",
-    [
-        12,
-        12.0,
-        {"dict": "is not correct"},
-        {"set", "is", "incorrect"},
-        ["list", "isn't", "correct"],
-        ("tuple", "isn't", "correct"),
-        frozenset(("frozenset", "isn't", "correct")),
-    ],
-)
-def test_str_field_ilike_method_failure(
-    field: type[BaseStringField],
-    comparison_value: str,
-) -> None:
-    """Test string fields `ilike` method.
-
-    Check that method raises an exception with wrong types.
-    """
-
-    class TestTable(BaseTable):
-        qaspen = field()
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        TestTable.qaspen.ilike(
-            comparison_value=comparison_value,
-        )
 
 
 @pytest.mark.parametrize(
@@ -764,47 +612,13 @@ def test_str_field_not_ilike_method_success(
     filter_with_value = TestTable.qaspen.not_ilike(
         comparison_value=comparison_value,
     )
-    assert filter_with_value.field in [TestTable.qaspen]
+    assert filter_with_value.left_operand in [TestTable.qaspen]
     assert filter_with_value.comparison_value == TestTable.qaspen
     assert filter_with_value.operator == NotILikeOperator
 
     querystring, qs_params = filter_with_value.querystring().build()
     assert querystring == "testtable.qaspen NOT ILIKE %s"
     assert qs_params == [comparison_value]
-
-
-@pytest.mark.parametrize(
-    "field",
-    [VarCharField, TextField],
-)
-@pytest.mark.parametrize(
-    "comparison_value",
-    [
-        12,
-        12.0,
-        {"dict": "is not correct"},
-        {"set", "is", "incorrect"},
-        ["list", "isn't", "correct"],
-        ("tuple", "isn't", "correct"),
-        frozenset(("frozenset", "isn't", "correct")),
-    ],
-)
-def test_str_field_not_ilike_method_failure(
-    field: type[BaseStringField],
-    comparison_value: str,
-) -> None:
-    """Test string fields `not_ilike` method.
-
-    Check that method raises an exception with wrong types.
-    """
-
-    class TestTable(BaseTable):
-        qaspen = field()
-
-    with pytest.raises(expected_exception=FieldComparisonError):
-        TestTable.qaspen.not_ilike(
-            comparison_value=comparison_value,
-        )
 
 
 @pytest.mark.parametrize(

@@ -64,6 +64,7 @@ class OrderByStatement(BaseStatement):
         """Build `QueryString`."""
         if not self.order_by_expressions:
             return QueryString.empty()
+
         final_order_by: CommaSeparatedQueryString = functools.reduce(
             operator.add,
             [
