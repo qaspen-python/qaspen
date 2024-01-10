@@ -5,6 +5,7 @@ import inspect
 import typing
 
 from qaspen.fields.base import Field
+from qaspen.statements.delete_statement import DeleteStatement
 from qaspen.statements.insert_statement import (
     InsertObjectsStatement,
     InsertStatement,
@@ -197,6 +198,32 @@ class BaseTable(MetaTable, abstract=True):
         return UpdateStatement[T_](
             from_table=cls,
             for_update_map=for_update_map,
+        )
+
+    @classmethod
+    def delete(cls: type[T_]) -> DeleteStatement[T_]:
+        """Create `DeleteStatement`.
+
+        This method allows delete records in the database.
+
+        Example:
+        -------
+        ```python
+        class Buns(BaseTable, table_name="buns"):
+            name: VarCharField = VarCharField()
+            nickname: VarCharField = VarCharField()
+
+
+        update_statement = (
+            Buns
+            .delete().where(
+                Buns.name == "Old name",
+            )
+        )
+        ```
+        """
+        return DeleteStatement[T_](
+            from_table=cls,
         )
 
     @classmethod
