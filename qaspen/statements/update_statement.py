@@ -72,7 +72,7 @@ class UpdateStatement(
         self: Self,
         engine: BaseEngine[Any, Any, Any],
     ) -> list[dict[str, Any]] | None:
-        """Execute select statement.
+        """Execute update statement.
 
         This is manual execution.
         You can pass specific engine.
@@ -96,7 +96,7 @@ class UpdateStatement(
         self: Self,
         transaction: BaseTransaction[Any, Any],
     ) -> list[dict[str, Any]] | None:
-        """Execute statement inside a transaction context.
+        """Execute update statement inside a transaction context.
 
         This is manual execution.
         You can pass specific transaction.
