@@ -25,6 +25,8 @@ async def test_exists_await_method(
         .exists()
     )
 
+    UserTable._table_meta.database_engine = None
+
     with pytest.raises(expected_exception=AttributeError):
         await stmt
 

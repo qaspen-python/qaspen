@@ -31,20 +31,15 @@ if TYPE_CHECKING:
     )
 
 
-class UpdateStatement(
+class DeleteStatement(
     BaseStatement,
     Executable[Optional[List[Dict[str, Any]]]],
     Generic[FromTable],
 ):
-    """Statement for UPDATE queries."""
+    """Statement for DELETE queries."""
 
-    def __init__(
-        self: Self,
-        from_table: type[FromTable],
-        for_update_map: dict[Field[Any], Any],
-    ) -> None:
+    def __init__(self: Self, from_table: type[FromTable]) -> None:
         self._from_table: Final = from_table
-        self._for_update_map: Final = for_update_map
 
         self._filter_statement = FilterStatement(
             filter_operator="WHERE",
@@ -56,7 +51,7 @@ class UpdateStatement(
     def __await__(
         self: Self,
     ) -> Generator[None, None, list[dict[str, Any]] | None]:
-        """InsertStatement can be awaited.
+        """DeleteStatement can be awaited.
 
         ### Returns:
         result from `execute` method.
@@ -72,7 +67,7 @@ class UpdateStatement(
         self: Self,
         engine: BaseEngine[Any, Any, Any],
     ) -> list[dict[str, Any]] | None:
-        """Execute update statement.
+        """Execute DELETE statement.
 
         This is manual execution.
         You can pass specific engine.
@@ -96,7 +91,7 @@ class UpdateStatement(
         self: Self,
         transaction: BaseTransaction[Any, Any],
     ) -> list[dict[str, Any]] | None:
-        """Execute update statement inside a transaction context.
+        """Execute DELETE statement inside a transaction context.
 
         This is manual execution.
         You can pass specific transaction.
@@ -121,6 +116,38 @@ class UpdateStatement(
 
         return raw_query_result
 
+    def querystring(self: Self) -> QueryString:
+        """Build final querystring for UpdateStatement.
+
+        Firstly it checks are there where clause or force flag,
+        if not than raise an error.
+
+        After it builds querystring, adds where clause
+        and returning if necessary.
+
+        ### Returns:
+        `QueryString`.
+        """
+        if not self._is_where_used and not self._force:
+            no_where_clause_error = (
+                "You can't make DELETE queries without WHERE clause. "
+                "You can allow it with `.force()` method.",
+            )
+            raise FieldDeclarationError(no_where_clause_error)
+
+        querystring = QueryString(
+            self._from_table.table_name(),
+            sql_template=f"DELETE FROM {QueryString.arg_ph()}",
+        )
+
+        if self._is_where_used:
+            querystring += self._filter_statement.querystring()
+
+        if self._returning:
+            querystring += self._returning_query()
+
+        return querystring
+
     def where(
         self: Self,
         *where_arguments: CombinableExpression,
@@ -143,9 +170,7 @@ class UpdateStatement(
             name: VarCharField = VarCharField()
             description: VarCharField = VarCharField()
 
-        statement = Buns.update(
-            {Buns.description: "Wow!"},
-        ).where(
+        statement = Buns.delete().where(
             Buns.name == "Tasty",
         )
         ```
@@ -153,34 +178,6 @@ class UpdateStatement(
         self._is_where_used = True
         self._filter_statement.add_filter(*where_arguments)
         return self
-
-    def querystring(self: Self) -> QueryString:
-        """Build final querystring for UpdateStatement.
-
-        Firstly it checks are there where clause or force flag,
-        if not than raise an error.
-
-        After it builds querystring, adds where clause
-        and returning if necessary.
-
-        ### Returns:
-        `QueryString`.
-        """
-        if not self._is_where_used and not self._force:
-            no_where_clause_error = (
-                "You can't make UPDATE queries without WHERE clause. "
-                "You can allow it with `.force()` method.",
-            )
-            raise FieldDeclarationError(no_where_clause_error)
-        querystring = self._main_query()
-
-        if self._is_where_used:
-            querystring += self._filter_statement.querystring()
-
-        if self._returning:
-            querystring += self._returning_query()
-
-        return querystring
 
     def returning(
         self: Self,
@@ -214,36 +211,6 @@ class UpdateStatement(
         """
         self._force = False
         return self
-
-    def _main_query(self: Self) -> QueryString:
-        """Build main query.
-
-        `UPDATE <> SET <>`.
-        """
-        updates: list[QueryString] = [
-            QueryString(
-                field_to_update._original_field_name,
-                template_parameters=[update_value],
-                sql_template=(
-                    f"{QueryString.arg_ph()} = {QueryString.param_ph()}"
-                ),
-            )
-            for field_to_update, update_value in self._for_update_map.items()
-        ]
-        updates_template = ", ".join(
-            ["{}"] * len(self._for_update_map),
-        )
-
-        update_qs = QueryString(
-            *updates,
-            sql_template=updates_template,
-        )
-
-        return QueryString(
-            self._from_table.table_name(),
-            update_qs,
-            sql_template="UPDATE {} SET {}",
-        )
 
     def _returning_query(self: Self) -> QueryString:
         if not self._returning:  # pragma: no cover
