@@ -1,0 +1,5 @@
+[qaspen]
+engine_path="./database/engine:DatabaseEngine"
+
+master_engine_path="./database/engine:DatabaseEngine"
+slave_engine_path="./database/engine:SlaveDatabaseEngine"
