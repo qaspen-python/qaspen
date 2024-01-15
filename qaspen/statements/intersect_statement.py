@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Final, Generator, List
+from typing import TYPE_CHECKING, Any, Dict, Final, List
 
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import Executable
@@ -62,39 +62,6 @@ class IntersectStatement(
             right_expression=right_expression,
         )
 
-    def __await__(
-        self: Self,
-    ) -> Generator[None, None, list[dict[str, Any]]]:
-        """IntersectStatement can be awaited.
-
-        Example:
-        -------
-        ```
-        class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-
-        async def main() -> None:
-            list_of_buns = await Buns.select()
-            print(list_of_buns)
-        ```
-        """
-        first_select_statement: Final = self._start_select_statement(
-            statement=self.intersect_statement.left_expression,
-        )
-
-        engine: BaseEngine[
-            Any,
-            Any,
-            Any,
-        ] | None = (
-            first_select_statement._from_table._table_meta.database_engine
-        )
-        if not engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-
-        return self.execute(engine=engine).__await__()
-
     async def execute(
         self: Self,
         engine: BaseEngine[Any, Any, Any],
@@ -142,21 +109,3 @@ class IntersectStatement(
     def querystring(self: Self) -> QueryString:
         """Build `QueryString`."""
         return self.intersect_statement.querystring()
-
-    def _start_select_statement(
-        self: Self,
-        statement: SelectStatement[FromTable] | Intersect,
-    ) -> SelectStatement[FromTable]:
-        """Retrieve first SelectStatement in the IntersectStatement.
-
-        ### Parameters
-        :param statement: Intersect or SelectStatement.
-
-        ### Returns
-        :returns: SelectStatement.
-        """
-        if isinstance(statement, Intersect):
-            return self._start_select_statement(
-                statement=statement.left_expression,
-            )
-        return statement

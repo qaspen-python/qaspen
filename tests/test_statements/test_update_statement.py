@@ -92,6 +92,7 @@ def test_update_stmt_deforce_method() -> None:
 
 @pytest.mark.usefixtures(
     "_create_test_data",
+    "_mock_find_engine",
 )
 @pytest.mark.anyio()
 async def test_update_stmt_await_method(
@@ -113,11 +114,6 @@ async def test_update_stmt_await_method(
             UserTable.fullname,
         )
     )
-
-    UserTable._table_meta.database_engine = None
-
-    with pytest.raises(expected_exception=AttributeError):
-        await update_stmt
 
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine

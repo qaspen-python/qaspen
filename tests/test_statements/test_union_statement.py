@@ -11,7 +11,10 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.anyio()
-@pytest.mark.usefixtures("_create_test_data")
+@pytest.mark.usefixtures(
+    "_create_test_data",
+    "_mock_find_engine",
+)
 async def test_union_await_method(
     test_engine: PsycopgEngine,
     test_db_transaction: PsycopgTransaction,
@@ -31,11 +34,6 @@ async def test_union_await_method(
 
     union = stmt1.union(stmt2)
     union = union.union(stmt3)
-
-    UserTable._table_meta.database_engine = None
-
-    with pytest.raises(expected_exception=AttributeError):
-        await union
 
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine

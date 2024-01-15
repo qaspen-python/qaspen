@@ -11,7 +11,10 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.anyio()
-@pytest.mark.usefixtures("_create_test_data")
+@pytest.mark.usefixtures(
+    "_create_test_data",
+    "_mock_find_engine",
+)
 async def test_intersect_await_method(
     test_engine: PsycopgEngine,
     test_db_transaction: PsycopgTransaction,
@@ -32,9 +35,6 @@ async def test_intersect_await_method(
     UserTable._table_meta.database_engine = None
     intersect = stmt1.intersect(stmt2)
     intersect = intersect.intersect(stmt3)
-
-    with pytest.raises(expected_exception=AttributeError):
-        await intersect
 
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine

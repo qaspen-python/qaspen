@@ -34,21 +34,6 @@ class ExistsStatement(
             SelectStatement[FromTable],
         ] = select_statement
 
-    def __await__(self: Self) -> Any:
-        """Make ExistsStatement awaitable."""
-        engine: BaseEngine[
-            Any,
-            Any,
-            Any,
-        ] | None = (
-            self._select_statement._from_table._table_meta.database_engine
-        )
-        if not engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-
-        return self.execute(engine=engine).__await__()
-
     def querystring(self: Self) -> QueryString:
         """Return querystring for comparisons.
 

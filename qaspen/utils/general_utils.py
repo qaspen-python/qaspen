@@ -22,7 +22,6 @@ class QaspenConfig:
 
     _config: _QaspenConfig | None = None
 
-    @property  # type: ignore[misc]
     @classmethod
     def config(cls: type[QaspenConfig]) -> _QaspenConfig:
         """Return config.
@@ -155,4 +154,5 @@ def import_object(object_spec: str) -> Any:
         raise ValueError(import_msg_err)
     with add_cwd_in_path():
         module = import_module(import_spec[0])
+
     return getattr(module, import_spec[1])

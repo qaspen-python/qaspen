@@ -48,6 +48,10 @@ def test_meta_table_init_subclass() -> None:
         "field3": InheritanceMetaTable.field3,  # type: ignore[arg-type]
         "field4": InheritanceMetaTable.field4,  # type: ignore[arg-type]
     }
+    assert InheritanceMetaTable._fields_with_default() == {
+        "field3": InheritanceMetaTable.field3,  # type: ignore[arg-type]
+        "field4": "wow",
+    }
 
 
 def test_meta_table_init_method() -> None:

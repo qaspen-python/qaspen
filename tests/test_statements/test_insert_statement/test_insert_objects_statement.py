@@ -36,7 +36,10 @@ def test_insert_obj_stmt_returning_method() -> None:
 
 
 @pytest.mark.anyio()
-@pytest.mark.usefixtures("_create_test_table")
+@pytest.mark.usefixtures(
+    "_create_test_table",
+    "_mock_find_engine",
+)
 async def test_insert_obj_stmt_await_method(
     test_engine: PsycopgEngine,
     test_db_transaction: PsycopgTransaction,
@@ -62,16 +65,12 @@ async def test_insert_obj_stmt_await_method(
         from_table=TableTest,
     )
 
-    TableTest._table_meta.database_engine = None
-    with pytest.raises(expected_exception=AttributeError):
-        await iostmt
-
     test_engine.running_transaction.set(test_db_transaction)
     TableTest._table_meta.database_engine = test_engine
 
     await iostmt
     db_raw_records = await TableTest.select()
-    db_results = db_raw_records.result()
+    db_results = db_raw_records.result() if db_raw_records else []
     expected_db_results = [
         {"some_id": 1000, "some_name": "Qaspen", "some_number": 100},
         {"some_id": 999, "some_name": "ORM", "some_number": 100},

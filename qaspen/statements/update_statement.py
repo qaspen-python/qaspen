@@ -1,15 +1,6 @@
 from __future__ import annotations
 
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Final,
-    Generator,
-    Generic,
-    List,
-    Optional,
-)
+from typing import TYPE_CHECKING, Any, Dict, Final, Generic, List, Optional
 
 from qaspen.exceptions import FieldDeclarationError
 from qaspen.qaspen_types import FromTable
@@ -52,21 +43,6 @@ class UpdateStatement(
         self._is_where_used: bool = False
         self._force: bool = False
         self._returning: tuple[Field[Any], ...] | None = None
-
-    def __await__(
-        self: Self,
-    ) -> Generator[None, None, list[dict[str, Any]] | None]:
-        """InsertStatement can be awaited.
-
-        ### Returns:
-        result from `execute` method.
-        """
-        engine: Final = self._from_table._table_meta.database_engine
-        if not engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-
-        return self.execute(engine=engine).__await__()
 
     async def execute(
         self: Self,

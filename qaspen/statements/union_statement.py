@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Final, Generator, Generic, List
+from typing import TYPE_CHECKING, Any, Dict, Final, Generic, List
 
 from qaspen.base.sql_base import SQLSelectable
 from qaspen.qaspen_types import FromTable
@@ -69,35 +69,6 @@ class UnionStatement(
             union_all=union_all,
         )
 
-    def __await__(
-        self: Self,
-    ) -> Generator[None, None, list[dict[str, Any]]]:
-        """SelectStatement can be awaited.
-
-        Example:
-        -------
-        ```
-        class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-
-        async def main() -> None:
-            list_of_buns = await Buns.select()
-            print(list_of_buns)
-        ```
-        """
-        first_select_statement: Final = self._start_select_statement(
-            statement=self.union_statement.left_expression,  # type: ignore[arg-type]
-        )
-
-        engine: Final = (
-            first_select_statement._from_table._table_meta.database_engine
-        )
-        if not engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-
-        return self.execute(engine=engine).__await__()
-
     async def execute(
         self: Self,
         engine: BaseEngine[Any, Any, Any],
@@ -148,21 +119,3 @@ class UnionStatement(
     def querystring(self: Self) -> QueryString:
         """Build new `QueryString`."""
         return self.union_statement.querystring()
-
-    def _start_select_statement(
-        self: Self,
-        statement: SelectStatement[FromTable] | SQLUnion,
-    ) -> SelectStatement[FromTable]:
-        """Retrieve first SelectStatement in the UnionStatement.
-
-        ### Parameters
-        :param statement: Union or SelectStatement.
-
-        ### Returns
-        :returns: SelectStatement.
-        """
-        if isinstance(statement, SQLUnion):
-            return self._start_select_statement(
-                statement=statement.left_expression,  # type: ignore[arg-type]
-            )
-        return statement

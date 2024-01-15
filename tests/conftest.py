@@ -4,7 +4,8 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Generator
+from unittest import mock
 
 import pytest
 from qaspen_psycopg.engine import PsycopgEngine, PsycopgTransaction
@@ -55,3 +56,16 @@ async def test_db_transaction(
     transaction = test_engine.transaction()
     yield transaction
     await transaction.rollback()
+
+
+@pytest.fixture()
+def _mock_find_engine(
+    test_engine: PsycopgEngine,
+    test_db_transaction: PsycopgTransaction,
+) -> Generator[None, None, None]:
+    def mocked_find_engine() -> PsycopgEngine:
+        test_engine.running_transaction.set(test_db_transaction)
+        return test_engine
+
+    with mock.patch("qaspen.statements.base.find_engine", mocked_find_engine):
+        yield

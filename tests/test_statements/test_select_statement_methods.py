@@ -13,17 +13,16 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.anyio()
-@pytest.mark.usefixtures("_create_test_data")
+@pytest.mark.usefixtures(
+    "_create_test_data",
+    "_mock_find_engine",
+)
 async def test_select_await_method(
     test_engine: PsycopgEngine,
     test_db_transaction: PsycopgTransaction,
 ) -> None:
     """Test `__await__` `SelectStatement` method."""
     stmt = UserTable.select()
-
-    UserTable._table_meta.database_engine = None
-    with pytest.raises(expected_exception=AttributeError):
-        await stmt
 
     test_engine.running_transaction.set(test_db_transaction)
     UserTable._table_meta.database_engine = test_engine
@@ -35,7 +34,7 @@ async def test_select_await_method(
         {"user_id": 2, "fullname": "Python"},
     ]
 
-    raw_result = stmt_result.result()
+    raw_result = stmt_result.result() if stmt_result else []
     assert len(raw_result) == expected_number_of_results
     assert raw_result == expected_result
 

@@ -4,7 +4,6 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Final,
-    Generator,
     Generic,
     Iterable,
     Optional,
@@ -111,29 +110,6 @@ class SelectStatement(
         self._order_by_statement: OrderByStatement = OrderByStatement()
         self._join_statement: JoinStatement = JoinStatement()
         self._field_aliases: FieldAliases = FieldAliases()
-
-    def __await__(
-        self: Self,
-    ) -> Generator[None, None, SelectStatementResult]:
-        """SelectStatement can be awaited.
-
-        Example:
-        -------
-        ```
-        class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-
-        async def main() -> None:
-            list_of_buns = await Buns.select()
-            print(list_of_buns)
-        ```
-        """
-        engine: Final = self._from_table._table_meta.database_engine
-        if not engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-
-        return self.execute(engine=engine).__await__()
 
     async def execute(
         self: Self,

@@ -2,15 +2,7 @@ from __future__ import annotations
 
 import functools
 import operator
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Final,
-    Generator,
-    Generic,
-    Sequence,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Any, Final, Generic, Sequence, TypeVar
 
 from qaspen.fields.base import Field
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE, FromTable
@@ -47,21 +39,6 @@ class BaseInsertStatement(
     def __init__(self: Self, from_table: type[FromTable]) -> None:
         self._from_table: Final = from_table
         self._returning_field: Field[Any] | None = None
-
-    def __await__(
-        self: Self,
-    ) -> Generator[None, None, ReturnResultType]:
-        """InsertStatement can be awaited.
-
-        ### Returns:
-        result from `execute` method.
-        """
-        engine: Final = self._from_table._table_meta.database_engine
-        if not engine:
-            engine_err_msg: Final = "There is no database engine."
-            raise AttributeError(engine_err_msg)
-
-        return self.execute(engine=engine).__await__()
 
     async def execute(
         self: Self,
