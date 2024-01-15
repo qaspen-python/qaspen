@@ -40,6 +40,9 @@ fixable = ["ALL"]
 ignore = ["ANN401", "D100", "D107", "SLF001", "D105", "TRY003", "PLR0913", "FBT001", "FBT002", "S608", "S101"]
 exclude = ["qaspen/fields/operators.py"]
 
+[tool.qaspen]
+engine_path = "/none"
+
 [tool.ruff.extend-per-file-ignores]
 "tests/test_statements/test_insert_statement/test_insert_statement.py" = ["PLR2004"]
 "tests/test_fields/test_base.py" = ["B015"]
