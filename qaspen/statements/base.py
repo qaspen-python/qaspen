@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Final, Generator, Generic, TypeVar
 
-from qaspen.utils.engine_utils import find_engine
+from qaspen.utils.engine_utils import EngineFinder
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -24,7 +24,7 @@ class Executable(ABC, Generic[StatementResultType]):
         self: Self,
     ) -> Generator[None, None, StatementResultType]:
         """Make statement awaitable."""
-        engine: Final = find_engine()
+        engine: Final = EngineFinder.engine()
 
         if not engine:
             engine_err_msg: Final = "There is no database engine."

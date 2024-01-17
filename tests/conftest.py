@@ -67,5 +67,8 @@ def _mock_find_engine(
         test_engine.running_transaction.set(test_db_transaction)
         return test_engine
 
-    with mock.patch("qaspen.statements.base.find_engine", mocked_find_engine):
+    with mock.patch(
+        "qaspen.statements.base.EngineFinder.engine",
+        mocked_find_engine,
+    ):
         yield
