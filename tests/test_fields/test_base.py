@@ -54,6 +54,26 @@ def test_set_name_magic_method() -> None:
     assert TestTable.wow_field._original_field_name == "wow_field"
 
 
+def test_not_is_primary_unique() -> None:
+    """Test negative is_primary and unique attributes."""
+
+    class TestTable(BaseTable):
+        wow_field = Field[str]()
+
+    assert not TestTable.wow_field._field_data.is_primary
+    assert not TestTable.wow_field._field_data.unique
+
+
+def test_is_primary_unique() -> None:
+    """Test is_primary and unique attributes."""
+
+    class TestTable(BaseTable):
+        wow_field = Field[str](is_primary=True, unique=True)
+
+    assert TestTable.wow_field._field_data.is_primary
+    assert TestTable.wow_field._field_data.unique
+
+
 def test_field_value_property(for_test_table: _ForTestTable) -> None:
     """Test `value` property."""
     ttable: Final = for_test_table(  # type: ignore[operator]
