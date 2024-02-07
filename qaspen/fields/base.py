@@ -45,6 +45,10 @@ class FieldData(Generic[FieldType]):
 
     `from_table` - From what table field is.
 
+    `is_primary` - is fiels is a PRIMARY KEY
+
+    `unique` - is fiels has a UNIQUE constraint
+
     `is_null` - is field can be NULL.
 
     `field_value` - value of the field in the database or
@@ -68,6 +72,8 @@ class FieldData(Generic[FieldType]):
 
     field_name: str
     from_table: type[BaseTable] = None  # type: ignore[assignment]
+    is_primary: bool = False
+    unique: bool = False
     is_null: bool = False
     field_value: FieldType | EmptyFieldValue | None = EMPTY_FIELD_VALUE
     default: Any | None = None
@@ -325,7 +331,9 @@ class Field(
     def __init__(
         self: Self,
         *args: Any,
+        is_primary: bool = False,
         is_null: bool = True,
+        unique: bool = False,
         default: FieldDefaultType[FieldType] = None,
         database_default: str | None = None,
         db_field_name: str | None = None,
@@ -356,11 +364,13 @@ class Field(
         self.is_null: Final = is_null if not default else False
         self.default = default
         self.database_default = database_default
+        self.is_primary = is_primary
+        self.unique = unique
 
         self.prepared_default: Any | None = None
-        self.callable_default_value: CallableDefaultType[
-            FieldType
-        ] | None = None
+        self.callable_default_value: (
+            CallableDefaultType[FieldType] | None
+        ) = None
         self.not_callable_default: FieldType | None = None
         if callable(default):
             self.callable_default_value = default
@@ -388,6 +398,8 @@ class Field(
 
         self._field_data: FieldData[FieldType] = FieldData(
             field_name=db_field_name or "",
+            is_primary=self.is_primary,
+            unique=self.unique,
             is_null=is_null,
             default=self.not_callable_default,
             prepared_default=self.prepared_default,
