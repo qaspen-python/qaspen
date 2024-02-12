@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 
 from qaspen.sql_type.base import SQLType
@@ -81,10 +83,40 @@ class Time(SQLType):
     python_type = datetime.time
 
 
+class TimeTZ(SQLType):
+    """Represent `TIME` PostgreSQL type in the python."""
+
+    python_type = datetime.time
+
+    @classmethod
+    def sql_type(cls: type[SQLType]) -> str:
+        """Build string Type in PostgreSQL.
+
+        ### Returns:
+        string.
+        """
+        return "TIME WITH TIME ZONE"
+
+
 class Timestamp(SQLType):
     """Represent `TIMESTAMP` PostgreSQL type in the python."""
 
     python_type = datetime.datetime
+
+
+class TimestampTZ(SQLType):
+    """Represent `TIMESTAMP` PostgreSQL type in the python."""
+
+    python_type = datetime.datetime
+
+    @classmethod
+    def sql_type(cls: type[SQLType]) -> str:
+        """Build string Type in PostgreSQL.
+
+        ### Returns:
+        string.
+        """
+        return "TIMESTAMP WITH TIME ZONE"
 
 
 class Interval(SQLType):
