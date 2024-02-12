@@ -386,16 +386,16 @@ def test_primitive_field_available_comparison_types_operator(
         (DateField, None),
         # ------ TimeField ------
         (TimeField, datetime.now().time()),  # noqa: DTZ005
-        (TimeField, _ForTestTable.name),
+        (TimeField, None),
         # ------ TimeTZField ------
         (TimeTZField, datetime.now().time()),  # noqa: DTZ005
-        (TimeTZField, _ForTestTable.name),
+        (TimeTZField, None),
         # ------ TimestampField ------
         (TimestampField, datetime.now()),  # noqa: DTZ005
-        (TimestampField, _ForTestTable.name),
+        (TimestampField, None),
         # ------ TimestampTZField ------
         (TimestampTZField, datetime.now()),  # noqa: DTZ005
-        (TimestampTZField, _ForTestTable.name),
+        (TimestampTZField, None),
         # ------ IntervalField ------
         (IntervalField, timedelta(days=1)),
         (IntervalField, None),

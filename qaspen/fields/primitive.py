@@ -602,7 +602,7 @@ class TimeField(BaseDatetimeField[datetime.time]):
 
 
 class TimeTZField(BaseDateTimeFieldWithTZ[datetime.time]):
-    """PostgreSQL type for `datetime.time` python type."""
+    """PostgreSQL type for `datetime.time` python type with TZ."""
 
     _available_comparison_types: tuple[
         type,
@@ -634,7 +634,7 @@ class TimestampField(BaseDatetimeField[datetime.datetime]):
 
 
 class TimestampTZField(BaseDateTimeFieldWithTZ[datetime.datetime]):
-    """PostgreSQL type for `datetime.datetime` python type."""
+    """PostgreSQL type for `datetime.datetime` python type with TZ."""
 
     _available_comparison_types: tuple[
         type,

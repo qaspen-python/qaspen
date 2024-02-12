@@ -95,7 +95,7 @@ class TimeTZ(SQLType):
         ### Returns:
         string.
         """
-        return "TIME WITH TIMEZONE"
+        return "TIME WITH TIME ZONE"
 
 
 class Timestamp(SQLType):
@@ -116,7 +116,7 @@ class TimestampTZ(SQLType):
         ### Returns:
         string.
         """
-        return "TIMESTAMP WITH TIMEZONE"
+        return "TIMESTAMP WITH TIME ZONE"
 
 
 class Interval(SQLType):
