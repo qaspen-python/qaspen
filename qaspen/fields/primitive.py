@@ -541,15 +541,7 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
         db_field_name: str | None = None,
         default: FieldDefaultType[FieldType] = None,
         database_default: str | None = None,
-        with_timezone: bool = False,
     ) -> None:
-        if default and database_default:
-            declaration_err_msg: Final = (
-                "Please specify either `default` or `database_default` "
-                "for DateField.",
-            )
-            raise FieldDeclarationError(declaration_err_msg)
-
         super().__init__(
             *args,
             is_null=is_null,
@@ -558,13 +550,7 @@ class BaseDateTimeFieldWithTZ(BaseDatetimeField[FieldType]):
             database_default=database_default,
         )
 
-        self.with_timezone: Final = with_timezone
-
-    @property
-    def _field_type(self: Self) -> str:
-        if self.with_timezone:
-            return f"{self._sql_type.sql_type()} WITH TIME ZONE"
-        return super()._field_type
+        self.with_timezone: Final = True
 
 
 class DateField(BaseDatetimeField[datetime.date]):
@@ -599,7 +585,7 @@ class DateField(BaseDatetimeField[datetime.date]):
         )
 
 
-class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
+class TimeField(BaseDatetimeField[datetime.time]):
     """PostgreSQL type for `datetime.time` python type."""
 
     _available_comparison_types: tuple[
@@ -614,26 +600,24 @@ class TimeField(BaseDateTimeFieldWithTZ[datetime.time]):
     _set_available_types: tuple[type, ...] = (datetime.time,)
     _sql_type = primitive_types.Time
 
-    def __init__(
-        self: Self,
-        *args: Any,
-        is_null: bool = True,
-        db_field_name: str | None = None,
-        default: datetime.time | Callable[[], datetime.time] | None = None,
-        database_default: str | None = None,
-        with_timezone: bool = False,
-    ) -> None:
-        super().__init__(
-            *args,
-            is_null=is_null,
-            db_field_name=db_field_name,
-            default=default,
-            database_default=database_default,
-            with_timezone=with_timezone,
-        )
+
+class TimeTZField(BaseDateTimeFieldWithTZ[datetime.time]):
+    """PostgreSQL type for `datetime.time` python type."""
+
+    _available_comparison_types: tuple[
+        type,
+        ...,
+    ] = (
+        datetime.time,
+        Field,
+        All_,
+        Any_,
+    )
+    _set_available_types: tuple[type, ...] = (datetime.time,)
+    _sql_type = primitive_types.TimeTZ
 
 
-class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
+class TimestampField(BaseDatetimeField[datetime.datetime]):
     """PostgreSQL type for `datetime.datetime` python type."""
 
     _available_comparison_types: tuple[
@@ -648,25 +632,21 @@ class TimestampField(BaseDateTimeFieldWithTZ[datetime.datetime]):
     _set_available_types: tuple[type, ...] = (datetime.datetime,)
     _sql_type = primitive_types.Timestamp
 
-    def __init__(
-        self: Self,
-        *args: Any,
-        is_null: bool = True,
-        db_field_name: str | None = None,
-        default: (
-            datetime.datetime | Callable[[], datetime.datetime] | None
-        ) = None,
-        database_default: str | None = None,
-        with_timezone: bool = False,
-    ) -> None:
-        super().__init__(
-            *args,
-            is_null=is_null,
-            db_field_name=db_field_name,
-            default=default,
-            database_default=database_default,
-            with_timezone=with_timezone,
-        )
+
+class TimestampTZField(BaseDateTimeFieldWithTZ[datetime.datetime]):
+    """PostgreSQL type for `datetime.datetime` python type."""
+
+    _available_comparison_types: tuple[
+        type,
+        ...,
+    ] = (
+        datetime.datetime,
+        Field,
+        All_,
+        Any_,
+    )
+    _set_available_types: tuple[type, ...] = (datetime.datetime,)
+    _sql_type = primitive_types.TimestampTZ
 
 
 class IntervalField(Field[datetime.timedelta]):

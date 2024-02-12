@@ -34,6 +34,8 @@ from qaspen.fields.primitive import (
     TextField,
     TimeField,
     TimestampField,
+    TimestampTZField,
+    TimeTZField,
     VarCharField,
 )
 from qaspen.table.base_table import BaseTable
@@ -244,9 +246,15 @@ def test_numeric_field_type(
         # ------ TimeField ------
         (TimeField, datetime.now().time()),  # noqa: DTZ005
         (TimeField, _ForTestTable.name),
+        # ------ TimeTZField ------
+        (TimeTZField, datetime.now().time()),  # noqa: DTZ005
+        (TimeTZField, _ForTestTable.name),
         # ------ TimestampField ------
         (TimestampField, datetime.now()),  # noqa: DTZ005
         (TimestampField, _ForTestTable.name),
+        # ------ TimestampTZField ------
+        (TimestampTZField, datetime.now()),  # noqa: DTZ005
+        (TimestampTZField, _ForTestTable.name),
         # ------ IntervalField ------
         (IntervalField, timedelta(days=1)),
         (IntervalField, _ForTestTable.name),
@@ -283,7 +291,9 @@ def test_primitive_field_available_comparison_types_success(
         CharField,
         DateField,
         TimeField,
+        TimeTZField,
         TimestampField,
+        TimestampTZField,
         IntervalField,
     ],
 )
@@ -376,10 +386,16 @@ def test_primitive_field_available_comparison_types_operator(
         (DateField, None),
         # ------ TimeField ------
         (TimeField, datetime.now().time()),  # noqa: DTZ005
-        (TimeField, None),
+        (TimeField, _ForTestTable.name),
+        # ------ TimeTZField ------
+        (TimeTZField, datetime.now().time()),  # noqa: DTZ005
+        (TimeTZField, _ForTestTable.name),
         # ------ TimestampField ------
         (TimestampField, datetime.now()),  # noqa: DTZ005
-        (TimestampField, None),
+        (TimestampField, _ForTestTable.name),
+        # ------ TimestampTZField ------
+        (TimestampTZField, datetime.now()),  # noqa: DTZ005
+        (TimestampTZField, _ForTestTable.name),
         # ------ IntervalField ------
         (IntervalField, timedelta(days=1)),
         (IntervalField, None),
@@ -718,5 +734,18 @@ def test_timestamp_field_field_type_method() -> None:
     field_without_with_timezone = TimestampField()
     assert field_without_with_timezone._field_type == "TIMESTAMP"
 
-    field_with_timezone = TimestampField(with_timezone=True)
+    field_with_timezone = TimestampTZField()
     assert field_with_timezone._field_type == "TIMESTAMP WITH TIME ZONE"
+
+
+def test_time_field_field_type_method() -> None:
+    """Test `_field_type` in `TimestampField`.
+
+    Check that return string changes if field has
+    `with_timezone` param.
+    """
+    field_without_with_timezone = TimeField()
+    assert field_without_with_timezone._field_type == "TIME"
+
+    field_with_timezone = TimeTZField()
+    assert field_with_timezone._field_type == "TIME WITH TIME ZONE"
