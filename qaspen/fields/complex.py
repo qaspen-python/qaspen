@@ -13,8 +13,6 @@ from qaspen.sql_type import complex_types
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.sql_type.base import SQLType
-
 
 class JsonBase(Field[FieldType]):
     """Base field for JSON and JSONB PostgreSQL fields."""
@@ -174,7 +172,7 @@ class ArrayField(Field[List[Any]]):
     def __init__(
         self: Self,
         *args: Any,
-        base_type: type[SQLType],
+        inner_field: Field[Any],
         is_null: bool = True,
         db_field_name: str | None = None,
         default: FieldDefaultType[list[Any]] = None,
@@ -190,7 +188,7 @@ class ArrayField(Field[List[Any]]):
         )
 
         self.dimension: Final = dimension
-        self.base_type: Final = base_type
+        self.inner_field: Final = inner_field
 
     def _prepare_default_value(
         self: Self,
@@ -205,11 +203,7 @@ class ArrayField(Field[List[Any]]):
 
     @property
     def _field_type(self: Self) -> str:
-        sql_array_type: str = (
-            f"{self.base_type.querystring().build()[0]} "
-            f"{self._sql_type.sql_type()}"
-        )
         if self.dimension:
-            sql_array_type += f"[{self.dimension}]"
+            return f"{self.inner_field._field_type}[{self.dimension}]"
 
-        return sql_array_type
+        return f"{self.inner_field._field_type}[]"

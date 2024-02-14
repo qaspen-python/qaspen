@@ -6,7 +6,7 @@ import pytest
 
 from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
 from qaspen.fields.complex import ArrayField, JsonBase, JsonbField, JsonField
-from qaspen.sql_type.primitive_types import VarChar
+from qaspen.fields.primitive import VarCharField
 
 
 @pytest.mark.parametrize(
@@ -136,7 +136,7 @@ def test_array_field_prepare_default_value_method(
 ) -> None:
     """Test `_prepare_default_value` `ArrayField` method."""
     created_field = ArrayField(
-        base_type=VarChar,
+        inner_field=VarCharField(),
         default=raw_default_value,
     )
     assert created_field._prepared_default == prepared_default_value
@@ -145,12 +145,12 @@ def test_array_field_prepare_default_value_method(
 def test_array_field_field_type_method() -> None:
     """Test `_field_type` method."""
     field_without_dimension = ArrayField(
-        base_type=VarChar,
+        inner_field=VarCharField(max_length=64),
     )
-    assert field_without_dimension._field_type == "VARCHAR ARRAY"
+    assert field_without_dimension._field_type == "VARCHAR(64)[]"
 
     field_with_dimension = ArrayField(
-        base_type=VarChar,
+        inner_field=VarCharField(),
         dimension=10,
     )
-    assert field_with_dimension._field_type == "VARCHAR ARRAY[10]"
+    assert field_with_dimension._field_type == "VARCHAR(255)[10]"
