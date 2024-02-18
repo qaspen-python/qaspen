@@ -10,7 +10,7 @@ from qaspen.querystring.querystring import (
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.fields.base import Field
+    from qaspen.columns.base import Column
 
 
 class OrderBy:
@@ -18,18 +18,18 @@ class OrderBy:
 
     def __init__(
         self: Self,
-        field: Field[Any],
+        column: Column[Any],
         ascending: bool | None = None,
         nulls_first: bool | None = None,
     ) -> None:
-        self.field: Final[Field[Any]] = field  # type: ignore[arg-type]
+        self.column: Final[Column[Any]] = column  # type: ignore[arg-type]
         self.ascending: Final = ascending
         self.nulls_first: Final = nulls_first
 
     def querystring(self: Self) -> CommaSeparatedQueryString:
         """Build `QueryString`."""
         querystring_template = f"{QueryString.arg_ph()}"
-        querystring_arguments: list[str] = [self.field.field_name]
+        querystring_arguments: list[str] = [self.column.column_name]
 
         if self.ascending is not None:
             querystring_template += f" {QueryString.arg_ph()}"

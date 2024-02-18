@@ -4,7 +4,7 @@ import copy
 import dataclasses
 from typing import TYPE_CHECKING, Any, ClassVar, Final
 
-from qaspen.fields.base import Field
+from qaspen.columns.base import Column
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -23,27 +23,27 @@ class MetaTableData:
 
     - `abstract`: is it abstract table or not.
 
-    - `table_fields`: all fields of the table.
+    - `table_columns`: all columns of the table.
 
-    - `table_fields_with_default`:
-        fields with `default` or `callable_default`.
+    - `table_columns_with_default`:
+        columns with `default` or `callable_default`.
         We process them before actual application start
         because we don't want to spend time in runtime to
-        find fields with defaults.
+        find columns with defaults.
 
     - `database_engine`: engine for the database.
 
     - `alias`: alias for table, usually used in `AS` operator
-        and as prefix for the fields.
+        and as prefix for the columns.
     """
 
     table_name: str = ""
     table_schema: str = "public"
     abstract: bool = False
-    table_fields: dict[str, Field[Any]] = dataclasses.field(
+    table_columns: dict[str, Column[Any]] = dataclasses.field(
         default_factory=dict,
     )
-    table_fields_with_default: dict[str, Field[Any]] = dataclasses.field(
+    table_columns_with_default: dict[str, Column[Any]] = dataclasses.field(
         default_factory=dict,
     )
     database_engine: BaseEngine[Any, Any, Any] | None = None
@@ -54,9 +54,9 @@ class MetaTableData:
             table_name=copy.copy(self.table_name),
             table_schema=copy.copy(self.table_schema),
             abstract=copy.copy(self.abstract),
-            table_fields=copy.deepcopy(self.table_fields),
-            table_fields_with_default=copy.deepcopy(
-                self.table_fields_with_default,
+            table_columns=copy.deepcopy(self.table_columns),
+            table_columns_with_default=copy.deepcopy(
+                self.table_columns_with_default,
             ),
             database_engine=self.database_engine,
             alias=copy.copy(self.alias),
@@ -79,15 +79,15 @@ class MetaTable:
         if not table_name:
             table_name = cls.__name__.lower()
 
-        table_fields: Final = cls._parse_table_fields()
+        table_columns: Final = cls._parse_table_columns()
 
         cls._table_meta = MetaTableData(
             table_name=table_name,
             table_schema=table_schema,
             abstract=abstract,
-            table_fields=table_fields,
-            table_fields_with_default=cls._parse_table_fields_with_default(
-                table_fields=table_fields,
+            table_columns=table_columns,
+            table_columns_with_default=cls._parse_table_columns_with_default(
+                table_columns=table_columns,
             ),
         )
 
@@ -95,31 +95,31 @@ class MetaTable:
 
         super().__init_subclass__(**kwargs)
 
-    def __init__(self: Self, **fields_values: Any) -> None:
+    def __init__(self: Self, **columns_values: Any) -> None:
         """Initialize Table instance.
 
         This method must be called only from user side.
         """
         self._table_meta = copy.deepcopy(self._table_meta)
-        for table_field in self._table_meta.table_fields.values():
-            self._table_meta.table_fields[
-                table_field._original_field_name
-            ] = table_field
+        for table_column in self._table_meta.table_columns.values():
+            self._table_meta.table_columns[
+                table_column._original_column_name
+            ] = table_column
             setattr(
                 self,
-                table_field._original_field_name,
-                table_field,
+                table_column._original_column_name,
+                table_column,
             )
 
-            new_field_value: Any = fields_values.get(
-                table_field._original_field_name,
+            new_column_value: Any = columns_values.get(
+                table_column._original_column_name,
                 None,
             )
 
             setattr(
                 self,
-                table_field._original_field_name,
-                new_field_value,
+                table_column._original_column_name,
+                new_column_value,
             )
 
     def __getattr__(
@@ -129,10 +129,10 @@ class MetaTable:
         return self.__dict__[attribute]  # pragma: no cover
 
     def __getattribute__(self: Self, attribute: str) -> Any:
-        """Return value of the value instead of the instance of the field.
+        """Return value of the value instead of the instance of the column.
 
-        Value of the field will be returned only
-        if we have initialized `instance` of the field,
+        Value of the column will be returned only
+        if we have initialized `instance` of the column,
         not the class.
 
         ### Params
@@ -142,65 +142,65 @@ class MetaTable:
         :returns: any attribute of the table.
         """
         table_meta = object.__getattribute__(self, "_table_meta")
-        table_fields = object.__getattribute__(table_meta, "table_fields")
-        if attribute in table_fields:
+        table_columns = object.__getattribute__(table_meta, "table_columns")
+        if attribute in table_columns:
             return object.__getattribute__(self, attribute).value
         return super().__getattribute__(attribute)
 
     @classmethod
-    def _retrieve_field(
+    def _retrieve_column(
         cls: type[MetaTable],
-        field_name: str,
-    ) -> Field[Any]:
-        """Retrieve field from the table by its name.
+        column_name: str,
+    ) -> Column[Any]:
+        """Retrieve column from the table by its name.
 
-        We need this method because if Field subclass
-        uses parameter `db_field_name` than we
-        can't get it with basic `BaseTable.your_field`,
-        we need to get it from `table_fields`.
+        We need this method because if Column subclass
+        uses parameter `db_column_name` than we
+        can't get it with basic `BaseTable.your_column`,
+        we need to get it from `table_columns`.
 
         DO NOT USE IT IN YOUR CODE. FOR INTERNAL
         USE ONLY.
 
         ### Parameters:
-        - `field_name`: name of the field.
+        - `column_name`: name of the column.
 
         ### Returns:
-        `Field` in a table.
+        `Column` in a table.
         """
-        return cls._table_meta.table_fields[field_name]
+        return cls._table_meta.table_columns[column_name]
 
     @classmethod
-    def _parse_table_fields(
+    def _parse_table_columns(
         cls: type[MetaTable],
-    ) -> dict[str, Field[Any]]:
-        """Find all `Field` instances.
+    ) -> dict[str, Column[Any]]:
+        """Find all `Column` instances.
 
         ### Returns:
-        dict as `dict[<field_name>: <field_instance>]`.
+        dict as `dict[<column_name>: <column_instance>]`.
         """
         return {
-            field_class._field_data.field_name: field_class
-            for field_class in cls.__dict__.values()
-            if isinstance(field_class, Field)
+            column_class._column_data.column_name: column_class
+            for column_class in cls.__dict__.values()
+            if isinstance(column_class, Column)
         }
 
     @classmethod
-    def _parse_table_fields_with_default(
+    def _parse_table_columns_with_default(
         cls: type[MetaTable],
-        table_fields: dict[str, Field[Any]],
-    ) -> dict[str, Field[Any]]:
-        """Parse table fields and find all with default values.
+        table_columns: dict[str, Column[Any]],
+    ) -> dict[str, Column[Any]]:
+        """Parse table columns and find all with default values.
 
         We are searching for non-`None` `default` or `callable_default`
-        parameters in `_field_data`.
+        parameters in `_column_data`.
         """
         return {
-            table_field_name: table_field
-            for table_field_name, table_field in table_fields.items()
+            table_column_name: table_column
+            for table_column_name, table_column in table_columns.items()
             if (
-                table_field._field_data.default
-                or table_field._field_data.callable_default
+                table_column._column_data.default
+                or table_column._column_data.callable_default
             )
         }
 
@@ -220,7 +220,7 @@ class MetaTable:
         ]
 
     @classmethod
-    def _fields_with_default(
+    def _columns_with_default(
         cls: type[MetaTable],
-    ) -> dict[str, Field[Any]]:
-        return cls._table_meta.table_fields_with_default
+    ) -> dict[str, Column[Any]]:
+        return cls._table_meta.table_columns_with_default

@@ -1,4 +1,4 @@
-"""Tests for BaseField."""
+"""Tests for BaseColumn."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Final
@@ -6,13 +6,8 @@ from typing import TYPE_CHECKING, Any, Callable, Final
 import pytest
 
 from qaspen.base.operators import All_, Any_
-from qaspen.exceptions import (
-    FieldDeclarationError,
-    FieldValueValidationError,
-    FilterComparisonError,
-)
-from qaspen.fields.base import Field
-from qaspen.fields.operators import (
+from qaspen.columns.base import Column
+from qaspen.columns.operators import (
     AnyOperator,
     BetweenOperator,
     EqualOperator,
@@ -27,15 +22,20 @@ from qaspen.fields.operators import (
     NotEqualOperator,
     NotInOperator,
 )
-from qaspen.fields.primitive import VarCharField
+from qaspen.columns.primitive import VarCharColumn
+from qaspen.exceptions import (
+    ColumnDeclarationError,
+    ColumnValueValidationError,
+    FilterComparisonError,
+)
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE, EMPTY_VALUE, OperatorTypes
 from qaspen.sql_type.primitive_types import VarChar
 from qaspen.table.base_table import BaseTable
-from tests.test_fields.conftest import (
-    ForTestField,
-    ForTestFieldInt,
+from tests.test_columns.conftest import (
+    ForTestColumn,
+    ForTestColumnInt,
     _ForTestTable,
-    calculate_default_field_value,
+    calculate_default_column_value,
 )
 
 if TYPE_CHECKING:
@@ -45,52 +45,52 @@ if TYPE_CHECKING:
 def test_set_name_magic_method() -> None:
     """Test `__set_name__` method.
 
-    Check that field get name from its variable.
+    Check that column get name from its variable.
     """
 
     class TestTable(BaseTable):
-        wow_field = Field[str]()
+        wow_column = Column[str]()
 
-    assert TestTable.wow_field._original_field_name == "wow_field"
+    assert TestTable.wow_column._original_column_name == "wow_column"
 
 
 def test_not_is_primary() -> None:
     """Test negative is_primary and unique attributes."""
 
     class TestTable(BaseTable):
-        wow_field = Field[str]()
+        wow_column = Column[str]()
 
-    assert not TestTable.wow_field._field_data.is_primary
+    assert not TestTable.wow_column._column_data.is_primary
 
 
 def test_is_primary() -> None:
     """Test is_primary and unique attributes."""
 
     class TestTable(BaseTable):
-        wow_field = Field[str](is_primary=True)
+        wow_column = Column[str](is_primary=True)
 
-    assert TestTable.wow_field._field_data.is_primary
+    assert TestTable.wow_column._column_data.is_primary
 
 
 def test_not_unique() -> None:
     """Test negative is_primary and unique attributes."""
 
     class TestTable(BaseTable):
-        wow_field = Field[str]()
+        wow_column = Column[str]()
 
-    assert not TestTable.wow_field._field_data.unique
+    assert not TestTable.wow_column._column_data.unique
 
 
 def test_unique() -> None:
     """Test is_primary and unique attributes."""
 
     class TestTable(BaseTable):
-        wow_field = Field[str](is_primary=True)
+        wow_column = Column[str](is_primary=True)
 
-    assert TestTable.wow_field._field_data.is_primary
+    assert TestTable.wow_column._column_data.is_primary
 
 
-def test_field_value_property(for_test_table: _ForTestTable) -> None:
+def test_column_value_property(for_test_table: _ForTestTable) -> None:
     """Test `value` property."""
     ttable: Final = for_test_table(  # type: ignore[operator]
         name="123",
@@ -103,108 +103,110 @@ def test_table_name_property() -> None:
     """Test `_table_name` property."""
 
     class TestTable(BaseTable, table_name="tname"):
-        wow_field = Field[str]()
+        wow_column = Column[str]()
 
-    assert TestTable.wow_field._table_name == "tname"
+    assert TestTable.wow_column._table_name == "tname"
 
 
 def test_schemed_table_name_property() -> None:
     """Test `_schemed_table_name` property."""
 
     class TestTable(BaseTable, table_name="tname"):
-        wow_field = Field[str]()
+        wow_column = Column[str]()
 
-    assert TestTable.wow_field._schemed_table_name == "public.tname"
+    assert TestTable.wow_column._schemed_table_name == "public.tname"
 
 
-def test_field_field_name_property() -> None:
-    """Test `field_name` property."""
+def test_column_column_name_property() -> None:
+    """Test `column_name` property."""
 
     class TestTable(BaseTable, table_name="tname"):
-        wow_field = Field[str]()
+        wow_column = Column[str]()
 
-    assert TestTable.wow_field.field_name == "tname.wow_field"
+    assert TestTable.wow_column.column_name == "tname.wow_column"
 
     aliased_table = TestTable.aliased(alias="wow_table")
 
-    assert aliased_table.wow_field.field_name == "wow_table.wow_field"
+    assert aliased_table.wow_column.column_name == "wow_table.wow_column"
 
 
-def test_field_field_null_property() -> None:
-    """Test `_field_null` property."""
+def test_column_column_null_property() -> None:
+    """Test `_column_null` property."""
 
     class TestTable(BaseTable, table_name="tname"):
-        wow_field = VarCharField()
+        wow_column = VarCharColumn()
 
-    assert TestTable.wow_field._field_null == ""
+    assert TestTable.wow_column._column_null == ""
 
     class TestTable2(BaseTable, table_name="tname"):
-        second_field = VarCharField(
+        second_column = VarCharColumn(
             is_null=False,
             default="100",
         )
 
-    assert TestTable2.second_field._field_null == "NOT NULL"
+    assert TestTable2.second_column._column_null == "NOT NULL"
 
 
-def test_field_field_default_property() -> None:
-    """Test `_field_default` property."""
+def test_column_column_default_property() -> None:
+    """Test `_column_default` property."""
 
     class ForTestTable(_ForTestTable):
         """Class for test purposes."""
 
-        name: ForTestField = ForTestField(is_null=True)
-        count: ForTestFieldInt = ForTestFieldInt(
+        name: ForTestColumn = ForTestColumn(is_null=True)
+        count: ForTestColumnInt = ForTestColumnInt(
             default=100,
         )
 
-    assert not ForTestTable.name._field_default
-    assert ForTestTable.count._field_default == "DEFAULT 100"
+    assert not ForTestTable.name._column_default
+    assert ForTestTable.count._column_default == "DEFAULT 100"
 
 
-def test_field_field_type_property() -> None:
-    """Test `_field_type` property."""
+def test_column_column_type_property() -> None:
+    """Test `_column_type` property."""
 
-    class TestField(Field[str]):
+    class TestColumn(Column[str]):
         _sql_type = VarChar
 
     class TestTable(BaseTable, table_name="tname"):
-        wow_field = TestField()
+        wow_column = TestColumn()
 
-    assert TestTable.wow_field._field_type == "VARCHAR"
+    assert TestTable.wow_column._column_type == "VARCHAR"
     type_qs, _ = VarChar.querystring().build()
-    assert TestTable.wow_field._field_type == type_qs
+    assert TestTable.wow_column._column_type == type_qs
 
 
 def test_no_args_in_parameters() -> None:
-    """Test that it's impossible to pass not keyword parameters into Field."""
-    with pytest.raises(expected_exception=FieldDeclarationError):
-        Field("some_arg_argument", "second_arg_argument")
+    """Test that it's impossible to pass not keyword parameters into Column."""
+    with pytest.raises(expected_exception=ColumnDeclarationError):
+        Column("some_arg_argument", "second_arg_argument")
 
 
-def test_db_field_name_param() -> None:
-    """Test that db_field_name sets field name."""
-    field_name: Final = "cool_field_name"
-    field = Field[str](db_field_name=field_name)
+def test_db_column_name_param() -> None:
+    """Test that db_column_name sets column name."""
+    column_name: Final = "cool_column_name"
+    column = Column[str](db_column_name=column_name)
 
-    assert field._original_field_name == field_name
+    assert column._original_column_name == column_name
 
 
-def test_automate_field_name() -> None:
-    """Test that field_name will be set automatically in Table."""
+def test_automate_column_name() -> None:
+    """Test that column_name will be set automatically in Table."""
 
     class ForTestTable(BaseTable):
-        field_in_table = Field[str]()
+        column_in_table = Column[str]()
 
-    assert ForTestTable.field_in_table._original_field_name == "field_in_table"
+    assert (
+        ForTestTable.column_in_table._original_column_name == "column_in_table"
+    )
 
 
 def test_default_and_database_default() -> None:
     """Check that it's impossible to specify default and database_default."""
-    with pytest.raises(expected_exception=FieldDeclarationError):
+    with pytest.raises(expected_exception=ColumnDeclarationError):
 
         class ForTestTable(BaseTable):
-            field_in_table = Field[str](
+            column_in_table = Column[str](
                 default="123",
                 database_default="100",
             )
@@ -215,16 +217,16 @@ def test_create_table_object_with_none() -> None:
 
     Check if we specify is_null=False and
     try to create table instance without passing
-    value to the field, creation will fail.
+    value to the column, creation will fail.
     """
 
     class ForTestTable(BaseTable):
-        field_in_table = VarCharField(is_null=False)
+        column_in_table = VarCharColumn(is_null=False)
 
-    with pytest.raises(expected_exception=FieldValueValidationError):
+    with pytest.raises(expected_exception=ColumnValueValidationError):
         ForTestTable()
 
-    ForTestTable(field_in_table="123")
+    ForTestTable(column_in_table="123")
 
 
 @pytest.mark.parametrize(
@@ -236,11 +238,11 @@ def test_create_table_object_with_none() -> None:
         (
             {"not": "correct", "type": 2},
             None,
-            FieldValueValidationError,
+            ColumnValueValidationError,
         ),
     ],
 )
-def test_field_set_method(
+def test_column_set_method(
     for_test_table: _ForTestTable,
     set_value: Any,
     expected_set_value: Any,
@@ -271,34 +273,37 @@ def test_field_set_method(
 def test_default_value_validation_failure(
     default_value: Any,
 ) -> None:
-    """Test failure validation of default value for the Field.
+    """Test failure validation of default value for the Column.
 
     Check that we cannot type for default value that not in
     `_set_available_types`.
-    `ForTestField` - testing Field that allows only `str` and `float`
+    `ForTestColumn` - testing Column that allows only `str` and `float`
     types for `default`.
     """
-    with pytest.raises(expected_exception=FieldValueValidationError):
-        ForTestField(default=default_value)
+    with pytest.raises(expected_exception=ColumnValueValidationError):
+        ForTestColumn(default=default_value)
 
 
 def test_default_value_validation_success() -> None:
-    """Test success validation of default value for the Field.
+    """Test success validation of default value for the Column.
 
     Check that we can set `str`, `float` and `callable`
-    default types to ForTestField.
+    default types to ForTestColumn.
     """
-    field_with_str = ForTestField(default="test_string")
-    assert field_with_str._default == "test_string"
-    assert field_with_str._prepared_default == "'test_string'"
-    field_with_float = ForTestField(default=12.0)
-    assert field_with_float._default == 12.0  # noqa: PLR2004
-    assert field_with_float._prepared_default == "12.0"
+    column_with_str = ForTestColumn(default="test_string")
+    assert column_with_str._default == "test_string"
+    assert column_with_str._prepared_default == "'test_string'"
+    column_with_float = ForTestColumn(default=12.0)
+    assert column_with_float._default == 12.0  # noqa: PLR2004
+    assert column_with_float._prepared_default == "12.0"
 
-    field_with_callable = ForTestField(default=calculate_default_field_value)
-    assert not field_with_callable._default
+    column_with_callable = ForTestColumn(
+        default=calculate_default_column_value,
+    )
+    assert not column_with_callable._default
     assert (
-        field_with_callable._callable_default == calculate_default_field_value
+        column_with_callable._callable_default
+        == calculate_default_column_value
     )
 
 
@@ -306,7 +311,7 @@ def test_default_value_validation_success() -> None:
     (
         "is_null",
         "default",
-        "db_field_name",
+        "db_column_name",
         "expected_default_value",
         "excepted_default_callable_value",
     ),
@@ -317,36 +322,36 @@ def test_default_value_validation_success() -> None:
         (False, 12.0, "wow_name", 12.0, None),
         (
             False,
-            calculate_default_field_value,
+            calculate_default_column_value,
             "wow_name",
             None,
-            calculate_default_field_value,
+            calculate_default_column_value,
         ),
     ],
 )
-def test_field_field_data(
+def test_column_column_data(
     is_null: bool,
     default: str | float | Callable[[], str | float] | None,
-    db_field_name: str,
+    db_column_name: str,
     expected_default_value: str | None,
     excepted_default_callable_value: Callable[[], str | float] | None,
 ) -> None:
-    """Test full main information about the field."""
-    field = ForTestField(
+    """Test full main information about the column."""
+    column = ForTestColumn(
         is_null=is_null,
         default=default,
-        db_field_name=db_field_name,
+        db_column_name=db_column_name,
     )
 
-    assert field._is_null == is_null
-    assert field._default == expected_default_value
+    assert column._is_null == is_null
+    assert column._default == expected_default_value
     assert (
-        field._field_data.callable_default == excepted_default_callable_value
+        column._column_data.callable_default == excepted_default_callable_value
     )
-    assert field._field_data.field_name == db_field_name
+    assert column._column_data.column_name == db_column_name
 
 
-def test_field_in_method_with_values(for_test_table: _ForTestTable) -> None:
+def test_column_in_method_with_values(for_test_table: _ForTestTable) -> None:
     """Test `in_` method with comparison_values.
 
     ### Parameters:
@@ -371,7 +376,7 @@ def test_field_in_method_with_values(for_test_table: _ForTestTable) -> None:
     assert qs_params == [list(comparison_values)]
 
 
-def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
+def test_column_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
     """Test `in_` method with subquery.
 
     ### Parameters:
@@ -395,7 +400,7 @@ def test_field_in_method_with_subquery(for_test_table: _ForTestTable) -> None:
     assert not qs_params
 
 
-def test_field_in_method_with_subquery_and_values(
+def test_column_in_method_with_subquery_and_values(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `in_` method.
@@ -413,10 +418,10 @@ def test_field_in_method_with_subquery_and_values(
         )
 
 
-def test_field_not_in_method_with_values(
+def test_column_not_in_method_with_values(
     for_test_table: _ForTestTable,
 ) -> None:
-    """Test `not_in` field method.
+    """Test `not_in` column method.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
@@ -439,7 +444,7 @@ def test_field_not_in_method_with_values(
     assert qs_params == [list(comparison_values)]
 
 
-def test_field_not_in_method_with_subquery(
+def test_column_not_in_method_with_subquery(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `not_in` method with subquery.
@@ -465,7 +470,7 @@ def test_field_not_in_method_with_subquery(
     assert not qs_params
 
 
-def test_field_not_in_method_with_subquery_and_values(
+def test_column_not_in_method_with_subquery_and_values(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `not_in` method.
@@ -483,7 +488,7 @@ def test_field_not_in_method_with_subquery_and_values(
         )
 
 
-def test_field_between_method(for_test_table: _ForTestTable) -> None:
+def test_column_between_method(for_test_table: _ForTestTable) -> None:
     """Test `between` method."""
     left_value: Final = "left"
     right_value: Final = "right"
@@ -494,7 +499,7 @@ def test_field_between_method(for_test_table: _ForTestTable) -> None:
 
     assert filter_between.left_comparison_value == left_value
     assert filter_between.right_comparison_value == right_value
-    assert filter_between.field in [for_test_table.name]
+    assert filter_between.column in [for_test_table.name]
     assert filter_between.operator == BetweenOperator
 
     querystring, qs_params = filter_between.querystring().build()
@@ -505,25 +510,25 @@ def test_field_between_method(for_test_table: _ForTestTable) -> None:
     ]
 
 
-def test_field_overloaded_eq_method_with_field(
+def test_column_overloaded_eq_method_with_column(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__eq__` method.
 
-    Check that method works correct with field as a comparison value.
+    Check that method works correct with column as a comparison value.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
-    filter_with_field: Final[Filter] = (
+    filter_with_column: Final[Filter] = (
         for_test_table.name == for_test_table.name
     )
 
-    assert filter_with_field.left_operand in [for_test_table.name]
-    assert filter_with_field.comparison_value == for_test_table.name
-    assert filter_with_field.operator == EqualOperator
+    assert filter_with_column.left_operand in [for_test_table.name]
+    assert filter_with_column.comparison_value == for_test_table.name
+    assert filter_with_column.operator == EqualOperator
 
-    querystring, qs_params = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_column.querystring().build()
     assert querystring == "fortesttable.name = fortesttable.name"
     assert not qs_params
 
@@ -535,7 +540,7 @@ def test_field_overloaded_eq_method_with_field(
         (All_, "ALL"),
     ],
 )
-def test_field_overloaded_eq_method_with_operator(
+def test_column_overloaded_eq_method_with_operator(
     for_test_table: _ForTestTable,
     operator_class: OperatorTypes,
     operator_string: str,
@@ -565,7 +570,7 @@ def test_field_overloaded_eq_method_with_operator(
     assert not qs_params
 
 
-def test_field_overloaded_eq_method_with_value(
+def test_column_overloaded_eq_method_with_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__eq__` method.
@@ -587,7 +592,7 @@ def test_field_overloaded_eq_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_eq_method_with_none_value(
+def test_column_eq_method_with_none_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__eq__` method.
@@ -607,7 +612,7 @@ def test_field_eq_method_with_none_value(
     assert not qs_params
 
 
-def test_field_eq_method(
+def test_column_eq_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `eq` method.
@@ -631,25 +636,25 @@ def test_field_eq_method(
     assert qs_params == [value]
 
 
-def test_overloaded_ne_method_with_field(
+def test_overloaded_ne_method_with_column(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__ne__` method.
 
-    Check that method works correct with field as a comparison value.
+    Check that method works correct with column as a comparison value.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
-    filter_with_field: Final[Filter] = (
+    filter_with_column: Final[Filter] = (
         for_test_table.name != for_test_table.name
     )
 
-    assert filter_with_field.left_operand in [for_test_table.name]
-    assert filter_with_field.comparison_value == for_test_table.name
-    assert filter_with_field.operator == NotEqualOperator
+    assert filter_with_column.left_operand in [for_test_table.name]
+    assert filter_with_column.comparison_value == for_test_table.name
+    assert filter_with_column.operator == NotEqualOperator
 
-    querystring, qs_params = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_column.querystring().build()
     assert querystring == "fortesttable.name != fortesttable.name"
     assert not qs_params
 
@@ -661,7 +666,7 @@ def test_overloaded_ne_method_with_field(
         (All_, "ALL"),
     ],
 )
-def test_field_overloaded_ne_method_with_operator(
+def test_column_overloaded_ne_method_with_operator(
     for_test_table: _ForTestTable,
     operator_class: OperatorTypes,
     operator_string: str,
@@ -691,7 +696,7 @@ def test_field_overloaded_ne_method_with_operator(
     assert not qs_params
 
 
-def test_field_overloaded_ne_method_with_value(
+def test_column_overloaded_ne_method_with_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__ne__` method.
@@ -713,7 +718,7 @@ def test_field_overloaded_ne_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_ne_method_with_none_value(
+def test_column_ne_method_with_none_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__eq__` method.
@@ -733,7 +738,7 @@ def test_field_ne_method_with_none_value(
     assert not qs_params
 
 
-def test_field_ne_method(
+def test_column_ne_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `ne` method.
@@ -757,25 +762,25 @@ def test_field_ne_method(
     assert qs_params == [value]
 
 
-def test_overloaded_gt_method_with_field(
+def test_overloaded_gt_method_with_column(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__gt__` method.
 
-    Check that method works correct with field as a comparison value.
+    Check that method works correct with column as a comparison value.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
-    filter_with_field: Final[Filter] = (
+    filter_with_column: Final[Filter] = (
         for_test_table.name > for_test_table.name
     )
 
-    assert filter_with_field.left_operand in [for_test_table.name]
-    assert filter_with_field.comparison_value == for_test_table.name
-    assert filter_with_field.operator == GreaterOperator
+    assert filter_with_column.left_operand in [for_test_table.name]
+    assert filter_with_column.comparison_value == for_test_table.name
+    assert filter_with_column.operator == GreaterOperator
 
-    querystring, qs_params = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_column.querystring().build()
     assert querystring == "fortesttable.name > fortesttable.name"
     assert not qs_params
 
@@ -787,7 +792,7 @@ def test_overloaded_gt_method_with_field(
         (All_, "ALL"),
     ],
 )
-def test_field_overloaded_gt_method_with_operator(
+def test_column_overloaded_gt_method_with_operator(
     for_test_table: _ForTestTable,
     operator_class: OperatorTypes,
     operator_string: str,
@@ -817,7 +822,7 @@ def test_field_overloaded_gt_method_with_operator(
     assert not qs_params
 
 
-def test_field_overloaded_gt_method_with_value(
+def test_column_overloaded_gt_method_with_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__gt__` method.
@@ -839,7 +844,7 @@ def test_field_overloaded_gt_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_gt_method(
+def test_column_gt_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `gt` method.
@@ -863,25 +868,25 @@ def test_field_gt_method(
     assert qs_params == [value]
 
 
-def test_overloaded_ge_method_with_field(
+def test_overloaded_ge_method_with_column(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__ge__` method.
 
-    Check that method works correct with field as a comparison value.
+    Check that method works correct with column as a comparison value.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
-    filter_with_field: Final[Filter] = (
+    filter_with_column: Final[Filter] = (
         for_test_table.name >= for_test_table.name
     )
 
-    assert filter_with_field.left_operand in [for_test_table.name]
-    assert filter_with_field.comparison_value == for_test_table.name
-    assert filter_with_field.operator == GreaterEqualOperator
+    assert filter_with_column.left_operand in [for_test_table.name]
+    assert filter_with_column.comparison_value == for_test_table.name
+    assert filter_with_column.operator == GreaterEqualOperator
 
-    querystring, qs_params = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_column.querystring().build()
     assert querystring == "fortesttable.name >= fortesttable.name"
     assert not qs_params
 
@@ -893,7 +898,7 @@ def test_overloaded_ge_method_with_field(
         (All_, "ALL"),
     ],
 )
-def test_field_overloaded_ge_method_with_operator(
+def test_column_overloaded_ge_method_with_operator(
     for_test_table: _ForTestTable,
     operator_class: OperatorTypes,
     operator_string: str,
@@ -923,7 +928,7 @@ def test_field_overloaded_ge_method_with_operator(
     assert not qs_params
 
 
-def test_field_overloaded_ge_method_with_value(
+def test_column_overloaded_ge_method_with_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__ge__` method.
@@ -945,7 +950,7 @@ def test_field_overloaded_ge_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_gte_method(
+def test_column_gte_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `gte` method.
@@ -969,25 +974,25 @@ def test_field_gte_method(
     assert qs_params == [value]
 
 
-def test_overloaded_lt_method_with_field(
+def test_overloaded_lt_method_with_column(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__lt__` method.
 
-    Check that method works correct with field as a comparison value.
+    Check that method works correct with column as a comparison value.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
-    filter_with_field: Final[Filter] = (
+    filter_with_column: Final[Filter] = (
         for_test_table.name < for_test_table.name
     )
 
-    assert filter_with_field.left_operand in [for_test_table.name]
-    assert filter_with_field.comparison_value == for_test_table.name
-    assert filter_with_field.operator == LessOperator
+    assert filter_with_column.left_operand in [for_test_table.name]
+    assert filter_with_column.comparison_value == for_test_table.name
+    assert filter_with_column.operator == LessOperator
 
-    querystring, qs_params = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_column.querystring().build()
     assert querystring == "fortesttable.name < fortesttable.name"
     assert not qs_params
 
@@ -999,7 +1004,7 @@ def test_overloaded_lt_method_with_field(
         (All_, "ALL"),
     ],
 )
-def test_field_overloaded_lt_method_with_operator(
+def test_column_overloaded_lt_method_with_operator(
     for_test_table: _ForTestTable,
     operator_class: OperatorTypes,
     operator_string: str,
@@ -1029,7 +1034,7 @@ def test_field_overloaded_lt_method_with_operator(
     assert not qs_params
 
 
-def test_field_overloaded_lt_method_with_value(
+def test_column_overloaded_lt_method_with_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__lt__` method.
@@ -1051,7 +1056,7 @@ def test_field_overloaded_lt_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_lt_method(
+def test_column_lt_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `lt` method.
@@ -1075,25 +1080,25 @@ def test_field_lt_method(
     assert qs_params == [value]
 
 
-def test_overloaded_le_method_with_field(
+def test_overloaded_le_method_with_column(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__le__` method.
 
-    Check that method works correct with field as a comparison value.
+    Check that method works correct with column as a comparison value.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
-    filter_with_field: Final[Filter] = (
+    filter_with_column: Final[Filter] = (
         for_test_table.name <= for_test_table.name
     )
 
-    assert filter_with_field.left_operand in [for_test_table.name]
-    assert filter_with_field.comparison_value == for_test_table.name
-    assert filter_with_field.operator == LessEqualOperator
+    assert filter_with_column.left_operand in [for_test_table.name]
+    assert filter_with_column.comparison_value == for_test_table.name
+    assert filter_with_column.operator == LessEqualOperator
 
-    querystring, qs_params = filter_with_field.querystring().build()
+    querystring, qs_params = filter_with_column.querystring().build()
     assert querystring == "fortesttable.name <= fortesttable.name"
     assert not qs_params
 
@@ -1105,7 +1110,7 @@ def test_overloaded_le_method_with_field(
         (All_, "ALL"),
     ],
 )
-def test_field_overloaded_le_method_with_operator(
+def test_column_overloaded_le_method_with_operator(
     for_test_table: _ForTestTable,
     operator_class: OperatorTypes,
     operator_string: str,
@@ -1135,7 +1140,7 @@ def test_field_overloaded_le_method_with_operator(
     assert not qs_params
 
 
-def test_field_overloaded_le_method_with_value(
+def test_column_overloaded_le_method_with_value(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `__le__` method.
@@ -1157,7 +1162,7 @@ def test_field_overloaded_le_method_with_value(
     assert qs_params == [value]
 
 
-def test_field_lte_method(
+def test_column_lte_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `lte` method.
@@ -1181,7 +1186,7 @@ def test_field_lte_method(
     assert qs_params == [value]
 
 
-def test_field_with_alias_method(
+def test_column_with_alias_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test `with_alias` method.
@@ -1190,11 +1195,11 @@ def test_field_with_alias_method(
     - `test_for_test_table`: table for test purposes.
     """
     alias_name: Final = "good_alias"
-    aliased_field: Final = for_test_table.name.with_alias(
+    aliased_column: Final = for_test_table.name.with_alias(
         alias_name="good_alias",
     )
 
-    assert aliased_field.alias == alias_name
+    assert aliased_column.alias == alias_name
 
     statement_with_aliased = for_test_table.select(
         for_test_table.name.with_alias(alias_name=alias_name),
@@ -1208,7 +1213,7 @@ def test_field_with_alias_method(
     assert not qs_params
 
 
-def test_field_correct_method_value_types(
+def test_column_correct_method_value_types(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test that `_correct_method_value_types` returns correct types.
@@ -1218,19 +1223,19 @@ def test_field_correct_method_value_types(
     """
     expected_types = (
         *for_test_table.name._available_comparison_types,
-        Field,
+        Column,
         OperatorTypes.__args__,  # type: ignore[attr-defined]
     )
 
     assert for_test_table.name._correct_method_value_types == expected_types
 
 
-def test_field_is_the_same_field_method(
+def test_column_is_the_same_column_method(
     for_test_table: _ForTestTable,
 ) -> None:
-    """Test method `_is_the_same_field`.
+    """Test method `_is_the_same_column`.
 
-    Check that it returns True if fields are the same.
+    Check that it returns True if columns are the same.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
@@ -1240,34 +1245,34 @@ def test_field_is_the_same_field_method(
     assert for_test_table.count != for_test_table.name
 
 
-def test_field_with_prefix_method(
+def test_column_with_prefix_method(
     for_test_table: _ForTestTable,
 ) -> None:
     """Test method `_with_prefix`.
 
-    Check that field have prefix after method use.
+    Check that column have prefix after method use.
 
     ### Parameters:
     - `test_for_test_table`: table for test purposes.
     """
     prefix_name: Final = "good_prefix"
-    prefixed_field = for_test_table.name._with_prefix(
+    prefixed_column = for_test_table.name._with_prefix(
         prefix=prefix_name,
     )
 
-    assert prefixed_field._field_data.prefix == prefix_name
+    assert prefixed_column._column_data.prefix == prefix_name
 
 
 @pytest.mark.parametrize(
     ("value", "excepted_exception"),
     [
         (None, None),
-        (calculate_default_field_value, None),
-        (12, FieldValueValidationError),
-        ({"not": "correct"}, FieldValueValidationError),
+        (calculate_default_column_value, None),
+        (12, ColumnValueValidationError),
+        ({"not": "correct"}, ColumnValueValidationError),
     ],
 )
-def test_field_validate_default_value(
+def test_column_validate_default_value(
     value: Any,
     excepted_exception: None | type[Exception],
     for_test_table: _ForTestTable,
@@ -1296,30 +1301,30 @@ def test_field_validate_default_value(
         (None, None),
         ("123", None),
         (12.0, None),
-        (["incorrect", "type"], FieldValueValidationError),
+        (["incorrect", "type"], ColumnValueValidationError),
     ],
 )
-def test_field_validate_field_method(
+def test_column_validate_column_method(
     value_to_validate: Any,
     expected_exception: type[Exception],
     for_test_table: _ForTestTable,
 ) -> None:
-    """Test `_validate_field_value` `Field` method."""
+    """Test `_validate_column_value` `Column` method."""
     if expected_exception:
         with pytest.raises(expected_exception=expected_exception):
-            for_test_table.name._validate_field_value(
-                field_value=value_to_validate,
+            for_test_table.name._validate_column_value(
+                column_value=value_to_validate,
             )
     else:
-        for_test_table.name._validate_field_value(
-            field_value=value_to_validate,
+        for_test_table.name._validate_column_value(
+            column_value=value_to_validate,
         )
 
 
-def test_field_is_the_same_field(
+def test_column_is_the_same_column(
     for_test_table: _ForTestTable,
 ) -> None:
-    """Test `_is_the_same_field` `Field` method."""
-    assert for_test_table.name._is_the_same_field(
+    """Test `_is_the_same_column` `Column` method."""
+    assert for_test_table.name._is_the_same_column(
         for_test_table.name,
     )

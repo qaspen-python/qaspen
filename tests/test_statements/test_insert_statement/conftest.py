@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from qaspen.fields.primitive import IntegerField, VarCharField
+from qaspen.columns.primitive import IntegerColumn, VarCharColumn
 from qaspen.table.base_table import BaseTable
 
 if TYPE_CHECKING:
@@ -19,12 +19,12 @@ def default_some_number() -> int:
 class TableTest(BaseTable, table_name="table_test"):
     """Class for testing joins."""
 
-    some_id: IntegerField = IntegerField()
-    some_name: VarCharField = VarCharField(
+    some_id: IntegerColumn = IntegerColumn()
+    some_name: VarCharColumn = VarCharColumn(
         default="Qaspen",
         is_null=False,
     )
-    some_number: IntegerField = IntegerField(
+    some_number: IntegerColumn = IntegerColumn(
         default=default_some_number,
         is_null=False,
     )

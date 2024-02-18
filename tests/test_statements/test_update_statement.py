@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from qaspen.exceptions import FieldDeclarationError
+from qaspen.exceptions import ColumnDeclarationError
 from qaspen.statements.update_statement import UpdateStatement
 from tests.test_statements.conftest import ForTestTable, UserTable
 
@@ -68,7 +68,7 @@ def test_update_stmt_force_method() -> None:
         },
     )
 
-    with pytest.raises(expected_exception=FieldDeclarationError):
+    with pytest.raises(expected_exception=ColumnDeclarationError):
         update_stmt.querystring()
 
     update_stmt = update_stmt.force()
@@ -86,7 +86,7 @@ def test_update_stmt_deforce_method() -> None:
 
     update_stmt = update_stmt.deforce()
 
-    with pytest.raises(expected_exception=FieldDeclarationError):
+    with pytest.raises(expected_exception=ColumnDeclarationError):
         update_stmt.querystring()
 
 

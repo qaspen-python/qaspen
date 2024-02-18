@@ -180,7 +180,7 @@ class QueryString:
 
         Template arguments are values that must be processed on the
         qaspen side.
-        For example, it can be subclass of Field or AggFunction.
+        For example, it can be subclass of Column or AggFunction.
 
         If template argument is QueryString or something SQLSelectable
         we build it, take `template_arguments` and add built object to it.
@@ -303,17 +303,17 @@ class QueryString:
         -------
         ```python
         qs1 = QueryString(
-            "good_field",
+            "good_column",
             "good_table",
             sql_template="SELECT {} FROM {}",
         )
         qs2 = QueryString(
-            "good_field",
+            "good_column",
             sql_template="ORDER BY {}",
         )
         result_qs = qs1 + qs2
         print(result_qs)
-        # SELECT good_field FROM good_table ORDER BY good_field
+        # SELECT good_column FROM good_table ORDER BY good_column
         ```
         """
         if isinstance(additional_querystring, EmptyQueryString):

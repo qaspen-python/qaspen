@@ -37,7 +37,7 @@ class ExistsStatement(
     def querystring(self: Self) -> QueryString:
         """Return querystring for comparisons.
 
-        Used in methods like `Field.contains(querystring=...)`.
+        Used in methods like `Column.contains(querystring=...)`.
         """
         return QueryString(
             self._select_statement.querystring(),

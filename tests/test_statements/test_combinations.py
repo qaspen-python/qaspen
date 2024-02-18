@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from qaspen.clauses.filter import Filter
-from qaspen.fields.operators import EqualOperator
+from qaspen.columns.operators import EqualOperator
 from tests.test_statements.conftest import ForTestTable
 
 

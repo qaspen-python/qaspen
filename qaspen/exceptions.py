@@ -6,26 +6,26 @@ class DatabaseUrlParseError(QaspenBaseError):
     """If database from connection url cannot be parsed."""
 
 
-class FieldBaseError(QaspenBaseError):
-    """Base error for all field-related errors."""
+class ColumnBaseError(QaspenBaseError):
+    """Base error for all column-related errors."""
 
 
-class FieldValueValidationError(FieldBaseError):
-    """Error for field value validation error."""
+class ColumnValueValidationError(ColumnBaseError):
+    """Error for column value validation error."""
 
 
-class FieldDeclarationError(FieldBaseError):
-    """Error for field declaration error."""
+class ColumnDeclarationError(ColumnBaseError):
+    """Error for column declaration error."""
 
 
-class FieldComparisonError(FieldBaseError):
-    """Error for error in field comparison.
+class ColumnComparisonError(ColumnBaseError):
+    """Error for error in column comparison.
 
     Usually if types are incorrect.
     """
 
 
-class FilterComparisonError(FieldBaseError):
+class FilterComparisonError(ColumnBaseError):
     """Error if there is an mistake in Filter."""
 
 

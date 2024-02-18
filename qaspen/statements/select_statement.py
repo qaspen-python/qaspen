@@ -12,8 +12,8 @@ from typing import (
 )
 
 from qaspen.aggregate_functions.base import AggFunction
-from qaspen.fields.aliases import FieldAliases
-from qaspen.fields.base import Field
+from qaspen.columns.aliases import ColumnAliases
+from qaspen.columns.base import Column
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import (
     CommaSeparatedQueryString,
@@ -70,7 +70,7 @@ class SelectStatement(
     -------
     ```
     class Buns(BaseTable, table_name="buns"):
-        name: VarCharField = VarCharField()
+        name: VarCharColumn = VarCharColumn()
 
 
     select_statement: SelectStatement = Buns.select()
@@ -80,22 +80,22 @@ class SelectStatement(
     def __init__(
         self: Self,
         from_table: type[FromTable],
-        select_objects: Sequence[Field[Any] | AggFunction],
+        select_objects: Sequence[Column[Any] | AggFunction],
     ) -> None:
         self._from_table: Final[type[FromTable]] = from_table
 
-        self._select_fields = []
+        self._select_columns = []
         self._select_agg_functions: Sequence[AggFunction] = []
 
         for select_object in select_objects:
-            if isinstance(select_object, Field):
-                self._select_fields.append(select_object)
+            if isinstance(select_object, Column):
+                self._select_columns.append(select_object)
             elif isinstance(select_object, AggFunction):
                 self._select_agg_functions.append(
                     select_object,
                 )
 
-        self.final_select_fields: list[Field[Any]] = []
+        self.final_select_columns: list[Column[Any]] = []
         self.exist_prefixes: Final[list[str]] = []
 
         self._filter_statement = FilterStatement(
@@ -109,7 +109,7 @@ class SelectStatement(
         self._group_by_statement = GroupByStatement()
         self._order_by_statement: OrderByStatement = OrderByStatement()
         self._join_statement: JoinStatement = JoinStatement()
-        self._field_aliases: FieldAliases = FieldAliases()
+        self._column_aliases: ColumnAliases = ColumnAliases()
 
     async def execute(
         self: Self,
@@ -177,7 +177,7 @@ class SelectStatement(
         If you use `where` more than one time, clauses will be connected
         with `AND` operator.
 
-        Fields have different methods for the comparison.
+        Columns have different methods for the comparison.
         Also, you can pass the combination of the `where` clauses.
 
         Below you will see easy and advanced examples.
@@ -186,8 +186,8 @@ class SelectStatement(
         ------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
         statement = Buns.select().where(
             Buns.name == "Tasty",
@@ -197,14 +197,14 @@ class SelectStatement(
         ------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
-            example_field: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
+            example_column: VarCharColumn = VarCharColumn()
 
         statement = Buns.select().where(
             (Buns.name == "Tasty")
             & (Buns.description != "Not Tasty")
-            | Buns.example_field.eq("Real Example"))
+            | Buns.example_column.eq("Real Example"))
         )
         ```
         In this statement `&` is AND, `|` is OR.
@@ -222,15 +222,15 @@ class SelectStatement(
         If you use `having` more than one time, clauses will be connected
         with `AND` operator.
 
-        Fields have different methods for the comparison.
+        Columns have different methods for the comparison.
         Also, you can pass the combination of the `having` clauses.
 
         One `HAVING` Example:
         ------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
         statement = (
             Buns
@@ -262,8 +262,8 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         statement = Buns.select().limit(limit=10)
@@ -292,8 +292,8 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         statement = Buns.select().offset(offset=10)
@@ -333,7 +333,7 @@ class SelectStatement(
         that have `querystring()` method.
 
         Qaspen has this method for all SQL related
-        objects, like subclasses of `Field`, subclasses of `AggFunction`,
+        objects, like subclasses of `Column`, subclasses of `AggFunction`,
         etc.
 
         ### Parameters:
@@ -346,8 +346,8 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         statement = Buns.select(
@@ -364,18 +364,18 @@ class SelectStatement(
 
     def order_by(
         self: Self,
-        field: Field[Any] | None = None,
+        column: Column[Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
         order_bys: Iterable[OrderBy] | None = None,
     ) -> Self:
         """Set ORDER BY.
 
-        You can specify `field`, `ascending` and `nulls_first`
+        You can specify `column`, `ascending` and `nulls_first`
         parameters and/or pass `order_bys` with OrderBy instances.
 
         ### Parameters
-        :param field: subclass of BaseField.
+        :param column: subclass of BaseColumn.
         :param ascending: if True then `ASC` else `DESC`.
         :param nulls_first: if True then `NULLS FIRST` else `NULLS LAST`.
         :param order_bys: list of instances of order by.
@@ -384,13 +384,13 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         # first variant
         statement = Buns.select().order_by(
-            field=Buns.name,
+            column=Buns.name,
             # it's not necessary, but you can specify.
             ascending=False,  # by default its `True`
             nulls_first=False,  # by default its `True`
@@ -399,13 +399,13 @@ class SelectStatement(
         # second variant
         order_bys = [
             OrderBy(
-                field=Buns.name,
+                column=Buns.name,
                 # it's not necessary, but you can specify.
                 ascending=False,  # by default its `True`
                 nulls_first=False,  # by default its `True`
             ),
             OrderBy(
-                field=Buns.surname,
+                column=Buns.surname,
             ),
         ]
         statement = Buns.select().order_by(
@@ -413,9 +413,9 @@ class SelectStatement(
         )
         ```
         """
-        if field:
+        if column:
             self._order_by_statement.order_by(
-                field=field,
+                column=column,
                 ascending=ascending,
                 nulls_first=nulls_first,
             )
@@ -462,8 +462,8 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         statement_1 = Buns.select()
@@ -501,8 +501,8 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         statement_1 = Buns.select()
@@ -531,8 +531,8 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         exists_statement = Buns.select().where(
@@ -542,9 +542,9 @@ class SelectStatement(
         """
         from qaspen.statements.exists_statement import ExistsStatement
 
-        self._select_fields = []
+        self._select_columns = []
         for join in self._join_statement.join_expressions:
-            join._fields = []
+            join._columns = []
         return ExistsStatement(
             select_statement=self,
         )
@@ -560,7 +560,7 @@ class SelectStatement(
 
         ### Parameters
             - `join_table`: table in JOIN.
-            - `based_on`: Field's comparisons.
+            - `based_on`: Column's comparisons.
 
         ### Returns
         `self`
@@ -569,14 +569,14 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         class Cookies(BaseTable, table_name="cookies"):
-            bun_name: VarCharField = VarCharField()
-            filling: VarCharField = VarCharField()
-            topping: VarCharField = VarCharField()
+            bun_name: VarCharColumn = VarCharColumn()
+            filling: VarCharColumn = VarCharColumn()
+            topping: VarCharColumn = VarCharColumn()
 
         statement = (
             Buns
@@ -610,7 +610,7 @@ class SelectStatement(
 
         ### Parameters
         - `join_table`: table in JOIN.
-        - `based_on`: Field's comparisons.
+        - `based_on`: Column's comparisons.
 
         ### Returns
         `self`
@@ -619,14 +619,14 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         class Cookies(BaseTable, table_name="cookies"):
-            bun_name: VarCharField = VarCharField()
-            filling: VarCharField = VarCharField()
-            topping: VarCharField = VarCharField()
+            bun_name: VarCharColumn = VarCharColumn()
+            filling: VarCharColumn = VarCharColumn()
+            topping: VarCharColumn = VarCharColumn()
 
         statement = (
             Buns
@@ -660,7 +660,7 @@ class SelectStatement(
 
         ### Parameters
         - `join_table`: table in JOIN.
-        - `based_on`: Field's comparisons.
+        - `based_on`: Column's comparisons.
 
         ### Returns
         `self`
@@ -669,14 +669,14 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         class Cookies(BaseTable, table_name="cookies"):
-            bun_name: VarCharField = VarCharField()
-            filling: VarCharField = VarCharField()
-            topping: VarCharField = VarCharField()
+            bun_name: VarCharColumn = VarCharColumn()
+            filling: VarCharColumn = VarCharColumn()
+            topping: VarCharColumn = VarCharColumn()
 
         statement = (
             Buns
@@ -711,7 +711,7 @@ class SelectStatement(
 
         ### Parameters
         - `join_table`: table in JOIN.
-        - `based_on`: Field's comparisons.
+        - `based_on`: Column's comparisons.
 
         ### Returns
         `self`
@@ -720,14 +720,14 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         class Cookies(BaseTable, table_name="cookies"):
-            bun_name: VarCharField = VarCharField()
-            filling: VarCharField = VarCharField()
-            topping: VarCharField = VarCharField()
+            bun_name: VarCharColumn = VarCharColumn()
+            filling: VarCharColumn = VarCharColumn()
+            topping: VarCharColumn = VarCharColumn()
 
         statement = (
             Buns
@@ -757,13 +757,13 @@ class SelectStatement(
     ) -> Self:
         """Add `FULL OUTER JOIN` to the SelectStatement.
 
-        You can specify what fields you want to get from
+        You can specify what columns you want to get from
         the joined table.
         And set `ON` condition, it can be a combination.
 
         ### Parameters
         - `join_table`: table in JOIN.
-        - `based_on`: Field's comparisons.
+        - `based_on`: Column's comparisons.
 
         ### Returns
         `self`
@@ -772,14 +772,14 @@ class SelectStatement(
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         class Cookies(BaseTable, table_name="cookies"):
-            bun_name: VarCharField = VarCharField()
-            filling: VarCharField = VarCharField()
-            topping: VarCharField = VarCharField()
+            bun_name: VarCharColumn = VarCharColumn()
+            filling: VarCharColumn = VarCharColumn()
+            topping: VarCharColumn = VarCharColumn()
 
 
         statement = (
@@ -838,7 +838,7 @@ class SelectStatement(
     def _select_from(self: Self) -> QueryString:
         """Build `QueryString`.
 
-        Firstly, we need to select fields from main table
+        Firstly, we need to select columns from main table
         and from joins (if they exist).
         Then we need to add in select all
         aggregate functions.
@@ -849,17 +849,17 @@ class SelectStatement(
         ### Returns:
         new `QueryString` for SELECT FROM.
         """
-        prepared_fields = self._prepare_fields()
+        prepared_columns = self._prepare_columns()
 
-        to_select_fields_qs = CommaSeparatedQueryString(
+        to_select_columns_qs = CommaSeparatedQueryString(
             *[
                 QueryString(
-                    field.field_name,
+                    column.column_name,
                     sql_template="{}",
                 )
-                for field in prepared_fields
+                for column in prepared_columns
             ],
-            sql_template=", ".join(["{}"] * len(prepared_fields)),
+            sql_template=", ".join(["{}"] * len(prepared_columns)),
         )
         to_select_agg_func_qs = CommaSeparatedQueryString(
             *[
@@ -870,8 +870,8 @@ class SelectStatement(
         )
 
         final_to_select: QueryString | None = None
-        if to_select_fields_qs.template_arguments:
-            final_to_select = to_select_fields_qs
+        if to_select_columns_qs.template_arguments:
+            final_to_select = to_select_columns_qs
         if to_select_agg_func_qs.template_arguments:
             if final_to_select:
                 final_to_select = final_to_select + to_select_agg_func_qs
@@ -892,30 +892,30 @@ class SelectStatement(
             sql_template="SELECT {} FROM {}",
         )
 
-    def _prepare_fields(
+    def _prepare_columns(
         self: Self,
-    ) -> list[Field[Any]]:
-        """Prepare fields.
+    ) -> list[Column[Any]]:
+        """Prepare columns.
 
-        If we've already prepared fields, return them.
+        If we've already prepared columns, return them.
 
-        We need to get all fields to select,
-        this is fields from main table and fields from joins.
+        We need to get all columns to select,
+        this is columns from main table and columns from joins.
 
-        After we get all fields, we add alias to them.
+        After we get all columns, we add alias to them.
 
         ### Returns:
-        list of aliased fields.
+        list of aliased columns.
         """
-        if self.final_select_fields:
-            return self.final_select_fields
-        final_select_fields: Final[list[Field[Any]]] = []
+        if self.final_select_columns:
+            return self.final_select_columns
+        final_select_columns: Final[list[Column[Any]]] = []
 
-        for field in self._select_fields:
-            aliased_field = self._field_aliases.add_alias(
-                field=field,
+        for column in self._select_columns:
+            aliased_column = self._column_aliases.add_alias(
+                column=column,
             )
-            final_select_fields.append(aliased_field)
+            final_select_columns.append(aliased_column)
 
-        self.final_select_fields = final_select_fields
-        return final_select_fields
+        self.final_select_columns = final_select_columns
+        return final_select_columns

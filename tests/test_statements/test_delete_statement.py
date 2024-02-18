@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from qaspen.exceptions import FieldDeclarationError
+from qaspen.exceptions import ColumnDeclarationError
 from qaspen.statements.delete_statement import DeleteStatement
 from tests.test_statements.conftest import ForTestTable, UserTable
 
@@ -56,7 +56,7 @@ def test_delete_stmt_force_method() -> None:
         from_table=ForTestTable,
     )
 
-    with pytest.raises(expected_exception=FieldDeclarationError):
+    with pytest.raises(expected_exception=ColumnDeclarationError):
         delete_stmt.querystring()
 
     delete_stmt = delete_stmt.force()
@@ -71,7 +71,7 @@ def test_delete_stmt_deforce_method() -> None:
 
     delete_stmt = delete_stmt.deforce()
 
-    with pytest.raises(expected_exception=FieldDeclarationError):
+    with pytest.raises(expected_exception=ColumnDeclarationError):
         delete_stmt.querystring()
 
 

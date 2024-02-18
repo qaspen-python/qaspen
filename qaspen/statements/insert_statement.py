@@ -4,7 +4,7 @@ import functools
 import operator
 from typing import TYPE_CHECKING, Any, Final, Generic, Sequence, TypeVar
 
-from qaspen.fields.base import Field
+from qaspen.columns.base import Column
 from qaspen.qaspen_types import EMPTY_FIELD_VALUE, FromTable
 from qaspen.querystring.querystring import (
     FullStatementQueryString,
@@ -23,9 +23,9 @@ if TYPE_CHECKING:
 ReturnResultType = TypeVar(
     "ReturnResultType",
 )
-ReturningField = TypeVar(
-    "ReturningField",
-    bound=Field[Any],
+ReturningColumn = TypeVar(
+    "ReturningColumn",
+    bound=Column[Any],
 )
 
 
@@ -38,7 +38,7 @@ class BaseInsertStatement(
 
     def __init__(self: Self, from_table: type[FromTable]) -> None:
         self._from_table: Final = from_table
-        self._returning_field: Field[Any] | None = None
+        self._returning_column: Column[Any] | None = None
 
     async def execute(
         self: Self,
@@ -59,7 +59,7 @@ class BaseInsertStatement(
         raw_query_result: list[dict[str, Any]] | None = await engine.execute(
             querystring=querystring,
             querystring_parameters=qs_parameters,
-            fetch_results=bool(self._returning_field),
+            fetch_results=bool(self._returning_column),
         )
 
         return self._parse_raw_query_result(
@@ -85,12 +85,12 @@ class BaseInsertStatement(
         `InsertStatement`
         """
         querystring, qs_parameters = self.querystring().build()
-        raw_query_result: list[
-            dict[str, Any]
-        ] | None = await transaction.execute(
+        raw_query_result: (
+            list[dict[str, Any]] | None
+        ) = await transaction.execute(
             querystring=querystring,
             querystring_parameters=qs_parameters,
-            fetch_results=bool(self._returning_field),
+            fetch_results=bool(self._returning_column),
         )
 
         return self._parse_raw_query_result(
@@ -99,28 +99,28 @@ class BaseInsertStatement(
 
     def returning(
         self: Self,
-        return_field: ReturningField,
-    ) -> InsertStatement[FromTable, list[ReturningField]]:
+        return_column: ReturningColumn,
+    ) -> InsertStatement[FromTable, list[ReturningColumn]]:
         """Add `RETURNING` to the query.
 
         ### Parameters:
-        - `return_field`: field to return
+        - `return_column`: column to return
 
         ### Returns:
         `self` with new return type.
         """
-        self._returning_field = return_field
+        self._returning_column = return_column
         return self  # type: ignore[return-value]
 
     def _parse_raw_query_result(
         self: Self,
         raw_query_result: list[dict[str, Any]] | None,
     ) -> ReturnResultType:
-        if not self._returning_field or not raw_query_result:
+        if not self._returning_column or not raw_query_result:
             return None  # type: ignore[return-value]
 
         return [  # type: ignore[return-value]
-            db_record[self._returning_field._original_field_name]
+            db_record[self._returning_column._original_column_name]
             for db_record in raw_query_result
         ]
 
@@ -131,38 +131,38 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
     def __init__(
         self: Self,
         from_table: type[FromTable],
-        fields_to_insert: list[Field[Any]],
+        columns_to_insert: list[Column[Any]],
         values_to_insert: tuple[list[Any], ...],
     ) -> None:
         super().__init__(from_table=from_table)
 
-        self._not_passed_fields_with_default = (
-            self._find_not_passed_field_with_default(
-                fields_to_insert=fields_to_insert,
+        self._not_passed_columns_with_default = (
+            self._find_not_passed_column_with_default(
+                columns_to_insert=columns_to_insert,
             )
         )
-        self._fields_to_insert: Final = (
-            fields_to_insert + self._not_passed_fields_with_default
+        self._columns_to_insert: Final = (
+            columns_to_insert + self._not_passed_columns_with_default
         )
 
         self._values_to_insert: Final = values_to_insert
 
-        self._returning_field: Field[Any] | None = None
+        self._returning_column: Column[Any] | None = None
 
     def querystring(self: Self) -> QueryString:
         """Build querystring for INSERT statement."""
         returning_qs = (
             QueryString(
-                self._returning_field._original_field_name,
+                self._returning_column._original_column_name,
                 sql_template=f"RETURNING {QueryString.arg_ph()}",
             )
-            if self._returning_field
+            if self._returning_column
             else QueryString.empty()
         )
 
         return QueryString(
             self._from_table.table_name(),
-            self._make_fields_querystring(),
+            self._make_columns_querystring(),
             self._make_values_querystring(),
             returning_qs,
             sql_template=(
@@ -172,30 +172,30 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
             ),
         )
 
-    def _find_not_passed_field_with_default(
+    def _find_not_passed_column_with_default(
         self: Self,
-        fields_to_insert: list[Field[Any]],
-    ) -> list[Field[Any]]:
-        """Find all not passed table fields with default values.
+        columns_to_insert: list[Column[Any]],
+    ) -> list[Column[Any]]:
+        """Find all not passed table columns with default values.
 
         ### Parameters:
-        - `fields_to_insert`: user-passed fields.
+        - `columns_to_insert`: user-passed columns.
 
         ### Returns:
-        not passed into `InsertStatement` fields
+        not passed into `InsertStatement` columns
         with default values.
         """
-        all_fields_with_default = (
-            self._from_table._fields_with_default().values()
+        all_columns_with_default = (
+            self._from_table._columns_with_default().values()
         )
-        set_fields_to_insert = {
-            field._original_field_name for field in fields_to_insert
+        set_columns_to_insert = {
+            column._original_column_name for column in columns_to_insert
         }
 
         return [
-            field
-            for field in all_fields_with_default
-            if field._original_field_name not in set_fields_to_insert
+            column
+            for column in all_columns_with_default
+            if column._original_column_name not in set_columns_to_insert
         ]
 
     def _prepare_insert_values(
@@ -205,7 +205,7 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
         """Prepare INSERT values.
 
         We need to process `values_to_insert` and
-        add to them default value of the fields
+        add to them default value of the columns
         with `default` or `callable_default`.
 
         ### Parameters:
@@ -218,40 +218,40 @@ class InsertStatement(BaseInsertStatement[FromTable, ReturnResultType]):
             for element_idx, element in enumerate(values_to_insert_list):
                 values_to_insert_list[element_idx] = element
 
-        if not self._not_passed_fields_with_default:
+        if not self._not_passed_columns_with_default:
             return values_to_insert
 
         for list_value in values_to_insert:
-            for field_with_default in self._not_passed_fields_with_default:
-                if field_with_default._default:
+            for column_with_default in self._not_passed_columns_with_default:
+                if column_with_default._default:
                     list_value.append(
-                        field_with_default._default,
+                        column_with_default._default,
                     )
-                elif field_with_default._callable_default:
+                elif column_with_default._callable_default:
                     list_value.append(
-                        field_with_default._callable_default(),
+                        column_with_default._callable_default(),
                     )
 
         return values_to_insert
 
-    def _make_fields_querystring(self: Self) -> QueryString:
-        """Create `QueryString` for fields that will be inserted.
+    def _make_columns_querystring(self: Self) -> QueryString:
+        """Create `QueryString` for columns that will be inserted.
 
         ### Returns:
-        `Querystring` for fields in INSERT SQL.
+        `Querystring` for columns in INSERT SQL.
         """
-        fields_sql_template = ", ".join(
-            [QueryString.arg_ph()] * len(self._fields_to_insert),
+        columns_sql_template = ", ".join(
+            [QueryString.arg_ph()] * len(self._columns_to_insert),
         )
 
-        fields_sql_template_args = [
-            field_to_insert._original_field_name
-            for field_to_insert in self._fields_to_insert
+        columns_sql_template_args = [
+            column_to_insert._original_column_name
+            for column_to_insert in self._columns_to_insert
         ]
 
         return QueryString(
-            *fields_sql_template_args,
-            sql_template="(" + fields_sql_template + ")",
+            *columns_sql_template_args,
+            sql_template="(" + columns_sql_template + ")",
         )
 
     def _make_values_querystring(self: Self) -> QueryString:
@@ -302,7 +302,7 @@ class InsertObjectsStatement(
         super().__init__(from_table=from_table)
         self._insert_objects: Final = insert_objects
 
-        self._returning_field: Field[Any] | None = None
+        self._returning_column: Column[Any] | None = None
 
     async def execute(
         self: Self,
@@ -326,22 +326,22 @@ class InsertObjectsStatement(
         ]
         for qs_object in all_qs_objects:
             querystring, qs_parameters = qs_object.build()
-            raw_query_result: list[
-                dict[str, Any]
-            ] | None = await engine.execute(
+            raw_query_result: (
+                list[dict[str, Any]] | None
+            ) = await engine.execute(
                 querystring=querystring,
                 querystring_parameters=qs_parameters,
-                fetch_results=bool(self._returning_field),
+                fetch_results=bool(self._returning_column),
             )
 
             returned_value: list[Any] = self._parse_raw_query_result(  # type: ignore[assignment]
                 raw_query_result=raw_query_result,
             )
 
-            if self._returning_field and returned_value:
+            if self._returning_column and returned_value:
                 returned_values.append(returned_value[0])
 
-        if self._returning_field:
+        if self._returning_column:
             return returned_values  # type: ignore[return-value]
 
         return None  # type: ignore[return-value]
@@ -372,22 +372,22 @@ class InsertObjectsStatement(
 
         for qs_object in all_qs_objects:
             querystring, qs_parameters = qs_object.build()
-            raw_query_result: list[
-                dict[str, Any]
-            ] | None = await transaction.execute(
+            raw_query_result: (
+                list[dict[str, Any]] | None
+            ) = await transaction.execute(
                 querystring=querystring,
                 querystring_parameters=qs_parameters,
-                fetch_results=bool(self._returning_field),
+                fetch_results=bool(self._returning_column),
             )
 
             returned_value: list[Any] = self._parse_raw_query_result(  # type: ignore[assignment]
                 raw_query_result=raw_query_result,
             )
 
-            if self._returning_field and returned_value:
+            if self._returning_column and returned_value:
                 returned_values.append(returned_value[0])
 
-        if self._returning_field:
+        if self._returning_column:
             return returned_values  # type: ignore[return-value]
 
         return None  # type: ignore[return-value]
@@ -418,70 +418,70 @@ class InsertObjectsStatement(
         ### Returns:
         new generated `QueryString`.
         """
-        fields_to_insert = self._retrieve_object_fields_to_insert(
+        columns_to_insert = self._retrieve_object_columns_to_insert(
             table_object,
         )
 
-        insert_fields_qs = QueryString(
-            *[field._original_field_name for field in fields_to_insert],
+        insert_columns_qs = QueryString(
+            *[column._original_column_name for column in columns_to_insert],
             sql_template="("
-            + ", ".join(["{}" for _ in fields_to_insert])
+            + ", ".join(["{}" for _ in columns_to_insert])
             + ")",
         )
 
         values_to_insert_qs = QueryString(
             template_parameters=self._prepare_values_to_insert(
-                fields_to_insert,
+                columns_to_insert,
             ),
             sql_template="("
-            + ", ".join([QueryString.param_ph()] * len(fields_to_insert))
+            + ", ".join([QueryString.param_ph()] * len(columns_to_insert))
             + ")",
         )
 
         returning_qs = (
             QueryString(
-                self._returning_field._original_field_name,
+                self._returning_column._original_column_name,
                 sql_template=f" RETURNING {QueryString.arg_ph()}",
             )
-            if self._returning_field
+            if self._returning_column
             else QueryString.empty()
         )
 
         return FullStatementQueryString(
             table_object.original_table_name(),
-            insert_fields_qs,
+            insert_columns_qs,
             values_to_insert_qs,
             returning_qs,
             sql_template="INSERT INTO {}{} VALUES {}{}",
         )
 
-    def _retrieve_object_fields_to_insert(
+    def _retrieve_object_columns_to_insert(
         self: Self,
         table_object: FromTable,
-    ) -> list[Field[Any]]:
-        """Find all fields that must be inserted.
+    ) -> list[Column[Any]]:
+        """Find all columns that must be inserted.
 
-        That means that if fields with default value on
+        That means that if columns with default value on
         database level haven't passed we shouldn't specify them.
         """
-        result_fields: list[Field[Any]] = []
-        field: Field[Any]
-        for field in table_object._table_meta.table_fields.values():
+        result_columns: list[Column[Any]] = []
+        column: Column[Any]
+        for column in table_object._table_meta.table_columns.values():
             available_condition: bool = any(
                 (
-                    field._field_data.field_value != EMPTY_FIELD_VALUE,
-                    field._field_data.callable_default,
-                    field._field_data.default,
+                    column._column_data.column_value != EMPTY_FIELD_VALUE,
+                    column._column_data.callable_default,
+                    column._column_data.default,
                 ),
             )
             if available_condition:
-                result_fields.append(field)
+                result_columns.append(column)
 
-        return result_fields
+        return result_columns
 
     def _prepare_values_to_insert(
         self: Self,
-        table_fields: list[Field[Any]],
+        table_columns: list[Column[Any]],
     ) -> list[Any]:
         """Prepare INSERT values.
 
@@ -492,7 +492,7 @@ class InsertObjectsStatement(
         tuple of lists with values to insert.
         """
         return [
-            field._field_data.field_value
-            for field in table_fields
-            if field._field_data.field_value != EMPTY_FIELD_VALUE
+            column._column_data.column_value
+            for column in table_columns
+            if column._column_data.column_value != EMPTY_FIELD_VALUE
         ]

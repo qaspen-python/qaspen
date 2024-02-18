@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Final, Generic, List, Optional
 
-from qaspen.exceptions import FieldDeclarationError
+from qaspen.exceptions import ColumnDeclarationError
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import Executable
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from qaspen.abc.db_engine import BaseEngine
     from qaspen.abc.db_transaction import BaseTransaction
-    from qaspen.fields.base import Field
+    from qaspen.columns.base import Column
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,
     )
@@ -32,7 +32,7 @@ class UpdateStatement(
     def __init__(
         self: Self,
         from_table: type[FromTable],
-        for_update_map: dict[Field[Any], Any],
+        for_update_map: dict[Column[Any], Any],
     ) -> None:
         self._from_table: Final = from_table
         self._for_update_map: Final = for_update_map
@@ -42,7 +42,7 @@ class UpdateStatement(
         )
         self._is_where_used: bool = False
         self._force: bool = False
-        self._returning: tuple[Field[Any], ...] | None = None
+        self._returning: tuple[Column[Any], ...] | None = None
 
     async def execute(
         self: Self,
@@ -87,9 +87,9 @@ class UpdateStatement(
         `InsertStatement`
         """
         querystring, qs_parameters = self.querystring().build()
-        raw_query_result: list[
-            dict[str, Any]
-        ] | None = await transaction.execute(
+        raw_query_result: (
+            list[dict[str, Any]] | None
+        ) = await transaction.execute(
             querystring=querystring,
             querystring_parameters=qs_parameters,
             fetch_results=bool(self._returning),
@@ -107,7 +107,7 @@ class UpdateStatement(
         If you use `where` more than one time, clauses will be connected
         with `AND` operator.
 
-        Fields have different methods for the comparison.
+        Columns have different methods for the comparison.
         Also, you can pass the combination of the `where` clauses.
 
         Below you will see easy and advanced examples.
@@ -116,8 +116,8 @@ class UpdateStatement(
         ------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
         statement = Buns.update(
             {Buns.description: "Wow!"},
@@ -147,7 +147,7 @@ class UpdateStatement(
                 "You can't make UPDATE queries without WHERE clause. "
                 "You can allow it with `.force()` method.",
             )
-            raise FieldDeclarationError(no_where_clause_error)
+            raise ColumnDeclarationError(no_where_clause_error)
         querystring = self._main_query()
 
         if self._is_where_used:
@@ -160,17 +160,17 @@ class UpdateStatement(
 
     def returning(
         self: Self,
-        *returning_field: Field[Any],
+        *returning_column: Column[Any],
     ) -> Self:
         """Add `RETURNING` to the query.
 
         ### Parameters:
-        - `returning_field`: field to return
+        - `returning_column`: column to return
 
         ### Returns:
         `self`.
         """
-        self._returning = returning_field
+        self._returning = returning_column
         return self
 
     def force(self: Self) -> Self:
@@ -198,13 +198,13 @@ class UpdateStatement(
         """
         updates: list[QueryString] = [
             QueryString(
-                field_to_update._original_field_name,
+                column_to_update._original_column_name,
                 template_parameters=[update_value],
                 sql_template=(
                     f"{QueryString.arg_ph()} = {QueryString.param_ph()}"
                 ),
             )
-            for field_to_update, update_value in self._for_update_map.items()
+            for column_to_update, update_value in self._for_update_map.items()
         ]
         updates_template = ", ".join(
             ["{}"] * len(self._for_update_map),

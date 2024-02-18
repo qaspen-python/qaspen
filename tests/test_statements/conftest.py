@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from qaspen.fields.primitive import (
-    IntegerField,
-    SerialField,
-    TextField,
-    VarCharField,
+from qaspen.columns.primitive import (
+    IntegerColumn,
+    SerialColumn,
+    TextColumn,
+    VarCharColumn,
 )
 from qaspen.table.base_table import BaseTable
 
@@ -19,45 +19,45 @@ if TYPE_CHECKING:
 class ForTestTable(BaseTable):
     """Class for test purposes."""
 
-    name: TextField = TextField()
-    count: TextField = TextField()
+    name: TextColumn = TextColumn()
+    count: TextColumn = TextColumn()
 
 
 class UserTest(BaseTable):
     """Class for testing joins."""
 
-    id: SerialField = SerialField()  # noqa: A003
-    description: TextField = TextField()
+    id: SerialColumn = SerialColumn()  # noqa: A003
+    description: TextColumn = TextColumn()
 
 
 class VideoTest(BaseTable):
     """Class for testing joins."""
 
-    user_id: SerialField = SerialField()
-    video_id: SerialField = SerialField()
+    user_id: SerialColumn = SerialColumn()
+    video_id: SerialColumn = SerialColumn()
 
 
 class UserTable(BaseTable, table_name="main_users"):
     """Table for test `SelectStatement`."""
 
-    user_id = IntegerField()
-    fullname = VarCharField()
+    user_id = IntegerColumn()
+    fullname = VarCharColumn()
 
 
 class ProfileTable(BaseTable, table_name="profiles"):
     """Table for test `SelectStatement`."""
 
-    user_id = IntegerField()
-    profile_id = IntegerField()
-    nickname = VarCharField()
+    user_id = IntegerColumn()
+    profile_id = IntegerColumn()
+    nickname = VarCharColumn()
 
 
 class VideoTable(BaseTable, table_name="videos"):
     """Table for test `SelectStatement`."""
 
-    profile_id = IntegerField()
-    video_id = IntegerField()
-    count = IntegerField()
+    profile_id = IntegerColumn()
+    video_id = IntegerColumn()
+    count = IntegerColumn()
 
 
 @pytest.fixture()

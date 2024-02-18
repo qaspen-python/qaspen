@@ -17,14 +17,14 @@ def test_insert_stmt_init_method() -> None:
     values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=values_to_insert,
     )
 
     assert istmt._from_table == TableTest
-    assert istmt._fields_to_insert == TableTest.all_fields()
+    assert istmt._columns_to_insert == TableTest.all_columns()
     assert istmt._values_to_insert == values_to_insert
-    assert not istmt._returning_field
+    assert not istmt._returning_column
 
 
 def test_insert_stmt_returning_method() -> None:
@@ -33,11 +33,11 @@ def test_insert_stmt_returning_method() -> None:
     values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=values_to_insert,
     ).returning(TableTest.some_id)
 
-    assert istmt._returning_field == TableTest.some_id
+    assert istmt._returning_column == TableTest.some_id
 
 
 @pytest.mark.anyio()
@@ -54,7 +54,7 @@ async def test_insert_stmt_await_method(
     values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=values_to_insert,
     )
 
@@ -76,7 +76,7 @@ async def test_insert_stmt_await_method(
 
     istmt2 = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=([some_id],),
     ).returning(TableTest.some_id)
 
@@ -95,7 +95,7 @@ async def test_insert_stmt_execute_method(
     values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=values_to_insert,
     )
 
@@ -119,7 +119,7 @@ async def test_insert_stmt_execute_method(
 
     istmt2 = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=([some_id],),
     ).returning(TableTest.some_id)
 
@@ -137,7 +137,7 @@ async def test_insert_stmt_transaction_execute_method(
     values_to_insert = ([some_id],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=values_to_insert,
     )
 
@@ -162,7 +162,7 @@ async def test_insert_stmt_transaction_execute_method(
 
     istmt2 = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[TableTest.some_id],
+        columns_to_insert=[TableTest.some_id],
         values_to_insert=([some_id],),
     ).returning(TableTest.some_id)
 
@@ -174,12 +174,12 @@ async def test_insert_stmt_transaction_execute_method(
 
 @pytest.mark.anyio()
 @pytest.mark.usefixtures("_create_test_table")
-async def test_insert_stmt_all_fields(
+async def test_insert_stmt_all_columns(
     test_db_transaction: PsycopgTransaction,
 ) -> None:
     """Test `InsertStatement`.
 
-    Specify all fields.
+    Specify all columns.
     """
     some_id: Final = 999
     some_name: Final = "qaspen_wow"
@@ -187,7 +187,7 @@ async def test_insert_stmt_all_fields(
     values_to_insert = ([some_id, some_name, some_number],)
     istmt = InsertStatement[TableTest, None](
         from_table=TableTest,
-        fields_to_insert=[
+        columns_to_insert=[
             TableTest.some_id,
             TableTest.some_name,
             TableTest.some_number,

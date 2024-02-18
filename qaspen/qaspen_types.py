@@ -10,8 +10,8 @@ if typing.TYPE_CHECKING:
     from qaspen.table.base_table import BaseTable
 
 
-class EmptyFieldValue:
-    """Indicates that field wasn't queried from the database."""
+class EmptyColumnValue:
+    """Indicates that column wasn't queried from the database."""
 
     def __str__(self: Self) -> str:
         return self.__class__.__name__  # pragma: no cover
@@ -26,29 +26,29 @@ class EmptyValue:
 
 EMPTY_VALUE = EmptyValue()
 
-EMPTY_FIELD_VALUE = EmptyFieldValue()
+EMPTY_FIELD_VALUE = EmptyColumnValue()
 
 FromTable = typing.TypeVar(
     "FromTable",
     bound="BaseTable",
 )
 
-FieldType = typing.TypeVar(
-    "FieldType",
+ColumnType = typing.TypeVar(
+    "ColumnType",
 )
 
-FieldDefaultType = typing.Union[
-    FieldType,
+ColumnDefaultType = typing.Union[
+    ColumnType,
     typing.Callable[
         [],
-        FieldType,
+        ColumnType,
     ],
     None,
 ]
 
 CallableDefaultType = typing.Callable[
     [],
-    FieldType,
+    ColumnType,
 ]
 
 PydanticModel = typing.TypeVar(

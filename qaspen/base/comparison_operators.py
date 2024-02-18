@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any, Final, Generic
 
 from qaspen.base.sql_base import SQLComparison
 from qaspen.clauses.filter import Filter, FilterBetween
+from qaspen.columns import operators
 from qaspen.exceptions import FilterComparisonError
-from qaspen.fields import operators
 from qaspen.qaspen_types import ComparisonT
 
 if TYPE_CHECKING:
@@ -231,7 +231,7 @@ class BetweenComparisonMixin(SQLComparison[ComparisonT]):
         Initialized `FilterBetween`.
         """
         return FilterBetween(
-            field=self,
+            column=self,
             operator=operators.BetweenOperator,
             left_comparison_value=left_value,
             right_comparison_value=right_value,
@@ -255,7 +255,7 @@ class InComparisonMixin(SQLComparison[ComparisonT]):
         ### Parameters:
         - `comparison_values`: values for `IN` clause,
             they must be correct type. For example, if you are
-            working with string Field, you have to use str objects.
+            working with string Column, you have to use str objects.
         - `subquery`: Any object that provides `queryset()` method.
 
         ### Returns:
@@ -265,7 +265,7 @@ class InComparisonMixin(SQLComparison[ComparisonT]):
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
 
 
         select_statement = (
@@ -332,7 +332,7 @@ class NotInComparisonMixin(SQLComparison[ComparisonT]):
         ### Parameters:
         - `comparison_values`: values for `NOT IN` clause,
             they must be correct type. For example, if you are
-            working with string Field, you have to use str objects.
+            working with string Column, you have to use str objects.
         - `subquery`: Any object that provides `queryset()` method.
 
         ### Returns:
@@ -342,7 +342,7 @@ class NotInComparisonMixin(SQLComparison[ComparisonT]):
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
 
 
         select_statement = (

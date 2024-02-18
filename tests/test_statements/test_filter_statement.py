@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 
 from qaspen.clauses.filter import Filter, FilterBetween, FilterExclusive
-from qaspen.fields.operators import BetweenOperator, EqualOperator
+from qaspen.columns.operators import BetweenOperator, EqualOperator
 from qaspen.querystring.querystring import EmptyQueryString
 from qaspen.statements.combinable_statements.filter_statement import (
     FilterStatement,
@@ -76,7 +76,7 @@ def test_filter_between_querystring_method(
 ) -> None:
     """Test `FilterBetween` `querystring` method."""
     filter_instance = FilterBetween(
-        field=ForTestTable.name,
+        column=ForTestTable.name,
         operator=BetweenOperator,
         left_comparison_value=left_value,
         right_comparison_value=right_value,
@@ -92,7 +92,7 @@ def test_filter_exclusive_querystring_method() -> None:
     left_comparison_value = "test"
     right_comparison_value = "s_test"
     filter_between_instance = FilterBetween(
-        field=ForTestTable.name,
+        column=ForTestTable.name,
         operator=BetweenOperator,
         left_comparison_value=left_comparison_value,
         right_comparison_value=right_comparison_value,
@@ -129,7 +129,7 @@ def test_filter_statement() -> None:
     left_comparison_value = "test"
     right_comparison_value = "s_test"
     filter_between_instance = FilterBetween(
-        field=ForTestTable.name,
+        column=ForTestTable.name,
         operator=BetweenOperator,
         left_comparison_value=left_comparison_value,
         right_comparison_value=right_comparison_value,
