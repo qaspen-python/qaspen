@@ -5,24 +5,27 @@ from ast import literal_eval
 from typing import TYPE_CHECKING, Any, Dict, Final, List, Union
 
 from qaspen.base.operators import All_, Any_
-from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
-from qaspen.fields.base import Field
-from qaspen.qaspen_types import FieldDefaultType, FieldType
+from qaspen.columns.base import Column
+from qaspen.exceptions import (
+    ColumnDeclarationError,
+    ColumnValueValidationError,
+)
+from qaspen.qaspen_types import ColumnDefaultType, ColumnType
 from qaspen.sql_type import complex_types
 
 if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-class JsonBase(Field[FieldType]):
-    """Base field for JSON and JSONB PostgreSQL fields."""
+class JsonBase(Column[ColumnType]):
+    """Base column for JSON and JSONB PostgreSQL columns."""
 
     def __init__(
         self: Self,
         *args: Any,
         is_null: bool = True,
-        db_field_name: str | None = None,
-        default: FieldDefaultType[FieldType] = None,
+        db_column_name: str | None = None,
+        default: ColumnDefaultType[ColumnType] = None,
         database_default: str | None = None,
     ) -> None:
         super().__init__(
@@ -30,12 +33,12 @@ class JsonBase(Field[FieldType]):
             is_null=is_null,
             default=default,
             database_default=database_default,
-            db_field_name=db_field_name,
+            db_column_name=db_column_name,
         )
 
     def _prepare_default_value(
         self: Self,
-        default_value: FieldType | None,
+        default_value: ColumnType | None,
     ) -> str:
         """Prepare default value for PostgreSQL DEFAULT statement.
 
@@ -47,11 +50,11 @@ class JsonBase(Field[FieldType]):
                 json.loads(default_value)
             except json.decoder.JSONDecodeError as exc:
                 validation_err_msg: Final = (
-                    f"Default value {default_value} of field "
+                    f"Default value {default_value} of column "
                     f"{self.__class__.__name__} "
-                    f"can't be serialized in PSQL {self._field_type} type.",
+                    f"can't be serialized in PSQL {self._column_type} type.",
                 )
-                raise FieldValueValidationError(
+                raise ColumnValueValidationError(
                     validation_err_msg,
                 ) from exc
             return f"'{default_value}'"
@@ -70,9 +73,9 @@ class JsonBase(Field[FieldType]):
 
         type_err_msg: Final = (
             f"Can't set default value {default_value} for "
-            f"{self.__class__.__name__} field",
+            f"{self.__class__.__name__} column",
         )
-        raise FieldDeclarationError(type_err_msg)
+        raise ColumnDeclarationError(type_err_msg)
 
     def _dump_default(
         self: Self,
@@ -85,8 +88,8 @@ class JsonBase(Field[FieldType]):
         return f"'{dump_value}'"
 
 
-class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
-    """Field for JSON PostgreSQL type."""
+class JsonColumn(JsonBase[Union[Dict[Any, Any], str]]):
+    """Column for JSON PostgreSQL type."""
 
     _available_comparison_types: tuple[
         type,
@@ -95,7 +98,7 @@ class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
         dict,
         list,
         str,
-        Field,
+        Column,
         All_,
         Any_,
     )
@@ -106,21 +109,21 @@ class JsonField(JsonBase[Union[Dict[Any, Any], str]]):
         self: Self,
         *args: Any,
         is_null: bool = True,
-        db_field_name: str | None = None,
+        db_column_name: str | None = None,
         database_default: str | None = None,
-        default: FieldDefaultType[dict[Any, Any] | str] = None,
+        default: ColumnDefaultType[dict[Any, Any] | str] = None,
     ) -> None:
         super().__init__(
             *args,
             is_null=is_null,
             default=default,
             database_default=database_default,
-            db_field_name=db_field_name,
+            db_column_name=db_column_name,
         )
 
 
-class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
-    """Field for JSON PostgreSQL type."""
+class JsonbColumn(JsonBase[Union[Dict[Any, Any], str, bytes]]):
+    """Column for JSON PostgreSQL type."""
 
     _available_comparison_types: tuple[
         type,
@@ -130,7 +133,7 @@ class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         dict,
         str,
         list,
-        Field,
+        Column,
         All_,
         Any_,
     )
@@ -141,28 +144,28 @@ class JsonbField(JsonBase[Union[Dict[Any, Any], str, bytes]]):
         self: Self,
         *args: Any,
         is_null: bool = True,
-        db_field_name: str | None = None,
+        db_column_name: str | None = None,
         database_default: str | None = None,
-        default: FieldDefaultType[dict[Any, Any] | str | bytes] = None,
+        default: ColumnDefaultType[dict[Any, Any] | str | bytes] = None,
     ) -> None:
         super().__init__(
             *args,
             is_null=is_null,
             default=default,
             database_default=database_default,
-            db_field_name=db_field_name,
+            db_column_name=db_column_name,
         )
 
 
-class ArrayField(Field[List[Any]]):
-    """Field for ARRAY PostgreSQL type."""
+class ArrayColumn(Column[List[Any]]):
+    """Column for ARRAY PostgreSQL type."""
 
     _available_comparison_types: tuple[
         type,
         ...,
     ] = (
         list,
-        Field,
+        Column,
         All_,
         Any_,
     )
@@ -172,10 +175,10 @@ class ArrayField(Field[List[Any]]):
     def __init__(
         self: Self,
         *args: Any,
-        inner_field: Field[Any],
+        inner_column: Column[Any],
         is_null: bool = True,
-        db_field_name: str | None = None,
-        default: FieldDefaultType[list[Any]] = None,
+        db_column_name: str | None = None,
+        default: ColumnDefaultType[list[Any]] = None,
         database_default: str | None = None,
         dimension: int | None = None,
     ) -> None:
@@ -184,11 +187,11 @@ class ArrayField(Field[List[Any]]):
             is_null=is_null,
             default=default,
             database_default=database_default,
-            db_field_name=db_field_name,
+            db_column_name=db_column_name,
         )
 
         self.dimension: Final = dimension
-        self.inner_field: Final = inner_field
+        self.inner_column: Final = inner_column
 
     def _prepare_default_value(
         self: Self,
@@ -202,8 +205,8 @@ class ArrayField(Field[List[Any]]):
         return f"'{dumped_value}'"
 
     @property
-    def _field_type(self: Self) -> str:
+    def _column_type(self: Self) -> str:
         if self.dimension:
-            return f"{self.inner_field._field_type}[{self.dimension}]"
+            return f"{self.inner_column._column_type}[{self.dimension}]"
 
-        return f"{self.inner_field._field_type}[]"
+        return f"{self.inner_column._column_type}[]"

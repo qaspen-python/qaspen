@@ -3,44 +3,45 @@ from __future__ import annotations
 from typing import Final
 
 from qaspen.aggregate_functions.general_purpose import Count
-from qaspen.fields.primitive import VarCharField
+from qaspen.columns.primitive import VarCharColumn
 from qaspen.table.base_table import BaseTable
 from tests.test_table.conftest import InheritanceBetaTable
 
 
 def test_base_table_select() -> None:
     """Test `select` method."""
-    select_stmt_with_fields = InheritanceBetaTable.select(
-        InheritanceBetaTable.field1,
-        InheritanceBetaTable.field2,
+    select_stmt_with_columns = InheritanceBetaTable.select(
+        InheritanceBetaTable.column1,
+        InheritanceBetaTable.column2,
     )
 
-    querystring, qs_params = select_stmt_with_fields.querystring().build()
+    querystring, qs_params = select_stmt_with_columns.querystring().build()
     assert (
-        querystring == "SELECT btable.field1, btable.field2 FROM public.btable"
+        querystring
+        == "SELECT btable.column1, btable.column2 FROM public.btable"
     )
     assert not qs_params
 
     select_stmt_with_agg = InheritanceBetaTable.select(
-        Count(InheritanceBetaTable.field1),
+        Count(InheritanceBetaTable.column1),
     )
 
     querystring, qs_params = select_stmt_with_agg.querystring().build()
-    assert querystring == "SELECT COUNT(btable.field1) FROM public.btable"
+    assert querystring == "SELECT COUNT(btable.column1) FROM public.btable"
     assert not qs_params
 
-    select_stmt_with_fields_and_agg = InheritanceBetaTable.select(
-        Count(InheritanceBetaTable.field1),
-        InheritanceBetaTable.field2,
+    select_stmt_with_columns_and_agg = InheritanceBetaTable.select(
+        Count(InheritanceBetaTable.column1),
+        InheritanceBetaTable.column2,
     )
 
     (
         querystring,
         qs_params,
-    ) = select_stmt_with_fields_and_agg.querystring().build()
+    ) = select_stmt_with_columns_and_agg.querystring().build()
     assert (
         querystring
-        == "SELECT btable.field2, COUNT(btable.field1) FROM public.btable"
+        == "SELECT btable.column2, COUNT(btable.column1) FROM public.btable"
     )
     assert not qs_params
 
@@ -48,9 +49,9 @@ def test_base_table_select() -> None:
 def test_base_table_insert() -> None:
     """Test `insert` method."""
     insert_stmt = InheritanceBetaTable.insert(
-        fields=[
-            InheritanceBetaTable.field1,
-            InheritanceBetaTable.field2,
+        columns=[
+            InheritanceBetaTable.column1,
+            InheritanceBetaTable.column2,
         ],
         values=(
             ["Qaspen", "Cool"],
@@ -61,7 +62,7 @@ def test_base_table_insert() -> None:
     querystring, qs_params = insert_stmt.querystring().build()
     assert (
         querystring
-        == "INSERT INTO btable(field1, field2) VALUES (%s, %s), (%s, %s) "
+        == "INSERT INTO btable(column1, column2) VALUES (%s, %s), (%s, %s) "
     )
     assert qs_params == ["Qaspen", "Cool", "Python", "Nice"]
 
@@ -70,27 +71,27 @@ def test_base_table_insert_objects() -> None:
     """Test `insert_objects` method."""
     insert_stmt = InheritanceBetaTable.insert_objects(
         InheritanceBetaTable(
-            field1="test",
-            field2="Wow",
+            column1="test",
+            column2="Wow",
         ),
     )
 
     assert (
         insert_stmt.querystring().build()[0]
-        == "INSERT INTO btable(field1, field2) VALUES (%s, %s)"
+        == "INSERT INTO btable(column1, column2) VALUES (%s, %s)"
     )
 
 
-def test_base_table_all_fields() -> None:
-    """Test `all_fields` method."""
+def test_base_table_all_columns() -> None:
+    """Test `all_columns` method."""
 
     class FotTestInheritanceBetaTable(BaseTable):
-        field1: VarCharField = VarCharField()
-        field2: VarCharField = VarCharField()
+        column1: VarCharColumn = VarCharColumn()
+        column2: VarCharColumn = VarCharColumn()
 
-    assert FotTestInheritanceBetaTable.all_fields() == [
-        FotTestInheritanceBetaTable.field1,
-        FotTestInheritanceBetaTable.field2,
+    assert FotTestInheritanceBetaTable.all_columns() == [
+        FotTestInheritanceBetaTable.column1,
+        FotTestInheritanceBetaTable.column2,
     ]
 
 
@@ -99,14 +100,14 @@ def test_base_table_update_method() -> None:
     update_stmt = (
         InheritanceBetaTable.update(
             for_update_map={
-                InheritanceBetaTable.field1: "TestNew",
+                InheritanceBetaTable.column1: "TestNew",
             },
         )
         .where(
-            InheritanceBetaTable.field2 == "NotNew",
+            InheritanceBetaTable.column2 == "NotNew",
         )
         .returning(
-            InheritanceBetaTable.field1,
+            InheritanceBetaTable.column1,
         )
     )
 
@@ -114,7 +115,7 @@ def test_base_table_update_method() -> None:
 
     assert (
         querystring
-        == "UPDATE btable SET field1 = %s WHERE btable.field2 = %s RETURNING btable.field1"  # noqa: E501
+        == "UPDATE btable SET column1 = %s WHERE btable.column2 = %s RETURNING btable.column1"  # noqa: E501
     )
     assert qs_params == ["TestNew", "NotNew"]
 
@@ -124,10 +125,10 @@ def test_base_table_delete_method() -> None:
     update_stmt = (
         InheritanceBetaTable.delete()
         .where(
-            InheritanceBetaTable.field2 == "NotNew",
+            InheritanceBetaTable.column2 == "NotNew",
         )
         .returning(
-            InheritanceBetaTable.field1,
+            InheritanceBetaTable.column1,
         )
     )
 
@@ -135,14 +136,14 @@ def test_base_table_delete_method() -> None:
 
     assert (
         querystring
-        == "DELETE FROM btable WHERE btable.field2 = %s RETURNING btable.field1"  # noqa: E501
+        == "DELETE FROM btable WHERE btable.column2 = %s RETURNING btable.column1"  # noqa: E501
     )
     assert qs_params == ["NotNew"]
 
 
 def test_base_table_aliased_method() -> None:
     """Test `aliased` method."""
-    table_alias = "field_wow"
+    table_alias = "column_wow"
     aliased = InheritanceBetaTable.aliased(
         alias=table_alias,
     )
@@ -156,7 +157,7 @@ def test_base_table_original_table_name_method() -> None:
     assert InheritanceBetaTable.original_table_name() == "btable"
 
     aliased = InheritanceBetaTable.aliased(
-        alias="field_wow",
+        alias="column_wow",
     )
 
     assert aliased.original_table_name() == "btable"
@@ -167,25 +168,25 @@ def test_base_table_table_name_method() -> None:
     assert InheritanceBetaTable.table_name() == "btable"
 
     aliased = InheritanceBetaTable.aliased(
-        alias="field_wow",
+        alias="column_wow",
     )
 
-    assert aliased.table_name() == "field_wow"
+    assert aliased.table_name() == "column_wow"
 
 
 def test_base_table_schemed_table_name_method() -> None:
     """Test `schemed_table_name` method."""
     schema: Final = "not_public"
     table_name: Final = "not_name"
-    table_alias = "field_wow"
+    table_alias = "column_wow"
 
     class FotTestInheritanceBetaTable(
         BaseTable,
         table_name=table_name,
         table_schema=schema,
     ):
-        field1: VarCharField = VarCharField()
-        field2: VarCharField = VarCharField()
+        column1: VarCharColumn = VarCharColumn()
+        column2: VarCharColumn = VarCharColumn()
 
     assert (
         FotTestInheritanceBetaTable.schemed_table_name()
@@ -202,15 +203,15 @@ def test_base_table_schemed_original_table_name_method() -> None:
     """Test `schemed_original_table_name` method."""
     schema: Final = "not_public"
     table_name: Final = "not_name"
-    table_alias = "field_wow"
+    table_alias = "column_wow"
 
     class FotTestInheritanceBetaTable(
         BaseTable,
         table_name=table_name,
         table_schema=schema,
     ):
-        field1: VarCharField = VarCharField()
-        field2: VarCharField = VarCharField()
+        column1: VarCharColumn = VarCharColumn()
+        column2: VarCharColumn = VarCharColumn()
 
     assert (
         FotTestInheritanceBetaTable.schemed_original_table_name()

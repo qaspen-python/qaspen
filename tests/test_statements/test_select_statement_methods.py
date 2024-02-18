@@ -243,7 +243,7 @@ async def test_select_order_by_method_without_order_bys(
     stmt = UserTable.select(
         UserTable.fullname,
     ).order_by(
-        field=UserTable.fullname,
+        column=UserTable.fullname,
         ascending=ascending,
         nulls_first=nulls_first,
     )
@@ -270,7 +270,7 @@ async def test_select_order_by_method_without_order_bys(
         (
             [
                 OrderBy(
-                    field=UserTable.fullname,
+                    column=UserTable.fullname,
                     ascending=True,
                     nulls_first=True,
                 ),
@@ -281,7 +281,7 @@ async def test_select_order_by_method_without_order_bys(
         (
             [
                 OrderBy(
-                    field=UserTable.fullname,
+                    column=UserTable.fullname,
                     ascending=True,
                     nulls_first=False,
                 ),
@@ -292,7 +292,7 @@ async def test_select_order_by_method_without_order_bys(
         (
             [
                 OrderBy(
-                    field=UserTable.fullname,
+                    column=UserTable.fullname,
                     ascending=False,
                     nulls_first=True,
                 ),
@@ -303,7 +303,7 @@ async def test_select_order_by_method_without_order_bys(
         (
             [
                 OrderBy(
-                    field=UserTable.fullname,
+                    column=UserTable.fullname,
                     ascending=False,
                     nulls_first=False,
                 ),

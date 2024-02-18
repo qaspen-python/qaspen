@@ -220,7 +220,7 @@ def test_array_agg_function_with_order_by(
     [
         (
             TableForTest.name,
-            [OrderBy(field=TableForTest.name)],
+            [OrderBy(column=TableForTest.name)],
             (
                 "SELECT ARRAY_AGG(ttest.name ORDER BY ttest.name) FROM public.ttest"  # noqa: E501
             ),
@@ -230,10 +230,10 @@ def test_array_agg_function_with_order_by(
             TableForTest.name,
             [
                 OrderBy(
-                    field=TableForTest.name,
+                    column=TableForTest.name,
                 ),
                 OrderBy(
-                    field=TableForTest.count,
+                    column=TableForTest.count,
                     ascending=False,
                     nulls_first=False,
                 ),
@@ -245,7 +245,7 @@ def test_array_agg_function_with_order_by(
         ),
         (
             "something",
-            [OrderBy(field=TableForTest.name)],
+            [OrderBy(column=TableForTest.name)],
             (
                 "SELECT ARRAY_AGG(%s::VARCHAR ORDER BY ttest.name) FROM public.ttest"  # noqa: E501
             ),
@@ -287,7 +287,7 @@ def test_array_agg_function_with_order_by_objs(
         (
             TableForTest.name,
             [TableForTest.name],
-            [OrderBy(field=TableForTest.count)],
+            [OrderBy(column=TableForTest.count)],
             (
                 "SELECT ARRAY_AGG(ttest.name ORDER BY ttest.name, ttest.count) FROM public.ttest"  # noqa: E501
             ),
@@ -296,7 +296,7 @@ def test_array_agg_function_with_order_by_objs(
         (
             "something",
             [TableForTest.name],
-            [OrderBy(field=TableForTest.count)],
+            [OrderBy(column=TableForTest.count)],
             (
                 "SELECT ARRAY_AGG(%s::VARCHAR ORDER BY ttest.name, ttest.count) FROM public.ttest"  # noqa: E501
             ),
@@ -452,7 +452,7 @@ def test_string_agg_function_with_order_by(
     [
         (
             TableForTest.name,
-            [OrderBy(field=TableForTest.name)],
+            [OrderBy(column=TableForTest.name)],
             (
                 "SELECT STRING_AGG(ttest.name, ',' ORDER BY ttest.name) FROM public.ttest"  # noqa: E501
             ),
@@ -462,7 +462,7 @@ def test_string_agg_function_with_order_by(
             "something",
             [
                 OrderBy(
-                    field=TableForTest.name,
+                    column=TableForTest.name,
                     ascending=True,
                     nulls_first=True,
                 ),
@@ -476,10 +476,10 @@ def test_string_agg_function_with_order_by(
             TableForTest.name,
             [
                 OrderBy(
-                    field=TableForTest.name,
+                    column=TableForTest.name,
                 ),
                 OrderBy(
-                    field=TableForTest.count,
+                    column=TableForTest.count,
                     ascending=False,
                     nulls_first=False,
                 ),
@@ -526,7 +526,7 @@ def test_string_agg_function_with_order_by_objs(
         (
             TableForTest.name,
             [TableForTest.name],
-            [OrderBy(field=TableForTest.count)],
+            [OrderBy(column=TableForTest.count)],
             (
                 "SELECT STRING_AGG(ttest.name, ',' ORDER BY ttest.name, ttest.count) FROM public.ttest"  # noqa: E501
             ),
@@ -535,7 +535,7 @@ def test_string_agg_function_with_order_by_objs(
         (
             "something",
             [TableForTest.name],
-            [OrderBy(field=TableForTest.count)],
+            [OrderBy(column=TableForTest.count)],
             (
                 "SELECT STRING_AGG(%s::VARCHAR, ',' ORDER BY ttest.name, ttest.count) FROM public.ttest"  # noqa: E501
             ),
@@ -544,7 +544,7 @@ def test_string_agg_function_with_order_by_objs(
         (
             TableForTest.count,
             [TableForTest.name],
-            [OrderBy(field=TableForTest.count)],
+            [OrderBy(column=TableForTest.count)],
             (
                 "SELECT STRING_AGG(ttest.count, ',' ORDER BY ttest.name, ttest.count) FROM public.ttest"  # noqa: E501
             ),

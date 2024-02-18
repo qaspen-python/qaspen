@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Final, Generic, List, Optional
 
-from qaspen.exceptions import FieldDeclarationError
+from qaspen.exceptions import ColumnDeclarationError
 from qaspen.qaspen_types import FromTable
 from qaspen.querystring.querystring import QueryString
 from qaspen.statements.base import Executable
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from qaspen.abc.db_engine import BaseEngine
     from qaspen.abc.db_transaction import BaseTransaction
-    from qaspen.fields.base import Field
+    from qaspen.columns.base import Column
     from qaspen.statements.combinable_statements.combinations import (
         CombinableExpression,
     )
@@ -37,7 +37,7 @@ class DeleteStatement(
         )
         self._is_where_used: bool = False
         self._force: bool = False
-        self._returning: tuple[Field[Any], ...] | None = None
+        self._returning: tuple[Column[Any], ...] | None = None
 
     async def execute(
         self: Self,
@@ -82,9 +82,9 @@ class DeleteStatement(
         `InsertStatement`
         """
         querystring, qs_parameters = self.querystring().build()
-        raw_query_result: list[
-            dict[str, Any]
-        ] | None = await transaction.execute(
+        raw_query_result: (
+            list[dict[str, Any]] | None
+        ) = await transaction.execute(
             querystring=querystring,
             querystring_parameters=qs_parameters,
             fetch_results=bool(self._returning),
@@ -109,7 +109,7 @@ class DeleteStatement(
                 "You can't make DELETE queries without WHERE clause. "
                 "You can allow it with `.force()` method.",
             )
-            raise FieldDeclarationError(no_where_clause_error)
+            raise ColumnDeclarationError(no_where_clause_error)
 
         querystring = QueryString(
             self._from_table.table_name(),
@@ -134,7 +134,7 @@ class DeleteStatement(
         If you use `where` more than one time, clauses will be connected
         with `AND` operator.
 
-        Fields have different methods for the comparison.
+        Columns have different methods for the comparison.
         Also, you can pass the combination of the `where` clauses.
 
         Below you will see easy and advanced examples.
@@ -143,8 +143,8 @@ class DeleteStatement(
         ------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
         statement = Buns.delete().where(
             Buns.name == "Tasty",
@@ -157,17 +157,17 @@ class DeleteStatement(
 
     def returning(
         self: Self,
-        *returning_field: Field[Any],
+        *returning_column: Column[Any],
     ) -> Self:
         """Add `RETURNING` to the query.
 
         ### Parameters:
-        - `returning_field`: field to return
+        - `returning_column`: column to return
 
         ### Returns:
         `self`.
         """
-        self._returning = returning_field
+        self._returning = returning_column
         return self
 
     def force(self: Self) -> Self:

@@ -15,8 +15,8 @@ from qaspen.statements.statement import BaseStatement
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.fields.base import Field
-    from qaspen.qaspen_types import FieldType
+    from qaspen.columns.base import Column
+    from qaspen.qaspen_types import ColumnType
     from qaspen.table.base_table import BaseTable
 
 
@@ -34,7 +34,7 @@ class Join(CombinableExpression):
 
     def __init__(
         self: Self,
-        fields: Iterable[Field[Any]] | None,
+        columns: Iterable[Column[Any]] | None,
         from_table: type[BaseTable],
         join_table: type[BaseTable],
         on: CombinableExpression,
@@ -45,10 +45,10 @@ class Join(CombinableExpression):
         self._based_on: CombinableExpression = on
         self._alias: str = join_alias
 
-        self._fields: list[Field[Any]] | None = None
-        if fields:
-            self._fields = self._process_select_fields(
-                fields=fields,
+        self._columns: list[Column[Any]] | None = None
+        if columns:
+            self._columns = self._process_select_columns(
+                columns=columns,
             )
 
     def querystring(self: Self) -> QueryString:
@@ -64,45 +64,45 @@ class Join(CombinableExpression):
             ),
         )
 
-    def add_fields(
+    def add_columns(
         self: Self,
-        fields: list[Field[Any]],
+        columns: list[Column[Any]],
     ) -> None:
-        """Add new fields to the join.
+        """Add new columns to the join.
 
         ### Parameters:
-        - `fields`: fields to add.
+        - `columns`: columns to add.
         """
-        processed_fields = self._process_select_fields(
-            fields=fields,
+        processed_columns = self._process_select_columns(
+            columns=columns,
         )
-        if self._fields:
-            self._fields.extend(processed_fields)
+        if self._columns:
+            self._columns.extend(processed_columns)
             return
 
-        self._fields = processed_fields
+        self._columns = processed_columns
 
-    def _prefixed_field(
+    def _prefixed_column(
         self: Self,
-        field: Field[FieldType],
-    ) -> Field[FieldType]:
-        return field._with_prefix(
+        column: Column[ColumnType],
+    ) -> Column[ColumnType]:
+        return column._with_prefix(
             prefix=(
-                field._field_data.from_table._table_meta.alias or self._alias
+                column._column_data.from_table._table_meta.alias or self._alias
             ),
         )
 
-    def _process_select_fields(
+    def _process_select_columns(
         self: Self,
-        fields: Iterable[Field[Any]],
-    ) -> list[Field[Any]]:
-        fields_with_prefix: list[Field[Any]] = [
-            self._prefixed_field(field=field) for field in fields
+        columns: Iterable[Column[Any]],
+    ) -> list[Column[Any]]:
+        columns_with_prefix: list[Column[Any]] = [
+            self._prefixed_column(column=column) for column in columns
         ]
-        return fields_with_prefix
+        return columns_with_prefix
 
-    def _join_fields(self: Self) -> list[Field[Any]] | None:
-        return self._fields
+    def _join_columns(self: Self) -> list[Column[Any]] | None:
+        return self._columns
 
 
 class InnerJoin(Join):
@@ -158,7 +158,7 @@ class JoinStatement(BaseStatement):
         from_table: type[BaseTable],
         on: CombinableExpression,
         join_type: JoinType,
-        fields: Iterable[Field[Any]] | None = None,
+        columns: Iterable[Column[Any]] | None = None,
     ) -> None:
         """Create new join.
 
@@ -167,7 +167,7 @@ class JoinStatement(BaseStatement):
         - `from_table`: main Table from the query.
         - `on`: `ON` condition (Filter class usually).
         - `join_type`: type of the JOIN.
-        - `fields`: fields to select from `join_table`.
+        - `columns`: columns to select from `join_table`.
         """
         join_alias = (
             join_table._table_meta.alias or join_table.original_table_name()
@@ -175,7 +175,7 @@ class JoinStatement(BaseStatement):
         self.join_expressions.append(
             join_type.value(
                 join_alias=join_alias,
-                fields=fields,
+                columns=columns,
                 join_table=join_table,
                 from_table=from_table,
                 on=on,
@@ -207,11 +207,11 @@ class JoinStatement(BaseStatement):
         )
         return final_join
 
-    def _retrieve_all_join_fields(
+    def _retrieve_all_join_columns(
         self: Self,
-    ) -> list[Field[Any]]:
-        all_joins_fields: list[Field[Any]] = []
+    ) -> list[Column[Any]]:
+        all_joins_columns: list[Column[Any]] = []
         for join_expression in self.join_expressions:
-            if join_fields := join_expression._join_fields():
-                all_joins_fields.extend(join_fields)
-        return all_joins_fields
+            if join_columns := join_expression._join_columns():
+                all_joins_columns.extend(join_columns)
+        return all_joins_columns

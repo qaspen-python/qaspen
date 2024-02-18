@@ -4,7 +4,7 @@ import abc
 import dataclasses
 from typing import TYPE_CHECKING
 
-from qaspen.fields.operators import (
+from qaspen.columns.operators import (
     ANDOperator,
     BaseOperator,
     NotOperator,

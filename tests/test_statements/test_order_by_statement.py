@@ -11,11 +11,11 @@ from qaspen.statements.combinable_statements.order_by_statement import (
 from tests.test_statements.conftest import ForTestTable
 
 if TYPE_CHECKING:
-    from qaspen.fields.base import Field
+    from qaspen.columns.base import Column
 
 
 @pytest.mark.parametrize(
-    ("field", "ascending", "nulls_first"),
+    ("column", "ascending", "nulls_first"),
     [
         (ForTestTable.name, True, True),
         (ForTestTable.name, True, False),
@@ -24,23 +24,23 @@ if TYPE_CHECKING:
     ],
 )
 def test_order_by_statement_order_by_method(
-    field: Field[Any],
+    column: Column[Any],
     ascending: bool,
     nulls_first: bool,
 ) -> None:
     """Test `OrderByStatement` `order_by` method.
 
-    Check that it works correctly if pass field.
+    Check that it works correctly if pass column.
     """
     order_by_stmt = OrderByStatement()
     order_by_stmt.order_by(
-        field=field,
+        column=column,
         ascending=ascending,
         nulls_first=nulls_first,
     )
 
     order_by_expression = order_by_stmt.order_by_expressions[0]
-    assert order_by_expression.field in [field]
+    assert order_by_expression.column in [column]
     assert order_by_expression.ascending == ascending
     assert order_by_expression.nulls_first == nulls_first
 
@@ -49,22 +49,22 @@ def test_order_by_statement_order_by_method(
     "order_by_expression",
     [
         OrderBy(
-            field=ForTestTable.name,
+            column=ForTestTable.name,
             ascending=True,
             nulls_first=True,
         ),
         OrderBy(
-            field=ForTestTable.name,
+            column=ForTestTable.name,
             ascending=True,
             nulls_first=False,
         ),
         OrderBy(
-            field=ForTestTable.name,
+            column=ForTestTable.name,
             ascending=False,
             nulls_first=True,
         ),
         OrderBy(
-            field=ForTestTable.name,
+            column=ForTestTable.name,
             ascending=False,
             nulls_first=False,
         ),
@@ -93,14 +93,14 @@ def test_order_by_statement_querystring_method() -> None:
     order_by_stmt.order_by(
         order_by_expressions=[
             OrderBy(
-                field=ForTestTable.name,
+                column=ForTestTable.name,
                 ascending=True,
                 nulls_first=True,
             ),
         ],
     )
     order_by_stmt.order_by(
-        field=ForTestTable.name,
+        column=ForTestTable.name,
     )
 
     expected_number_of_order_by_expressions = 2

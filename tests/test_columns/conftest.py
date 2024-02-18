@@ -1,11 +1,11 @@
-"""Conftest for field testing."""
+"""Conftest for column testing."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable, Union
 
 import pytest
 
-from qaspen.fields.base import Field
+from qaspen.columns.base import Column
 from qaspen.sql_type.primitive_types import VarChar
 from qaspen.table.base_table import BaseTable
 
@@ -13,13 +13,13 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
 
-def calculate_default_field_value() -> str:
+def calculate_default_column_value() -> str:
     """Return string as a default value."""
     return "calculated_default_value"
 
 
-class ForTestField(Field[Union[str, float]]):
-    """Field class for testing.
+class ForTestColumn(Column[Union[str, float]]):
+    """Column class for testing.
 
     It supports `string` and `float` types.
     """
@@ -39,17 +39,17 @@ class ForTestField(Field[Union[str, float]]):
         *args: Any,  # noqa: ARG002
         is_null: bool = True,
         default: str | float | None | Callable[[], str | float] = None,
-        db_field_name: str | None = None,
+        db_column_name: str | None = None,
     ) -> None:
         super().__init__(
             is_null=is_null,
             default=default,
-            db_field_name=db_field_name,
+            db_column_name=db_column_name,
         )
 
 
-class ForTestFieldInt(Field[int]):
-    """Field class for testing.
+class ForTestColumnInt(Column[int]):
+    """Column class for testing.
 
     It supports `int` type.
     """
@@ -62,20 +62,20 @@ class ForTestFieldInt(Field[int]):
         *args: Any,  # noqa: ARG002
         is_null: bool = True,
         default: int | Callable[[], int] | None = None,
-        db_field_name: str | None = None,
+        db_column_name: str | None = None,
     ) -> None:
         super().__init__(
             is_null=is_null,
             default=default,
-            db_field_name=db_field_name,
+            db_column_name=db_column_name,
         )
 
 
 class _ForTestTable(BaseTable):
     """Class for test purposes."""
 
-    name: ForTestField = ForTestField()
-    count: ForTestFieldInt = ForTestFieldInt()
+    name: ForTestColumn = ForTestColumn()
+    count: ForTestColumnInt = ForTestColumnInt()
 
 
 @pytest.fixture()
@@ -85,8 +85,8 @@ def for_test_table() -> type[_ForTestTable]:
     class ForTestTable(_ForTestTable):
         """Class for test purposes."""
 
-        name: ForTestField = ForTestField(is_null=True)
-        count: ForTestFieldInt = ForTestFieldInt(
+        name: ForTestColumn = ForTestColumn(is_null=True)
+        count: ForTestColumnInt = ForTestColumnInt(
             is_null=True,
         )
 

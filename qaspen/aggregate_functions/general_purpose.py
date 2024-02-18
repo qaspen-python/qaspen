@@ -32,7 +32,7 @@ class Count(AggFunction):
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
-        (Field, for example), or any base python class
+        (Column, for example), or any base python class
         (like str, int, etc. and their subclasses).
         - `alias`: name for a `AS` clause in statement.
         """
@@ -89,7 +89,7 @@ class Avg(AggFunction):
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
-        (Field, for example), or any base python class
+        (Column, for example), or any base python class
         (like str, int, etc. and their subclasses).
         - `alias`: name for a `AS` clause in statement.
         """
@@ -120,9 +120,9 @@ class ArrayAgg(AggFunction):
 
         ### Parameters:
         - `func_argument`: arguments for the aggregate function.
-            Usually it is Field instance.
+            Usually it is Column instance.
         - `alias`: alias for the function result.
-        - `order_by`: list of `Field` to order by.
+        - `order_by`: list of `Column` to order by.
         - `order_by_objs`: list of `OrderBy` objects.
             It can be useful because sometimes you want to add
             `DESC`/`ASC` and `NULLS FIRST/LAST`.
@@ -236,7 +236,7 @@ class Sum(AggFunction):
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
-        (Field, for example)
+        (Column, for example)
         - `alias`: name for a `AS` clause in statement.
         """
         super().__init__(
@@ -267,10 +267,10 @@ class StringAgg(AggFunction):
 
         ### Parameters:
         - `func_argument`: arguments for the aggregate function.
-            Tt is Field instance usually.
+            Tt is Column instance usually.
         - `separator`: separator for strings.
         - `alias`: alias for the function result.
-        - `order_by`: list of `Field` to order by.
+        - `order_by`: list of `Column` to order by.
         - `order_by_objs`: list of `OrderBy` objects.
             It can be useful because sometimes you want to add
             `DESC`/`ASC` and `NULLS FIRST/LAST`.
@@ -394,7 +394,7 @@ class Max(AggFunction):
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
-        (Field, for example)
+        (Column, for example)
         - `alias`: name for a `AS` clause in statement.
         """
         super().__init__(
@@ -421,7 +421,7 @@ class Min(AggFunction):
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
-        (Field, for example)
+        (Column, for example)
         - `alias`: name for a `AS` clause in statement.
         """
         super().__init__(
@@ -448,7 +448,7 @@ class Greatest(AggFunction):
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
-        (Field, for example)
+        (Column, for example)
         - `alias`: name for a `AS` clause in statement.
         """
         super().__init__(
@@ -475,7 +475,7 @@ class Least(AggFunction):
 
         ### Parameters:
         - `func_argument`: It's an object with `querystring()` method
-        (Field, for example)
+        (Column, for example)
         - `alias`: name for a `AS` clause in statement.
         """
         super().__init__(

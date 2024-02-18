@@ -19,17 +19,20 @@ from qaspen.base.comparison_operators import (
     NotEqualComparisonMixin,
     NotInComparisonMixin,
 )
-from qaspen.exceptions import FieldDeclarationError, FieldValueValidationError
+from qaspen.exceptions import (
+    ColumnDeclarationError,
+    ColumnValueValidationError,
+)
 from qaspen.qaspen_types import (
     EMPTY_FIELD_VALUE,
     CallableDefaultType,
-    EmptyFieldValue,
-    FieldDefaultType,
-    FieldType,
+    ColumnDefaultType,
+    ColumnType,
+    EmptyColumnValue,
     OperatorTypes,
 )
 from qaspen.querystring.querystring import QueryString
-from qaspen.utils.fields_utils import transform_value_to_sql
+from qaspen.utils.column_utils import transform_value_to_sql
 
 if TYPE_CHECKING:
     from qaspen.sql_type.base import SQLType
@@ -37,24 +40,24 @@ if TYPE_CHECKING:
 
 
 @dataclasses.dataclass
-class FieldData(Generic[FieldType]):
-    """All field data.
+class ColumnData(Generic[ColumnType]):
+    """All column data.
 
-    ### Fields
-    `field_name` - Name of the field
+    ### Columns
+    `column_name` - Name of the column
 
-    `from_table` - From what table field is.
+    `from_table` - From what table column is.
 
     `is_primary` - is fiels is a PRIMARY KEY
 
     `unique` - is fiels has a UNIQUE constraint
 
-    `is_null` - is field can be NULL.
+    `is_null` - is column can be NULL.
 
-    `field_value` - value of the field in the database or
-    if you create table instance with fields manually.
+    `column_value` - value of the column in the database or
+    if you create table instance with columns manually.
 
-    `default` - default value for the field.
+    `default` - default value for the column.
     If it is callable, do not use it in the database,
     use it in python and than save in the database.
 
@@ -63,61 +66,61 @@ class FieldData(Generic[FieldType]):
 
     `database_default` - this is default on
 
-    `prefix` - prefix for the field in the query.
+    `prefix` - prefix for the column in the query.
 
-    `alias` - alias of the field.
+    `alias` - alias of the column.
 
-    `in_join` - mark that field is used in join.
+    `in_join` - mark that column is used in join.
     """
 
-    field_name: str
+    column_name: str
     from_table: type[BaseTable] = None  # type: ignore[assignment]
     is_primary: bool = False
     unique: bool = False
     is_null: bool = False
-    field_value: FieldType | EmptyFieldValue | None = EMPTY_FIELD_VALUE
+    column_value: ColumnType | EmptyColumnValue | None = EMPTY_FIELD_VALUE
     default: Any | None = None
     prepared_default: str | None = None
-    callable_default: Callable[[], FieldType] | None = None
+    callable_default: Callable[[], ColumnType] | None = None
     database_default: str | None = None
     prefix: str = ""
     alias: str = ""
     in_join: bool = False
 
 
-class BaseField(Generic[FieldType], abc.ABC):
-    """Base field class for all Fields."""
+class BaseColumn(Generic[ColumnType], abc.ABC):
+    """Base column class for all Columns."""
 
-    _field_data: FieldData[FieldType]
+    _column_data: ColumnData[ColumnType]
     _sql_type: type[SQLType]
 
     def __set_name__(
         self: Self,
         owner: Any,
-        field_name: str,
+        column_name: str,
     ) -> None:
-        """Set name for the field.
+        """Set name for the column.
 
-        field_name is equal to the name of the Field variable.
+        column_name is equal to the name of the Column variable.
 
         Example:
         -------
         ```
         class MyTable(BaseTable):
-            # name of the field in the database is `meme_lord`
-            meme_lord: VarCharField = VarCharField()
+            # name of the column in the database is `meme_lord`
+            meme_lord: VarCharColumn = VarCharColumn()
         ```
         """
-        if not self._field_data.field_name:
-            self._field_data.field_name = field_name
-        self._field_data.from_table = owner
+        if not self._column_data.column_name:
+            self._column_data.column_name = column_name
+        self._column_data.from_table = owner
 
     @abc.abstractmethod
-    def _validate_field_value(
+    def _validate_column_value(
         self: Self,
-        field_value: FieldType | None,
+        column_value: ColumnType | None,
     ) -> None:
-        """Validate field value.
+        """Validate column value.
 
         It must raise an error if something goes wrong
         or not return anything.
@@ -127,9 +130,9 @@ class BaseField(Generic[FieldType], abc.ABC):
     @abc.abstractmethod
     def _validate_default_value(
         self: Self,
-        default_value: FieldType | None,
+        default_value: ColumnType | None,
     ) -> None:
-        """Validate field default value.
+        """Validate column default value.
 
         It must raise an error in validation failed.
         """
@@ -138,110 +141,110 @@ class BaseField(Generic[FieldType], abc.ABC):
     @abc.abstractmethod
     def _prepare_default_value(
         self: Self,
-        default_value: FieldType,
+        default_value: ColumnType,
     ) -> str | None:
-        """Prepare default value to specify it in Field declaration.
+        """Prepare default value to specify it in Column declaration.
 
-        It uses only in the method `_field_default`.
+        It uses only in the method `_column_default`.
 
         :returns: prepared default value.
         """
 
     @property
-    def value(self: Self) -> FieldType | EmptyFieldValue | None:
-        """Return value of the field.
+    def value(self: Self) -> ColumnType | EmptyColumnValue | None:
+        """Return value of the column.
 
-        It's valid only for fields after executing statement,
+        It's valid only for columns after executing statement,
         otherwise it returns `None`.
 
-        If you don't select field in the `.select()` and
+        If you don't select column in the `.select()` and
         try to get its value after `as_objects()` method,
-        you will retrieve `EmptyFieldValue` because it indicates
-        that you don't select this Field.
+        you will retrieve `EmptyColumnValue` because it indicates
+        that you don't select this Column.
 
         ### Returns:
-        `Python type of the field` or `EmptyFieldValue` or `None`.
+        `Python type of the column` or `EmptyColumnValue` or `None`.
         """
-        return self._field_data.field_value
+        return self._column_data.column_value
 
     @property
     def _table_name(self: Self) -> str:
-        """Return table name of this field.
+        """Return table name of this column.
 
         It's only the original table name, not aliased.
 
         ### Return
         `str` table name.
         """
-        return self._field_data.from_table.original_table_name()
+        return self._column_data.from_table.original_table_name()
 
     @property
     def _schemed_table_name(self: Self) -> str:
-        """Return aliased table name with schema of this field.
+        """Return aliased table name with schema of this column.
 
         ### Return
         `str` table name.
         """
-        return self._field_data.from_table.schemed_table_name()
+        return self._column_data.from_table.schemed_table_name()
 
     @property
     def alias(self: Self) -> str | None:
-        """Return alias to the field if it exists.
+        """Return alias to the column if it exists.
 
         ### Returns:
         `alias` or `None`.
         """
-        return self._field_data.alias
+        return self._column_data.alias
 
     @property
-    def field_name(self: Self) -> str:
-        """Return field name with prefix and alias.
+    def column_name(self: Self) -> str:
+        """Return column name with prefix and alias.
 
         ### Prefix logic:
         If `from_table` has alias than use this alias.
 
-        If this field has a prefix than use prefix.
+        If this column has a prefix than use prefix.
 
-        Else use original name of the field's Table.
+        Else use original name of the column's Table.
 
         ### Alias logic:
-        If this Field has an alias, use it.
+        If this Column has an alias, use it.
 
         ### Return
-        `Field` as a `str`.
+        `Column` as a `str`.
         """
         prefix: str = (
-            self._field_data.from_table._table_meta.alias
-            or self._field_data.prefix
-            or self._field_data.from_table.table_name()
+            self._column_data.from_table._table_meta.alias
+            or self._column_data.prefix
+            or self._column_data.from_table.table_name()
         )
-        field_name: str = f"{prefix}.{self._field_data.field_name}"
-        if alias := self._field_data.alias:
-            field_name += f" AS {alias}"
+        column_name: str = f"{prefix}.{self._column_data.column_name}"
+        if alias := self._column_data.alias:
+            column_name += f" AS {alias}"
 
-        return field_name
+        return column_name
 
     @property
-    def _original_field_name(self: Self) -> str:
-        """Return name of the field without prefix and alias.
+    def _original_column_name(self: Self) -> str:
+        """Return name of the column without prefix and alias.
 
         ### Return
-        `str` Field name.
+        `str` Column name.
         """
-        return self._field_data.field_name
+        return self._column_data.column_name
 
     @property
     def _default(self: Self) -> Any | None:
-        """Return default value of the field.
+        """Return default value of the column.
 
         ### Return
         default value.
         """
-        return self._field_data.default
+        return self._column_data.default
 
     @property
     def _prepared_default(self: Self) -> Any | None:
-        """Return default value of the field.
+        """Return default value of the column.
 
         This default is already converted into SQL string.
         Or None.
@@ -249,32 +252,32 @@ class BaseField(Generic[FieldType], abc.ABC):
         ### Return
         default value.
         """
-        return self._field_data.prepared_default
+        return self._column_data.prepared_default
 
     @property
     def _callable_default(
         self: Self,
-    ) -> CallableDefaultType[FieldType] | None:
-        """Return callable object for default value for the field.
+    ) -> CallableDefaultType[ColumnType] | None:
+        """Return callable object for default value for the column.
 
         This default value will be called in the statements
         that can be create new raws in the database.
 
         """
-        return self._field_data.callable_default
+        return self._column_data.callable_default
 
     @property
     def _is_null(self: Self) -> bool:
-        """Return flag that field can be `NULL`.
+        """Return flag that column can be `NULL`.
 
         ### Return
         `bool`
         """
-        return self._field_data.is_null
+        return self._column_data.is_null
 
     @property
-    def _field_null(self: Self) -> str:
-        """Return `NOT NULL` string if field cannot be NULL.
+    def _column_null(self: Self) -> str:
+        """Return `NOT NULL` string if column cannot be NULL.
 
         ### Return
         `str`.
@@ -282,14 +285,14 @@ class BaseField(Generic[FieldType], abc.ABC):
         return "NOT NULL" if not self._is_null else ""
 
     @property
-    def _field_default(self: Self) -> str:
+    def _column_default(self: Self) -> str:
         if self._default:
             return f"DEFAULT {self._default}" if self._default else ""
         return ""
 
     @property
-    def _field_type(self: Self) -> str:
-        """Property for final SQL field Type.
+    def _column_type(self: Self) -> str:
+        """Property for final SQL column Type.
 
         It can be changed in subclasses.
 
@@ -300,21 +303,25 @@ class BaseField(Generic[FieldType], abc.ABC):
         return query
 
 
-class Field(
-    BaseField[FieldType],
-    EqualComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType, None]],
-    NotEqualComparisonMixin[
-        Union["Field[Any]", OperatorTypes, FieldType, None],
+class Column(
+    BaseColumn[ColumnType],
+    EqualComparisonMixin[
+        Union["Column[Any]", OperatorTypes, ColumnType, None]
     ],
-    GreaterComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
-    GreaterEqualComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
-    LessComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
-    LessEqualComparisonMixin[Union["Field[Any]", OperatorTypes, FieldType]],
-    BetweenComparisonMixin[Union[FieldType, "Field[Any]"]],
-    InComparisonMixin[FieldType],
-    NotInComparisonMixin[FieldType],
+    NotEqualComparisonMixin[
+        Union["Column[Any]", OperatorTypes, ColumnType, None],
+    ],
+    GreaterComparisonMixin[Union["Column[Any]", OperatorTypes, ColumnType]],
+    GreaterEqualComparisonMixin[
+        Union["Column[Any]", OperatorTypes, ColumnType]
+    ],
+    LessComparisonMixin[Union["Column[Any]", OperatorTypes, ColumnType]],
+    LessEqualComparisonMixin[Union["Column[Any]", OperatorTypes, ColumnType]],
+    BetweenComparisonMixin[Union[ColumnType, "Column[Any]"]],
+    InComparisonMixin[ColumnType],
+    NotInComparisonMixin[ColumnType],
 ):
-    """Main Field class.
+    """Main Column class.
 
     All subclasses must be inherited from this class.
 
@@ -322,7 +329,7 @@ class Field(
     can be used in comparison methods, like `__eq__`.
 
     `_set_available_types` defines what types can be
-    set as a value to the field.
+    set as a value to the column.
     """
 
     _available_comparison_types: tuple[type, ...]
@@ -334,32 +341,32 @@ class Field(
         is_primary: bool = False,
         is_null: bool = True,
         unique: bool = False,
-        default: FieldDefaultType[FieldType] = None,
+        default: ColumnDefaultType[ColumnType] = None,
         database_default: str | None = None,
-        db_field_name: str | None = None,
+        db_column_name: str | None = None,
     ) -> None:
-        """Create new Field instance.
+        """Create new Column instance.
 
         It's not possible to use not keyword arguments for
         specifying parameters.
 
         ### Parameters:
-        - `is_null`: Defines is Field can be `NULL` or not.
-        - `default`: Default value for the Field.
+        - `is_null`: Defines is Column can be `NULL` or not.
+        - `default`: Default value for the Column.
             This default value can be callable object.
             Note! This value will be set at the python level.
-        - `db_field_name`: name of the field in the database.
+        - `db_column_name`: name of the column in the database.
         """
         if default and database_default:
             default_err_msg = (
                 "It's impossible to specify default and database_default. "
                 "Please specify only one."
             )
-            raise FieldDeclarationError(default_err_msg)
+            raise ColumnDeclarationError(default_err_msg)
 
         if args:
             args_err_msg: Final = "Use only keyword arguments."
-            raise FieldDeclarationError(args_err_msg)
+            raise ColumnDeclarationError(args_err_msg)
 
         self.is_null: Final = is_null if not default else False
         self.default = default
@@ -369,9 +376,9 @@ class Field(
 
         self.prepared_default: Any | None = None
         self.callable_default_value: (
-            CallableDefaultType[FieldType] | None
+            CallableDefaultType[ColumnType] | None
         ) = None
-        self.not_callable_default: FieldType | None = None
+        self.not_callable_default: ColumnType | None = None
         if callable(default):
             self.callable_default_value = default
         elif default is not None:
@@ -383,10 +390,10 @@ class Field(
         # python_is_null is a special flag for validations
         # and __set__ method.
         # In general, if there is is_null=False, we can't
-        # set None to the field.
-        # But for example in Serial fields, is_null is always False but
+        # set None to the column.
+        # But for example in Serial columns, is_null is always False but
         # we don't need to always specify value to them.
-        # Because value in this field will be calculated
+        # Because value in this column will be calculated
         # on database side.
         if not hasattr(self, "python_is_null"):
             self.python_is_null = is_null
@@ -396,8 +403,8 @@ class Field(
                 default_value=default,
             )
 
-        self._field_data: FieldData[FieldType] = FieldData(
-            field_name=db_field_name or "",
+        self._column_data: ColumnData[ColumnType] = ColumnData(
+            column_name=db_column_name or "",
             is_primary=self.is_primary,
             unique=self.unique,
             is_null=is_null,
@@ -410,7 +417,7 @@ class Field(
     def __hash__(
         self: Self,
     ) -> int:
-        """Make Field hashable.
+        """Make Column hashable.
 
         ### Returns:
         hash number.
@@ -425,47 +432,49 @@ class Field(
         try:
             return cast(
                 Self,
-                instance.__dict__[self._original_field_name],
+                instance.__dict__[self._original_column_name],
             )
         except (AttributeError, KeyError):
             return cast(
                 Self,
-                owner._retrieve_field(  # type: ignore[union-attr]
-                    self._original_field_name,
+                owner._retrieve_column(  # type: ignore[union-attr]
+                    self._original_column_name,
                 ),
             )
 
     def __set__(
         self: Self,
         instance: object,
-        value: FieldType | EmptyFieldValue | None,
+        value: ColumnType | EmptyColumnValue | None,
     ) -> None:
-        field: Field[FieldType]
+        column: Column[ColumnType]
         if value is None:
             if self.not_callable_default:
-                field = instance.__dict__[self._original_field_name]
-                field._field_data.field_value = self.not_callable_default
+                column = instance.__dict__[self._original_column_name]
+                column._column_data.column_value = self.not_callable_default
                 return
 
             if self.callable_default_value:
-                field = instance.__dict__[self._original_field_name]
-                field._field_data.field_value = self.callable_default_value()
+                column = instance.__dict__[self._original_column_name]
+                column._column_data.column_value = (
+                    self.callable_default_value()
+                )
                 return
 
-        if isinstance(value, EmptyFieldValue):
-            field = instance.__dict__[self._original_field_name]
-            field._field_data.field_value = value
+        if isinstance(value, EmptyColumnValue):
+            column = instance.__dict__[self._original_column_name]
+            column._column_data.column_value = value
             return
 
         if isinstance(value, self.__class__):
-            instance.__dict__[self._original_field_name] = value
+            instance.__dict__[self._original_column_name] = value
             return
 
-        self._validate_field_value(
-            field_value=value,
+        self._validate_column_value(
+            column_value=value,
         )
-        field = instance.__dict__[self._original_field_name]
-        field._field_data.field_value = value
+        column = instance.__dict__[self._original_column_name]
+        column._column_data.column_value = value
 
     def querystring(self: Self) -> QueryString:
         """Build QueryString class.
@@ -474,7 +483,7 @@ class Field(
         Built `QueryString`.
         """
         return QueryString(
-            self.field_name,
+            self.column_name,
             sql_template=QueryString.arg_ph(),
         )
 
@@ -482,13 +491,13 @@ class Field(
         self: Self,
         alias_name: str,
     ) -> Self:
-        """Set alias to the field.
+        """Set alias to the column.
 
         ### Parameters:
-        - `alias_name`: name of the alias to the field.
+        - `alias_name`: name of the alias to the column.
 
         ### Returns
-        `Field` with new prefix.
+        `Column` with new prefix.
         """
         return self._with_alias(
             alias=alias_name,
@@ -503,111 +512,111 @@ class Field(
         """
         return (
             *self._available_comparison_types,
-            Field,
+            Column,
             OperatorTypes.__args__,  # type: ignore[attr-defined]
         )
 
-    def _is_the_same_field(
+    def _is_the_same_column(
         self: Self,
-        other_field: BaseField[FieldType],
+        other_column: BaseColumn[ColumnType],
     ) -> bool:
-        """Compare two fields.
+        """Compare two columns.
 
         Return `True` if they are the same, else `False`.
-        They are equal if they `_field_data`s are the same.
+        They are equal if they `_column_data`s are the same.
 
         ### Parameters:
-        - `other_field`: field to compare with.
+        - `other_column`: column to compare with.
 
         ### Returns:
-        Are fields the same or not.
+        Are columns the same or not.
         """
-        return self._field_data == other_field._field_data
+        return self._column_data == other_column._column_data
 
-    def _with_prefix(self: Self, prefix: str) -> Field[FieldType]:
-        """Give Field a prefix.
+    def _with_prefix(self: Self, prefix: str) -> Column[ColumnType]:
+        """Give Column a prefix.
 
-        Make a Field deepcopy and set new prefix.
+        Make a Column deepcopy and set new prefix.
 
         ### Parameters
-        - `prefix`: prefix for the field.
+        - `prefix`: prefix for the column.
 
         ### Returns
-        `Field` with new prefix.
+        `Column` with new prefix.
         """
-        field: Field[FieldType] = copy.deepcopy(self)
-        field._field_data.prefix = prefix
-        return field
+        column: Column[ColumnType] = copy.deepcopy(self)
+        column._column_data.prefix = prefix
+        return column
 
     def _with_alias(self: Self, alias: str) -> Self:
-        """Give Field an alias.
+        """Give Column an alias.
 
-        Make a Field deepcopy and set new alias.
+        Make a Column deepcopy and set new alias.
 
         ### Parameters
-        - `alias`: alias for the field.
+        - `alias`: alias for the column.
 
         ### Returns
-        `Field` with new alias.
+        `Column` with new alias.
         """
-        field: Self = copy.deepcopy(self)
-        field._field_data.alias = alias
-        return field
+        column: Self = copy.deepcopy(self)
+        column._column_data.alias = alias
+        return column
 
-    def _validate_field_value(
+    def _validate_column_value(
         self: Self,
-        field_value: FieldType | None,
+        column_value: ColumnType | None,
     ) -> None:
-        """Validate field value.
+        """Validate column value.
 
-        :param field_value: new value for the field.
+        :param column_value: new value for the column.
 
-        :raises FieldValueValidationError: if the `max_length` is exceeded.
+        :raises ColumnValueValidationError: if the `max_length` is exceeded.
         """
-        if self.python_is_null and field_value is None:
+        if self.python_is_null and column_value is None:
             return
 
-        if not self.python_is_null and field_value is None:
+        if not self.python_is_null and column_value is None:
             null_err_msg = (
-                f"Value of the field {self.__class__.__name__} "
+                f"Value of the column {self.__class__.__name__} "
                 "can't be `None` because parameter is_null is False"
             )
-            raise FieldValueValidationError(null_err_msg)
+            raise ColumnValueValidationError(null_err_msg)
 
-        if not isinstance(field_value, self._set_available_types):
+        if not isinstance(column_value, self._set_available_types):
             err_msg: Final = (
-                f"Value of this field must be one of these - "
+                f"Value of this column must be one of these - "
                 f"{self._set_available_types}"
             )
-            raise FieldValueValidationError(err_msg)
+            raise ColumnValueValidationError(err_msg)
 
     def _validate_default_value(
         self: Self,
-        default_value: FieldDefaultType[FieldType],
+        default_value: ColumnDefaultType[ColumnType],
     ) -> None:
         if default_value is None or types.FunctionType == type(default_value):
             return
 
         try:
-            self._validate_field_value(
-                field_value=default_value,  # type: ignore[arg-type]
+            self._validate_column_value(
+                column_value=default_value,  # type: ignore[arg-type]
             )
-        except FieldValueValidationError as exc:
+        except ColumnValueValidationError as exc:
             validation_err_msg: Final = (
-                f"Default value of this field must be one of these - "
+                f"Default value of this column must be one of these - "
                 f"{self._set_available_types}"
             )
-            raise FieldValueValidationError(
+            raise ColumnValueValidationError(
                 validation_err_msg,
             ) from exc
 
     def _prepare_default_value(
         self: Self,
-        default_value: FieldType | None,
+        default_value: ColumnType | None,
     ) -> str | None:
-        """Prepare default value to specify it in Field declaration.
+        """Prepare default value to specify it in Column declaration.
 
-        It uses only in the method `_field_default`.
+        It uses only in the method `_column_default`.
 
         :returns: prepared default value.
         """

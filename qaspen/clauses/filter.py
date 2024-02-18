@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from qaspen.base.sql_base import SQLComparison
-    from qaspen.fields.operators import BaseOperator
+    from qaspen.columns.operators import BaseOperator
 
 
 class Filter(CombinableExpression):
@@ -65,12 +65,12 @@ class FilterBetween(CombinableExpression):
 
     def __init__(
         self: Self,
-        field: SQLComparison[Any],
+        column: SQLComparison[Any],
         operator: type[BaseOperator],
         left_comparison_value: Any,
         right_comparison_value: Any,
     ) -> None:
-        self.field: Final = field
+        self.column: Final = column
         self.operator: Final = operator
 
         self.left_comparison_value: Final = left_comparison_value
@@ -78,22 +78,22 @@ class FilterBetween(CombinableExpression):
 
     def querystring(self: Self) -> FilterQueryString:
         """Build new `FilterQueryString`."""
-        from qaspen.fields.base import BaseField
+        from qaspen.columns.base import BaseColumn
 
         left_value: str = (
-            self.left_comparison_value.field_name
-            if isinstance(self.left_comparison_value, BaseField)
+            self.left_comparison_value.column_name
+            if isinstance(self.left_comparison_value, BaseColumn)
             else self.left_comparison_value
         )
 
         right_value: str = (
-            self.right_comparison_value.field_name
-            if isinstance(self.right_comparison_value, BaseField)
+            self.right_comparison_value.column_name
+            if isinstance(self.right_comparison_value, BaseColumn)
             else self.right_comparison_value
         )
 
         return FilterQueryString(
-            self.field.querystring(),
+            self.column.querystring(),
             template_parameters=[left_value, right_value],
             sql_template=self.operator.operation_template,
         )

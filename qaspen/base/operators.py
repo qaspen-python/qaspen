@@ -27,7 +27,7 @@ class Any_:  # noqa: N801
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
 
 
         select_statement = (
@@ -73,7 +73,7 @@ class All_:  # noqa: N801
         -------
         ```
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
 
 
         select_statement = (

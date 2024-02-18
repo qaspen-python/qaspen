@@ -15,7 +15,7 @@ from qaspen.statements.statement import BaseStatement
 if TYPE_CHECKING:
     from typing_extensions import Self
 
-    from qaspen.fields.base import Field
+    from qaspen.columns.base import Column
 
 
 @dataclasses.dataclass
@@ -33,7 +33,7 @@ class OrderByStatement(BaseStatement):
 
     def order_by(
         self: Self,
-        field: Field[Any] | None = None,
+        column: Column[Any] | None = None,
         ascending: bool = True,
         nulls_first: bool = True,
         order_by_expressions: Iterable[OrderBy] | None = None,
@@ -41,15 +41,15 @@ class OrderByStatement(BaseStatement):
         """Create new `OrderBy`.
 
         ### Parameters:
-        - `field`: field to order by.
+        - `column`: column to order by.
         - `ascending`: `ASC` or `DESC` order.
         - `nulls_first`: `NULL` first or not.
         - `order_by_expressions`: already initialized OrderBys.
         """
-        if field:
+        if column:
             self.order_by_expressions.append(
                 OrderBy(
-                    field=field,
+                    column=column,
                     ascending=ascending,
                     nulls_first=nulls_first,
                 ),

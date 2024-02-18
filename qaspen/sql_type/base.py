@@ -8,10 +8,10 @@ class SQLType:
 
     It has mapping to it's type in python.
 
-    Usually mapped one-to-one to the Field.
-    For example, `SmallInt Field` mapped to `SmallInt` type.
+    Usually mapped one-to-one to the Column.
+    For example, `SmallInt Column` mapped to `SmallInt` type.
 
-    But in some Fields, like `Array`, it's necessary
+    But in some Columns, like `Array`, it's necessary
     to specify additional type.
 
     Also this and all subclasses are used in pydantic/msgspec

@@ -4,7 +4,7 @@ import copy
 import inspect
 import typing
 
-from qaspen.fields.base import Field
+from qaspen.columns.base import Column
 from qaspen.statements.delete_statement import DeleteStatement
 from qaspen.statements.insert_statement import (
     InsertObjectsStatement,
@@ -16,7 +16,7 @@ from qaspen.table.meta_table import MetaTable
 
 if typing.TYPE_CHECKING:
     from qaspen.aggregate_functions.base import AggFunction
-    from qaspen.qaspen_types import FieldType
+    from qaspen.qaspen_types import ColumnType
 
 T_ = typing.TypeVar(
     "T_",
@@ -33,15 +33,15 @@ class BaseTable(MetaTable, abstract=True):
     @classmethod
     def select(
         cls: type[T_],
-        *select: Field[typing.Any] | AggFunction,
+        *select: Column[typing.Any] | AggFunction,
     ) -> SelectStatement[T_]:
         """Create SelectStatement based on table.
 
-        You can specify here fields from main table and joins,
+        You can specify here columns from main table and joins,
         aggregate functions.
 
-        :param select_fields: fields to select.
-            By default select all possible fields.
+        :param select_columns: columns to select.
+            By default select all possible columns.
 
         :returns: SelectStatement.
 
@@ -49,8 +49,8 @@ class BaseTable(MetaTable, abstract=True):
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            nickname: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            nickname: VarCharColumn = VarCharColumn()
 
 
         select_statement = Buns.select(
@@ -62,7 +62,7 @@ class BaseTable(MetaTable, abstract=True):
         ```
         """
         select_statement: typing.Final[SelectStatement[T_]] = SelectStatement(
-            select_objects=select or cls.all_fields(),
+            select_objects=select or cls.all_columns(),
             from_table=cls,
         )
         return select_statement
@@ -70,34 +70,34 @@ class BaseTable(MetaTable, abstract=True):
     @classmethod
     def insert(
         cls: type[T_],
-        fields: list[Field[typing.Any]],
+        columns: list[Column[typing.Any]],
         values: tuple[list[typing.Any], ...],
     ) -> InsertStatement[T_, None]:
         """Create `InsertStatement`.
 
         This method copies SQL syntax.
 
-        Parameter `fields` is for fields that
+        Parameter `columns` is for columns that
         you specify when you write INSERT query.
 
-        `INSERT INTO qaspen (<there is `fields`>)`.
+        `INSERT INTO qaspen (<there is `columns`>)`.
 
         Parameter `values` is for actual data that you
         want to insert into the table.
 
         `!IMPORTANT.`
-        You shouldn't specify any value for fields with
+        You shouldn't specify any value for columns with
         any default value.
 
         Example:
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            nickname: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            nickname: VarCharColumn = VarCharColumn()
 
 
-        fields_to_insert = [
+        columns_to_insert = [
             Buns.name,
             Buns.nickname,
         ]
@@ -109,7 +109,7 @@ class BaseTable(MetaTable, abstract=True):
         insert_statement = (
             Buns
             .insert(
-                fields=fields_to_insert,
+                columns=columns_to_insert,
                 values=values_to_insert,
             )
         )
@@ -122,7 +122,7 @@ class BaseTable(MetaTable, abstract=True):
         """
         return InsertStatement[T_, None](
             from_table=cls,
-            fields_to_insert=fields,
+            columns_to_insert=columns,
             values_to_insert=values,
         )
 
@@ -140,8 +140,8 @@ class BaseTable(MetaTable, abstract=True):
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            nickname: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            nickname: VarCharColumn = VarCharColumn()
 
 
         insert_statement = (
@@ -166,7 +166,7 @@ class BaseTable(MetaTable, abstract=True):
     def update(
         cls: type[T_],
         for_update_map: dict[
-            Field[typing.Any],
+            Column[typing.Any],
             typing.Any,
         ],
     ) -> UpdateStatement[T_]:
@@ -178,8 +178,8 @@ class BaseTable(MetaTable, abstract=True):
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            nickname: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            nickname: VarCharColumn = VarCharColumn()
 
 
         update_statement = (
@@ -210,8 +210,8 @@ class BaseTable(MetaTable, abstract=True):
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            nickname: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            nickname: VarCharColumn = VarCharColumn()
 
 
         update_statement = (
@@ -227,19 +227,19 @@ class BaseTable(MetaTable, abstract=True):
         )
 
     @classmethod
-    def all_fields(cls: type[T_]) -> list[Field[FieldType]]:
-        """Return all fields in the table.
+    def all_columns(cls: type[T_]) -> list[Column[ColumnType]]:
+        """Return all columns in the table.
 
-        :returns: list of fields.
+        :returns: list of columns.
         """
-        return [*cls._table_meta.table_fields.values()]
+        return [*cls._table_meta.table_columns.values()]
 
     @classmethod
     def aliased(cls: type[T_], alias: str) -> type[T_]:
         """Create aliased version of the Table.
 
         ### Parameters
-        :param alias: alias to the field.
+        :param alias: alias to the column.
 
         ### Returns
         :returns: Same Table, but aliased.
@@ -248,8 +248,8 @@ class BaseTable(MetaTable, abstract=True):
         -------
         ```python
         class Buns(BaseTable, table_name="buns"):
-            name: VarCharField = VarCharField()
-            description: VarCharField = VarCharField()
+            name: VarCharColumn = VarCharColumn()
+            description: VarCharColumn = VarCharColumn()
 
 
         # It has the same type with all autosuggestions.
@@ -282,18 +282,18 @@ class BaseTable(MetaTable, abstract=True):
             cls,
             lambda member: not (inspect.isroutine(member)),
         )
-        only_field_attributes: dict[str, Field[typing.Any]] = {
+        only_column_attributes: dict[str, Column[typing.Any]] = {
             attribute[0]: copy.deepcopy(attribute[1])
             for attribute in attributes
-            if issubclass(type(attribute[1]), Field)
+            if issubclass(type(attribute[1]), Column)
         }
 
         for table_param_name, table_param in cls.__dict__.items():
             setattr(aliased_table, table_param_name, table_param)
 
-        for field_name, field in only_field_attributes.items():
-            field._field_data.from_table = aliased_table
-            setattr(aliased_table, field_name, field)
+        for column_name, column in only_column_attributes.items():
+            column._column_data.from_table = aliased_table
+            setattr(aliased_table, column_name, column)
 
         aliased_table._table_meta = (  # type: ignore[attr-defined]
             copy.deepcopy(
@@ -302,11 +302,11 @@ class BaseTable(MetaTable, abstract=True):
         )
         aliased_table._table_meta.alias = alias  # type: ignore[attr-defined]
 
-        table_meta_fields = (
-            aliased_table._table_meta.table_fields.values()  # type: ignore[attr-defined]
+        table_meta_columns = (
+            aliased_table._table_meta.table_columns.values()  # type: ignore[attr-defined]
         )
-        for field in table_meta_fields:
-            field._field_data.from_table = aliased_table
+        for column in table_meta_columns:
+            column._column_data.from_table = aliased_table
 
         return aliased_table
 
