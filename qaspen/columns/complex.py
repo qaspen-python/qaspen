@@ -182,6 +182,12 @@ class ArrayColumn(Column[List[Any]]):
         database_default: str | None = None,
         dimension: int | None = None,
     ) -> None:
+        if isinstance(inner_column, ArrayColumn):
+            exception_message: Final = (
+                "Nested arrays are not allowed.\n",
+                "Please, use JSONColumn or JSONBColumn instead",
+            )
+            raise ColumnDeclarationError(exception_message)
         super().__init__(
             *args,
             is_null=is_null,

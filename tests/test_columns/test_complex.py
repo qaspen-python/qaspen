@@ -162,3 +162,13 @@ def test_array_column_column_type_method() -> None:
         dimension=10,
     )
     assert column_with_dimension._column_type == "VARCHAR(255)[10]"
+
+
+def test_array_column_nested_arrays() -> None:
+    """Test nested arrays are not allowed."""
+    with pytest.raises(ColumnDeclarationError):
+        ArrayColumn(
+            inner_column=ArrayColumn(
+                inner_column=VarCharColumn(max_length=64),
+            ),
+        )
