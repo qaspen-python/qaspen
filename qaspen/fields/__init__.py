@@ -13,10 +13,13 @@ from qaspen.fields.primitive import (
     NumericField,
     RealField,
     SerialField,
+    SmallIntField,
     SmallSerialField,
     TextField,
     TimeField,
     TimestampField,
+    TimestampTZField,
+    TimeTZField,
     VarCharField,
 )
 
@@ -36,9 +39,12 @@ __all__ = [
     "NumericField",
     "RealField",
     "SerialField",
+    "SmallIntField",
     "SmallSerialField",
     "TextField",
     "TimeField",
     "TimestampField",
+    "TimeTZField",
+    "TimestampTZField",
     "VarCharField",
 ]
